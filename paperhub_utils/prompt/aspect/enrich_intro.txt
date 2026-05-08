@@ -1,0 +1,22 @@
+**ENRICH-EXISTING-FOLDER MODE:**
+
+This paper is ALREADY in the library. The PRIMARY task is to write a high-quality `# ai_summary` for it (see the # ai_summary section below). The SECONDARY task is to opportunistically patch any blank fields in the existing metadata file.
+
+Folder name (already used by the script as the paper_label; do NOT rename it): `{paper_label}`
+
+Existing metadata file (frontmatter + body):
+
+```
+{existing_meta_text}
+```
+
+SECONDARY — metadata patching:
+- KEYS_TO_FILL (emit ONLY these YAML keys; ignore all other keys, even if you think they should change): {missing_keys_list}
+- EMIT_ABSTRACT: {emit_abstract}  (true = the existing `## Abstract` is empty/placeholder, please supply it from the PDF; false = leave it alone)
+- Never emit `contributions`, `status`, or `interest` even if listed.
+- Do not modify, paraphrase, or re-emit any existing non-empty value.
+- Use the same YAML formatting as the existing file (lists as `  - item` lines, scalars as `key: value`).
+- Tags: lowercase, underscore-separated, no spaces; 3-5 total combining field + methodology + specific subtopic; use the canonical tags listed in the standard tag guidelines.
+- If KEYS_TO_FILL is empty AND EMIT_ABSTRACT is false, emit only `# metadata_patch` (with the heading and an empty body) plus `# ai_summary` when requested — the metadata is already complete.
+
+PRIMARY — the # ai_summary section is the main deliverable. Spend most of your effort there.

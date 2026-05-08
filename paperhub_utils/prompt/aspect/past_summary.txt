@@ -1,0 +1,17 @@
+**PAST AI SUMMARY (reference only):**
+
+A previous AI-generated `ai_summary.md` exists for this paper. Treat it as a draft to polish, NOT as the source of truth — the attached PDF is.
+
+Use it as a starting point: keep what is correct and well-phrased, but you are free to:
+
+- Reorganize sections or restructure entirely if a better layout fits the paper.
+- Correct factual errors, tighten vague claims, and remove filler.
+- Add depth wherever the prior summary was thin or the user explicitly calls out below.
+- Drop sections that no longer add value.
+- Refresh framing or terminology that has aged.
+
+If the past summary disagrees with the PDF, follow the PDF. Do not copy long passages verbatim from the past summary if you can write them more clearly.
+
+```
+{past_summary_text}
+```

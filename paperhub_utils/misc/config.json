@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "use_git": true,
+  "metadata_only_page_limit": 2,
+  "gemini_cli_model": "gemini-3.1-pro-preview",
+  "tag_prompt": {
+    "include_context": true,
+    "top_field": 20,
+    "top_topic": 200,
+    "top_methodology": 10,
+    "top_meta": 0
+  },
+  "obsidian": {
+    "vault_abs_path": null,
+    "vault_relative_paper_library_path": null
+  }
+}

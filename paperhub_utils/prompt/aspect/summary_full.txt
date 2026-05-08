@@ -1,0 +1,23 @@
+# ai_summary
+Write a detailed, free-form summary of this paper. Structure it however makes sense for this particular paper — use markdown headings, bullet points, and LaTeX math as appropriate.
+
+**Use LaTeX notation:**
+- Inline math: `$formula$` (e.g., `$y = \beta_0 + \beta_1 x + \epsilon$`)
+- Block math: `$$formula$$` (e.g., `$$\int_0^1 f(x) dx$$`)
+
+**What to cover (adapt emphasis to the paper type):**
+- **Research question**: What does this paper ask or set out to do?
+- **Methodology/Model**: Describe in enough detail that a reader can understand the approach without reading the paper. For theoretical papers, spell out the model setup, key assumptions, mechanism, and solution concept. Show the math and the equations. For empirical papers, cover the data, identification strategy, and key specifications. Include math notation where it clarifies.
+- **Main findings**: Primary results with magnitudes/effect sizes when available. Secondary findings if important.
+- **Robustness**: Brief note on robustness checks if applicable.
+- **Experimental design**: If the paper runs experiments, describe the design (type, participants, treatments, procedure, key results) in detail. Include where subjects are recruited, payment structure, and feedback design. Indicate if the experiment is asynchronous or synchronous. If helpful for clarity, use a Mermaid chart to illustrate the experiment's flow, treatments, or structure. Skip if not applicable.
+- **Literature context**: What does it build on? How does it differ?
+- **Policy/practical implications**: Only if explicitly discussed in the paper.
+- **Key tables/figures**: 1-2 most important, with page numbers.
+- **Notable quotes**: 1-2 max, only if genuinely insightful.
+- **Technical notes**: Noteworthy econometric specs, computational approaches, or data construction details.
+
+**Style:**
+- Be concise and direct. No filler, no exaggeration, no "this groundbreaking paper..."
+- Methodology sections should be the most detailed part — err on the side of too much detail here.
+- Target ~800-1200 words total

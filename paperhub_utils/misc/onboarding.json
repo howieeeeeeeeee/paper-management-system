@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "workflow": "paper-summarizer-onboarding",
+  "description": "Resumable onboarding state. Agents should read onboarding_questionnaire.md first when present, verify each completed step against the filesystem/config, and update this file after each step finishes.",
+  "status_values": [
+    "pending",
+    "in_progress",
+    "done",
+    "skipped",
+    "blocked"
+  ],
+  "updated_at": null,
+  "context": {
+    "paper_library_root": null,
+    "paperhub_utils_dir": null,
+    "obsidian_vault_abs_path": null,
+    "vault_relative_paper_library_path": null,
+    "questionnaire_status": null,
+    "questionnaire_deleted": false,
+    "use_git": null,
+    "ai_engine": null,
+    "metadata_only_page_limit": null,
+    "paper_label_format": null
+  },
+  "steps": [
+    {
+      "id": "apply_questionnaire",
+      "name": "Read onboarding questionnaire and map answers",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "discover_project",
+      "name": "Discover project, vault, and configured paths",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "prepare_folders",
+      "name": "Create or validate library folders",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "setup_uv_environment",
+      "name": "Install or validate uv and run uv sync",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "configure_git",
+      "name": "Decide and persist Git behavior",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "configure_ai_engine",
+      "name": "Configure OpenRouter or alternate AI engine",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "set_metadata_page_depth",
+      "name": "Set metadata-only page depth",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "initialize_tag_system",
+      "name": "Initialize or validate canonical tags",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "configure_research_interests",
+      "name": "Capture research interests in config.py (or leave empty)",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "configure_paper_label",
+      "name": "Choose paper label format and update paper_label.txt",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "configure_obsidian_bases",
+      "name": "Configure Obsidian Bases filters",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "verify_setup",
+      "name": "Run setup validation checks",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    },
+    {
+      "id": "recommend_first_run",
+      "name": "Recommend metadata-only first run",
+      "status": "pending",
+      "completed_at": null,
+      "notes": null
+    }
+  ]
+}

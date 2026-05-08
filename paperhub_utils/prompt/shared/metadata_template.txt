@@ -1,0 +1,50 @@
+# metadata
+Generate Obsidian-style metadata file content with YAML frontmatter.
+IMPORTANT: Do NOT wrap this section in markdown code fences (no ```yaml).
+Return the content directly starting with the YAML frontmatter:
+
+---
+title: "[Full Paper Title]"
+authors:
+  - [Author 1]
+  - [Author 2]
+year: [Year]
+journal: "[Journal Name or 'Unpublished manuscript']"
+link: [DOI or URL if found, empty if not available]
+status:
+  - initiated
+tags:
+  - [suggest 3-5 economics tags - NO SPACES, use canonical registry tags when possible]
+  - [include a field tag when one fits, preferably from the canonical registry context]
+  - [include a methodology tag when one fits, preferably from the canonical registry context]
+  - [If it is ai/llm related, make sure you have a tag called 'ai']
+created: {today}
+interest: none
+contributions:
+---
+
+# [Full Paper Title]
+
+## Abstract
+[Copy the paper's abstract verbatim. If the paper has no abstract in the provided pages, write "[Abstract not found in provided pages]".]
+
+## Reflections
+[keep this empty]
+
+## Key Takeaways for My Research
+
+**Main Contribution:**
+[1-2 sentences: What does this paper do? Keep it factual, no hype.]
+
+**Methodology/Technique:**
+[1 sentence: Key method used]
+
+**Relevance to My Work:**
+[Only include if there is a direct, strong connection to the reader's research interests. If the connection is weak or generic, write "[Not directly related]". Keep to 1-2 bullet points max and SHORT. If no research interests are provided, write "[To be filled]".]
+
+## Quick Reference
+[1 sentence: what the paper does]
+
+## Related Papers
+[If found in citations - use the paper_label format, 2-3 max]
+- [[paper_label]] - [Brief context]

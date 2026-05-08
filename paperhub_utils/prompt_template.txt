@@ -1,0 +1,106 @@
+Analyze this research paper and return Markdown with three top-level sections.
+
+**IMPORTANT STYLE GUIDELINES (apply throughout all sections):**
+- Be concise and precise. Avoid filler words, exaggeration, and academic jargon.
+- Write in plain, direct language. Say what the paper does, not how groundbreaking it is.
+- Keep sentences short. Prefer bullet points over long paragraphs.
+- Only mention relevance to the reader's research if there is a strong, specific connection. Do not force connections.
+
+{research_interests_section}
+Use exactly these level-1 headings (no code fences, no extra text outside):
+
+# paper_label
+Provide a single label in format `{first_author}{year}{topic_keyword}` (all lowercase, no spaces)
+- Single author: `melitz2003heterogeneous`
+- Two authors: `cardkrueger1994minimum`
+- Three+ authors: `autoretal2020trade`
+
+The topic keyword should be a brief descriptor of the paper's main subject.
+
+# metadata
+Generate Obsidian-style metadata file content with YAML frontmatter.
+IMPORTANT: Do NOT wrap this section in markdown code fences (no ```yaml).
+Return the content directly starting with the YAML frontmatter:
+
+---
+title: "[Full Paper Title]"
+authors:
+  - [Author 1]
+  - [Author 2]
+year: [Year]
+journal: "[Journal Name or 'Unpublished manuscript']"
+link: [DOI or URL if found, empty if not available]
+status:
+  - initiated
+tags:
+  - [suggest 3-5 economics tags - NO SPACES, use canonical registry tags when possible]
+  - [include a field tag when one fits, preferably from the canonical registry context]
+  - [include a methodology tag when one fits, preferably from the canonical registry context]
+  - [If it is ai/llm related, make sure you have a tag called 'ai']
+created: {today}
+interest: none
+contributions:
+---
+
+# [Full Paper Title]
+
+## Abstract
+[Copy the paper's abstract verbatim. If the paper has no abstract in the provided pages, write "[Abstract not found in provided pages]".]
+
+## Key Takeaways for My Research
+
+**Main Contribution:**
+[1-2 sentences: What does this paper do? Keep it factual, no hype.]
+
+**Methodology/Technique:**
+[1 sentence: Key method used (e.g., "IV with Bartik instrument", "Heterogeneous agent model with firm dynamics")]
+
+**Relevance to My Work:**
+[Only include if there is a direct, strong connection to the reader's research interests. If the connection is weak or generic, write "[Not directly related]". Keep to 1-2 bullet points max and SHORT. If no research interests are provided, write "[To be filled]".]
+
+## Quick Reference
+[1 sentence: what the paper does]
+
+## Related Papers
+[If found in citations - use the paper_label format, 2-3 max]
+- [[paper_label]] - [Brief context]
+
+
+**Important Guidelines:**
+- Tags CANNOT contain spaces (use underscores: `behavioral_economics` not `behavioral economics`)
+- Prefer canonical tags from the registry context when they fit
+- Preserve the exact spelling/case of existing canonical tags (for example, `IO`)
+- New tags should be lowercase with underscores
+- Suggest 3-5 tags total combining field + methodology + specific subtopics
+- If none of the registry tags fit, create a specific new tag rather than forcing a weak match
+- Always include the YAML field `contributions:` and leave it empty.
+- Always include `## Abstract` in the metadata markdown and copy the paper's abstract verbatim when present.
+
+# ai_summary
+Write a detailed, free-form summary of this paper. Structure it however makes sense for this particular paper — use markdown headings, bullet points, and LaTeX math as appropriate.
+
+**Use LaTeX notation:**
+- Inline math: `$formula$` (e.g., `$y = \beta_0 + \beta_1 x + \epsilon$`)
+- Block math: `$$formula$$` (e.g., `$$\int_0^1 f(x) dx$$`)
+
+**What to cover (adapt emphasis to the paper type):**
+- **Research question**: What does this paper ask or set out to do?
+- **Methodology/Model**: Describe in enough detail that a reader can understand the approach without reading the paper. For theoretical papers, spell out the model setup, key assumptions, mechanism, and solution concept. Show the math and the equations. For empirical papers, cover the data, identification strategy, and key specifications. Include math notation where it clarifies.
+- **Main findings**: Primary results with magnitudes/effect sizes when available. Secondary findings if important.
+- **Robustness**: Brief note on robustness checks if applicable.
+- **Experimental design**: If the paper runs experiments, describe the design (type, participants, treatments, procedure, key results) in detail. Include where subjects are recruited, payment structure, and feedback design. Indicate if the experiment is asynchronous or synchronous. If helpful for clarity, use a Mermaid chart to illustrate the experiment's flow, treatments, or structure. Skip if not applicable.
+- **Literature context**: What does it build on? How does it differ?
+- **Policy/practical implications**: Only if explicitly discussed in the paper.
+- **Key tables/figures**: 1-2 most important, with page numbers.
+- **Notable quotes**: 1-2 max, only if genuinely insightful.
+- **Technical notes**: Noteworthy econometric specs, computational approaches, or data construction details.
+
+**Style:**
+- Be concise and direct. No filler, no exaggeration, no "this groundbreaking paper..."
+- Methodology sections should be the most detailed part — err on the side of too much detail here.
+- Target ~800-1200 words total
+
+---
+
+**Summary Completed:** {today}
+{additional_instruction_section}

@@ -1,0 +1,9 @@
+**Important Guidelines:**
+- Tags CANNOT contain spaces (use underscores: `behavioral_economics` not `behavioral economics`)
+- Prefer canonical tags from the registry context when they fit
+- Preserve the exact spelling/case of existing canonical tags (for example, `IO`)
+- New tags should be lowercase with underscores
+- Suggest 3-5 tags total combining field + methodology + specific subtopics
+- If none of the registry tags fit, create a specific new tag rather than forcing a weak match
+- Always include the YAML field `contributions:` and leave it empty.
+- Always include `## Abstract` in the metadata markdown and copy the paper's abstract verbatim when present.

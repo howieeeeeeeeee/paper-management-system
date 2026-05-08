@@ -1,0 +1,80 @@
+summaries:
+  Filled: values.filter(!value.isType("null")).length
+filters:
+  and:
+    - "!title.isEmpty()"
+    - file.inFolder("EconPhD/PaperHub/organized")
+views:
+  - type: table
+    name: Backlog
+    filters:
+      and:
+        - and:
+            - "!title.isEmpty()"
+            - '!status.containsAny("done", "reflecting", "archived")'
+            - file.inFolder("EconPhD/PaperHub")
+    groupBy:
+      property: status
+      direction: DESC
+    order:
+      - file.name
+      - title
+      - tags
+      - status
+      - interest
+      - journal
+      - authors
+    sort:
+      - property: file.ctime
+        direction: DESC
+      - property: status
+        direction: ASC
+      - property: tags
+        direction: ASC
+      - property: authors
+        direction: ASC
+      - property: title
+        direction: DESC
+    columnSize:
+      file.name: 223
+      note.title: 163
+      note.tags: 236
+      note.status: 105
+      note.journal: 149
+      note.authors: 137
+    rowHeight: tall
+    imageFit: contain
+    cardSize: 400
+    indentProperties: true
+    markers: number
+  - type: list
+    name: All
+    order:
+      - file.name
+      - title
+      - journal
+      - authors
+      - tags
+      - status
+    sort:
+      - property: file.mtime
+        direction: DESC
+      - property: authors
+        direction: ASC
+      - property: file.name
+        direction: ASC
+      - property: title
+        direction: DESC
+    columnSize:
+      file.name: 190
+      note.title: 302
+      note.journal: 149
+      note.authors: 140
+      note.tags: 386
+      note.status: 107
+    rowHeight: tall
+    imageFit: contain
+    cardSize: 400
+    indentProperties: false
+    markers: number
+    separator: ", "

@@ -1,0 +1,63 @@
+# Mode: Full
+
+Full PDF → AI generates `{paper_label}.md` (metadata) + `ai_summary.md` (detailed summary).
+
+Triggered by: "with summary" / "full summary" / "AI summary", or as the user's choice when asked. This is the default for direct `paper_summarizer.py` calls (`--summary-mode full`).
+
+Engines that support `full`: **OpenRouter** (`engines/openrouter.md`), **Gemini CLI** (`engines/gemini_cli.md`), **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap).
+
+## Folder structure produced
+
+```
+{paper_label}/                    # e.g., melitz2003trade/
+├── {original_pdf_name}.pdf       # original paper, filename preserved
+├── {paper_label}.md              # AI-generated metadata
+└── ai_summary.md                 # AI-generated detailed summary
+```
+
+## Validation (after the AI returns)
+
+Save tokens — use shell tests, not full file reads.
+
+```bash
+[ -d "{output_dir}" ]                              && echo "OK" || echo "FAIL"   # 1. dir exists
+[ -f "{pdf_path}" ]                                && echo "OK" || echo "FAIL"   # 2. PDF moved
+[ -f "{output_dir}/{paper_label}.md" ]             && echo "OK" || echo "FAIL"   # 3. metadata
+[ -f "{output_dir}/ai_summary.md" ]                && echo "OK" || echo "FAIL"   # 4. summary (REQUIRED in full mode)
+```
+
+Plus: artifact scan + YAML schema check — see `shared/post_ai.md`.
+
+## Completion report (single paper)
+
+```
+Paper organized successfully!
+
+Location: organized/melitz2003trade/
+Files created:
+   - melitz2003trade.md (AI-generated metadata)
+   - ai_summary.md (AI-generated summary)
+   - melitz_2003.pdf (original paper)
+Git: Committed "feat(papers): add melitz2003trade"
+Model used: <model name>
+Token usage: X prompt + Y completion = Z total
+Tag updates: 2 new (international_trade [field], heterogeneous_firms [topic]); 1 merged (melitz_model -> melitz_framework)
+```
+
+## Completion report (batch)
+
+```
+Summary (3/3 succeeded):
+| Paper           | Prompt | Completion | Total  | Cost   |
+|-----------------|--------|------------|--------|--------|
+| melitz2003trade | 48,000 | 8,000      | 56,000 | $0.23  |
+...
+Git: Committed "feat(papers): add 3 papers"
+
+Tag updates this batch:
+  - 4 new tags added: international_trade (field), heterogeneous_firms (topic), structural (methodology), econ559 (meta)
+  - 2 tags merged into existing: melitz_model -> melitz_framework, info_asym -> information_asymmetry
+  - 0 tags reused without change: 11 of 17 tags this batch were already in the registry
+```
+
+Always include token usage when available. For Gemini CLI, `cost: N/A`.

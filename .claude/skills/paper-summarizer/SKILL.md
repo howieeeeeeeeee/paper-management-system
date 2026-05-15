@@ -66,12 +66,13 @@ For paper processing, pick **one engine** and **one mode** per batch.
 
 | Trigger | Read |
 |---------|------|
-| user asks "process tag additions" / "pick up new tags" / mentions `tag_initialization.md` | `tags/initialize_tag_system.md` → run **§3 only** (process additions file) |
+| user asks "process tag additions" / "pick up new tags" / mentions `tag_initialization.md` | `tags/initialize_tag_system.md` → run **§2 only if the additions file is missing**, then **§3** |
 | just finished a batch (any mode) | `tags/post_summary_update.md` → run the **post-summary update flow** |
 | user asks for "periodic tag check" / "audit tags" / "tag system check" / "clean up tags" | `tags/periodic_check.md` → run the **periodic-check flow** |
 
 ## Critical rules (apply always)
 
+- Treat `.venv` as disposable local state. In iCloud-synced vaults, never preserve or share `.venv` across machines. If a `uv` command fails because the environment is stale or broken, run `uv sync` from `paperhub_utils/`; if it still fails, run `rm -rf .venv` and then `uv sync`.
 - **NEVER read the PDF directly** — except `engines/coding_agent.md`. In `metadata-only` mode it extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
 - For `openrouter` and `gemini-cli`, ALWAYS delegate PDF processing to the script or `gemini` CLI. Only validate and fix the output.
 - **Handle partial failures via `AskUserQuestion`** — never decide unilaterally, never auto-switch models.
@@ -113,7 +114,7 @@ All engines accept additional user instructions and pass them through.
 | User config | `paperhub_utils/misc/config.json` (`config.py` loads and exports it) |
 | Onboarding questionnaire | `onboarding_questionnaire.md` at project root (deleted after successful onboarding) |
 | Prompts | `paperhub_utils/prompt/{shared,aspect}/*.txt` + `prompt/builder.py` (`prompt_template.txt` still read for `full`/`metadata-only`) |
-| Tag registry | `tags/_internal/` |
+| Tag registry | `tags/_internal/`; initial taxonomy comes from `onboarding_questionnaire.md` when present, otherwise `paperhub_utils/seeds/default_tags.yaml` |
 
 ## What this skill does NOT do
 

@@ -80,9 +80,10 @@ Each paper folder contains the original PDF and a metadata note. Full and enrich
 
 Four tag types are stored in each paper's YAML `tags:`: `field`, `methodology`, `topic`, and `meta`.
 
-Two ways to add tags:
+Two ways to shape tags:
 
-- `tags/tag_initialization.md`: the bulk seed path for tags you want available upfront, such as niche fields and topics. Edit one tag per line under each `## type` heading, set the frontmatter to `status: ready`, and the agent registers them on the next onboarding or tag pass.
+- `onboarding_questionnaire.md`: the first-run starter taxonomy. Edit the "Starter Tag Taxonomy" section before onboarding; the agent uses those lists directly when it creates the initial tag registry.
+- `tags/tag_initialization.md`: optional later bulk additions after onboarding. Ask the agent to create or process this file, then edit one tag per line under each `## type` heading and set the frontmatter to `status: ready`.
 - Edit a paper metadata file directly in Obsidian. Open any organized paper's `{paperlabel}.md` file and add a tag to its YAML `tags:` list. New tags are incorporated into the canonical registry on the next tag-update flow.
 
 While generating the metadata for a paper PDF, the model is nudged to reuse canonical tag strings during summarization.

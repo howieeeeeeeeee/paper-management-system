@@ -76,6 +76,15 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    uv sync
    ```
 
+   If `uv sync` fails because the local environment is stale or broken, rebuild only the disposable local `.venv` and retry:
+
+   ```bash
+   rm -rf .venv
+   uv sync
+   ```
+
+   Do not preserve or share `.venv` across iCloud-synced machines. `pyproject.toml` and `uv.lock` are the reproducible source of truth.
+
 ## 2. Apply setup choices from the questionnaire
 
 Ask only for missing or conflicting information.
@@ -116,9 +125,9 @@ Ask only for missing or conflicting information.
 
 Read `tags/initialize_tag_system.md` and follow it. Key behavior:
 
-- If no `tags/_internal/registry.json` exists, load the default seed pack from `paperhub_utils/seeds/default_tags.yaml` and write every entry to the registry at `count: 0`.
-- The user's personal additions live in `tags/tag_initialization.md`.
-- If the questionnaire or current user message includes starter tags, pre-fill them into `tags/tag_initialization.md` under the right type sections and set `status: ready` so they get processed automatically.
+- If no `tags/_internal/registry.json` exists, seed it from the questionnaire's "Starter Tag Taxonomy" section when present. If no questionnaire starter taxonomy is available, fall back to `paperhub_utils/seeds/default_tags.yaml`.
+- Treat the questionnaire starter taxonomy as the first-run source of truth. Do not create `tags/tag_initialization.md` just to carry onboarding starter tags.
+- `tags/tag_initialization.md` is optional and only for later bulk additions after onboarding. If it exists and has `status: ready`, process it; otherwise skip it silently.
 - Do not interrogate the user about their domain or taxonomy. The questionnaire is the intake surface; empty tag sections mean no personal additions right now.
 - Do not ask the user to choose tag prompt counts. The prompt builder already sends configured top existing tags to the AI prompt when `INCLUDE_TAG_CONTEXT_IN_PROMPT = True`.
 

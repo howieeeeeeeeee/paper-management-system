@@ -32,7 +32,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
-venv/
+.venv/
 env/
 
 # Obsidian workspace (user-specific)
@@ -42,7 +42,9 @@ env/
 # Logs
 *.log
 
-
+# Paper summarizer temporary files
+.paperhub_tmp/
 
 
 .env
+

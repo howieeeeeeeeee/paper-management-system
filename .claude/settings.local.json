@@ -60,8 +60,7 @@
       "Bash(gemini:*)",
       "Bash(pdfinfo:*)",
       "Bash(pdftotext:*)",
-      "Bash(uv run *)",
-      "Read(//private/tmp/**)"
+      "Bash(uv run *)"
     ]
   }
 }

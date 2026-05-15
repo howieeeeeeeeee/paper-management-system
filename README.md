@@ -47,7 +47,7 @@ paper-summarizer: metadata-only batch for everything in to_be_organized/.
 Save a terminal snippet (e.g. Alfred *Terminal Command* with keyword `pp`, or Raycast). Command:
 
 ```bash
-cd "/path/to/your/ObsidianVault/PaperHub" && claude --model claude-haiku-4-5-20251001
+cd "/Users/howieee/Library/Mobile Documents/iCloud~md~obsidian/Documents/Howie iCloud/EconPhD/PaperHub" && claude --model claude-haiku-4-5-20251001
 ```
 
 Optional: append `--dangerously-skip-permissions` if permission prompts break long skill runs—only when you fully trust that session.

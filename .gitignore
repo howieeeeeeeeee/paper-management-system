@@ -46,3 +46,6 @@ env/
 
 
 .env
+
+# Generated paper library (local)
+organized/

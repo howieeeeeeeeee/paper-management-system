@@ -81,7 +81,7 @@ Read `/tmp/paperhub_agent_pages.txt`. Draft metadata from that text only — nev
 
 ### Step 3 — write files directly
 
-Choose the `paper_label` using the rule from `paperhub_utils/prompt/shared/paper_label.txt` (`{first_author}{year}{topic_keyword}`, lowercase, no spaces).
+Choose the `paper_label` using the current rule from `paperhub_utils/prompt/shared/paper_label.txt`.
 
 ```bash
 LABEL="<your paper_label>"

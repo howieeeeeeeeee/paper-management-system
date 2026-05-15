@@ -1,0 +1,70 @@
+summaries:
+  Filled: values.filter(!value.isType("null")).length
+filters:
+  and:
+    - "!title.isEmpty()"
+    - file.inFolder("PaperHub/organized")
+views:
+  - type: table
+    name: Reading queue
+    filters:
+      and:
+        - and:
+            - "!title.isEmpty()"
+            - '!status.containsAny("done", "reflecting", "archived")'
+            - file.inFolder("PaperHub/organized")
+    groupBy:
+      property: status
+      direction: DESC
+    order:
+      - file.name
+      - title
+      - tags
+      - status
+      - interest
+      - journal
+      - authors
+    sort:
+      - property: file.ctime
+        direction: DESC
+      - property: status
+        direction: ASC
+      - property: tags
+        direction: ASC
+      - property: authors
+        direction: ASC
+      - property: title
+        direction: DESC
+    rowHeight: tall
+    imageFit: contain
+    cardSize: 400
+    indentProperties: true
+    markers: number
+  - type: list
+    name: All papers
+    filters:
+      and:
+        - "!title.isEmpty()"
+        - file.inFolder("PaperHub/organized")
+    order:
+      - file.name
+      - title
+      - journal
+      - authors
+      - tags
+      - status
+    sort:
+      - property: file.mtime
+        direction: DESC
+      - property: authors
+        direction: ASC
+      - property: file.name
+        direction: ASC
+      - property: title
+        direction: DESC
+    rowHeight: tall
+    imageFit: contain
+    cardSize: 400
+    indentProperties: false
+    markers: number
+    separator: ", "

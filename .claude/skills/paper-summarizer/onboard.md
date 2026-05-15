@@ -151,21 +151,50 @@ The paper-label spec lives in `paperhub_utils/prompt/shared/paper_label.txt` and
 
 1. Prefer the questionnaire's paper-label choice.
 2. Supported presets:
-   - **Default lowercase**: `melitz2003heterogeneous`, `cardkrueger1994minimum`, `autoretal2020trade`.
+   - **Recommended compact author-year-topic** (`compact_topic`): `melitz2003heterogeneous`, `cardkrueger1994minimum`, `autoretal2020trade`.
+     - Single author: `{first_author}{year}{topic_keyword}`.
+     - Two authors: `{first_author}{second_author}{year}{topic_keyword}`.
+     - Three or more authors: `{first_author}etal{year}{topic_keyword}`.
+     - Use lowercase ASCII letters and numbers only, no spaces or separators.
+   - **Compact author-year-title keywords** (`compact_title`): `melitz2003heterogeneousfirms`, `cardkrueger1994minimumwage`, `autoretal2020importcompetition`.
+     - Same author/year rules as `compact_topic`.
+     - Use one to three short title keywords instead of a broad topic keyword.
+     - Use lowercase ASCII letters and numbers only, no spaces or separators.
+   - **First-author plus etal for multi-author papers** (`first_author_etal`): `melitz2003heterogeneous`, `cardetal1994minimum`, `autoretal2020trade`.
+     - Single author: `{first_author}{year}{topic_keyword}`.
+     - Two or more authors: `{first_author}etal{year}{topic_keyword}`.
+     - Use lowercase ASCII letters and numbers only, no spaces or separators.
+   - **Author-year only** (`author_year`): `melitz2003`, `cardkrueger1994`, `autoretal2020`.
+     - Single author: `{first_author}{year}`.
+     - Two authors: `{first_author}{second_author}{year}`.
+     - Three or more authors: `{first_author}etal{year}`.
+     - Warn that this is concise but has higher collision risk.
+   - **Readable snake_case** (`snake_case`): `melitz_2003_heterogeneous`, `card_krueger_1994_minimum`, `autor_etal_2020_trade`.
+     - Separate components with underscores.
+     - Single author: `{first_author}_{year}_{topic_keyword}`.
+     - Two authors: `{first_author}_{second_author}_{year}_{topic_keyword}`.
+     - Three or more authors: `{first_author}_etal_{year}_{topic_keyword}`.
    - **Zotero-style capitalized**: `Melitz2003Heterogeneous`, `CardKrueger1994Minimum`, `AutorEtAl2020Trade`.
+     - Single author: `{FirstAuthor}{Year}{TopicKeyword}`.
+     - Two authors: `{FirstAuthor}{SecondAuthor}{Year}{TopicKeyword}`.
+     - Three or more authors: `{FirstAuthor}EtAl{Year}{TopicKeyword}`.
+     - Use PascalCase components, no spaces or separators.
    - **Keep current**: leave `paperhub_utils/prompt/shared/paper_label.txt` unchanged.
    - **Custom**: use the user's written rules.
-3. If the questionnaire says Custom but the rules are ambiguous, ask only for the missing dimensions:
+3. If the questionnaire has no paper-label choice, if multiple choices are checked, or if the checked choice conflicts with written custom rules, ask one concise follow-up.
+4. If the questionnaire says Custom but the rules are ambiguous, ask only for the missing dimensions:
    - Single-author pattern and one worked example.
    - Two-author pattern and one worked example.
    - Three-or-more-author pattern and one worked example.
    - Casing.
-   - Whether to keep the topic keyword and where it sits relative to the year.
+   - Whether to keep a topic or title keyword and where it sits relative to the year.
    - Separator between components.
-4. For Custom, read the resolved scheme back to the user as one confirmation summary with all three worked examples and wait for explicit confirmation before writing.
-5. Once confirmed, rewrite `paperhub_utils/prompt/shared/paper_label.txt` so the `# paper_label` heading is preserved and the body reflects the chosen rules with one worked example per author-count case. If the user kept the default or current preset, leave the file unchanged.
-6. Record the resolved choice in `paperhub_utils/misc/onboarding.json`:
-   - Set `context.paper_label_format` to `default`, `zotero_capital`, `current`, or `custom`.
+   - Whether to use `etal`, and for which author counts.
+   - Collision handling if the label would duplicate an existing folder.
+5. For Custom, read the resolved scheme back to the user as one confirmation summary with all three worked examples and wait for explicit confirmation before writing.
+6. For any preset except **Keep current**, rewrite `paperhub_utils/prompt/shared/paper_label.txt` so the `# paper_label` heading is preserved and the body reflects the chosen rules with one worked example per author-count case. For **Keep current**, leave the file unchanged.
+7. Record the resolved choice in `paperhub_utils/misc/onboarding.json`:
+   - Set `context.paper_label_format` to `compact_topic`, `compact_title`, `first_author_etal`, `author_year`, `snake_case`, `zotero_capital`, `current`, or `custom`.
    - For custom, add a one-line plain-text summary in `notes` on the `configure_paper_label` step.
    - Mark `configure_paper_label` as `done`, set `completed_at`, and save the JSON immediately.
 
@@ -181,14 +210,16 @@ Obsidian `file.inFolder(...)` filters must use vault-relative paths, not absolut
    - Leave `.base` files unchanged.
    - Not using Bases yet.
 2. If Bases setup is skipped, record `configure_obsidian_bases` as `skipped` and continue.
-3. If Bases setup is enabled, inspect root `*.base` files, especially `SamplePaperBoard.base`.
+3. If Bases setup is enabled, inspect root `*.base` files. The repository already includes `SamplePaperBoard.base`, so the normal onboarding task is to help update its paths, not create a new sample base.
 4. Derive the paper-library folder path relative to the Obsidian vault from the discovered project root and the vault absolute path.
 5. If the user chose agent-configured Bases but no valid vault absolute path is available, ask for that path before editing `.base` files. If the project root is outside the vault, ask where the paper library should live inside the vault.
-6. Update base filters so examples match the user's machine:
+6. After the vault path is settled, update the `is in path` filter shown by Obsidian Bases in `SamplePaperBoard.base`. In YAML this is the `file.inFolder(...)` path; set it to the path from the vault root to the intake folder, such as `file.inFolder("{vault_relative_paper_library}/to_be_organized")`. Never use an absolute filesystem path.
+7. Update base filters so examples match the user's machine:
+   - intake papers waiting to be organized: `file.inFolder("{vault_relative_paper_library}/to_be_organized")`
    - organized papers: `file.inFolder("{vault_relative_paper_library}/organized")`
    - all papers in this library: `file.inFolder("{vault_relative_paper_library}")`
-7. If no base file exists, create a simple sample board named `SamplePaperBoard.base` with global filters, a backlog table view, and an all-papers list view.
-8. Validate edited `.base` files as YAML. If Obsidian does not recognize `.base` files, tell the user to open Obsidian and enable the Bases core plugin; do not edit `.obsidian/` settings unless the user explicitly asks.
+8. Only create `SamplePaperBoard.base` if it is genuinely missing from the project.
+9. Validate edited `.base` files as YAML. If Obsidian does not recognize `.base` files, tell the user to open Obsidian and enable the Bases core plugin; do not edit `.obsidian/` settings unless the user explicitly asks.
 
 ## 7. Verify the setup
 

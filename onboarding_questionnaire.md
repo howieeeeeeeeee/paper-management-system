@@ -74,14 +74,19 @@ If you want to use OpenRouter:
 2. Sign in or create an account.
 3. Create an API key.
 4. Open Terminal at the PaperHub folder.
-5. Paste this command into Terminal after replacing `YOUR_OPENROUTER_API_KEY` with your real key:
+5. Copy the example environment file:
 
 ```bash
-mkdir -p paperhub_utils
-printf 'OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY\n' > paperhub_utils/.env
+cp paperhub_utils/.env.example paperhub_utils/.env
 ```
 
-After running the command, confirm that the file exists:
+6. Open the copied `.env` file and replace `YOUR_OPENROUTER_API_KEY` with your real key:
+
+```bash
+nano paperhub_utils/.env
+```
+
+In nano, save with `Ctrl+O`, press `Enter`, then exit with `Ctrl+X`. After saving, confirm that the file exists:
 
 ```bash
 ls paperhub_utils/.env
@@ -183,16 +188,20 @@ Meta tags, such as courses, reading lists, seminars, projects, or workflow label
 
 ## 6. Paper Label Format
 
-Paper labels become folder names and file names. For example, a paper by Melitz from 2003 might become `melitz2003heterogeneous`. The default lowercase format is recommended unless you already use a different naming system.
+Paper labels become folder names, file names, and Obsidian link targets. For example, a paper by Melitz from 2003 might become `melitz2003heterogeneous`. Compact lowercase labels are recommended for maximum compatibility, but any option below is fine if it matches your existing system.
 
 Choose one:
 
-- [ ] Default lowercase: `melitz2003heterogeneous`, `cardkrueger1994minimum`, `autoretal2020trade`
+- [ ] Recommended compact author-year-topic: `melitz2003heterogeneous`, `cardkrueger1994minimum`, `autoretal2020trade`
+- [ ] Compact author-year-title keywords: `melitz2003heterogeneousfirms`, `cardkrueger1994minimumwage`, `autoretal2020importcompetition`
+- [ ] First-author plus etal for multi-author papers: `melitz2003heterogeneous`, `cardetal1994minimum`, `autoretal2020trade`
+- [ ] Author-year only, shortest labels: `melitz2003`, `cardkrueger1994`, `autoretal2020`
+- [ ] Readable snake_case: `melitz_2003_heterogeneous`, `card_krueger_1994_minimum`, `autor_etal_2020_trade`
 - [ ] Zotero-style capitalized: `Melitz2003Heterogeneous`, `CardKrueger1994Minimum`, `AutorEtAl2020Trade`
 - [ ] Keep the current `paperhub_utils/prompt/shared/paper_label.txt`
 - [ ] Custom, described below
 
-Custom paper label rules, if any:
+Custom paper label rules, if any. Avoid spaces and characters that are awkward in filenames. Include examples for one-author, two-author, and three-or-more-author papers if possible.
 
 ```text
 
@@ -221,7 +230,7 @@ Use this space for preferences that do not fit above. Examples: where PDFs are c
 
 ## Agent Handoff
 
-After filling the questionnaire, paste this into your coding agent:
+After filling the questionnaire, paste this into your coding agent, make sure you have `cd` to the `PaperHub` folder:
 
 ```text
 Use the paper-summarizer skill to onboard this project from scratch.

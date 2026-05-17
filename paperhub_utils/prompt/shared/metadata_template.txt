@@ -18,8 +18,10 @@ tags:
   - [include a field tag when one fits, preferably from the canonical registry context]
   - [include a methodology tag when one fits, preferably from the canonical registry context]
   - [If it is ai/llm related, make sure you have a tag called 'ai']
+  - [For topic tags: choose short keywords that best match the paper's central subject; it is fine if they are not in the canonical registry when no registry tag fits]
 created: {today}
 interest: none
+importance: none
 contributions:
 ---
 
@@ -42,9 +44,6 @@ contributions:
 **Relevance to My Work:**
 [Only include if there is a direct, strong connection to the reader's research interests. If the connection is weak or generic, write "[Not directly related]". Keep to 1-2 bullet points max and SHORT. If no research interests are provided, write "[To be filled]".]
 
-## Quick Reference
-[1 sentence: what the paper does]
-
 ## Related Papers
-[If found in citations - use the paper_label format, 2-3 max]
+[If found in citations - use the paper_label format, 3-5 max]
 - [[paper_label]] - [Brief context]

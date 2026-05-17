@@ -1,90 +1,82 @@
 # Python and uv Recovery
 
-Read this only during onboarding when `uv` is missing and `python3 -m pip install --user uv` / `python -m pip install --user uv` cannot be used.
+Read this only during onboarding when `uv` is missing or `uv sync` cannot create a working environment.
 
-Goal: get a working Python with pip, install `uv`, then return to `onboard.md` and run `uv sync` from `paperhub_utils/`.
+Goal: install `uv`, let `uv` manage the project Python environment, then return to `onboard.md` and run `uv sync` from `paperhub_utils/`.
 
-## 1. Diagnose
+`pyenv` is not required for PaperHub setup. If a user already uses `pyenv`, it is fine for their shell to provide Python, but do not recommend installing `pyenv` just to onboard this project.
+
+## 1. Diagnose Existing Tools
 
 Run:
 
 ```bash
-command -v python3
-python3 --version
-python3 -m pip --version
-command -v pyenv
 command -v brew
-```
-
-If `python3` exists but pip is missing, try:
-
-```bash
-python3 -m ensurepip --upgrade
-python3 -m pip install --user uv
-```
-
-If that works, return to `onboard.md`.
-
-If pip reports a successful `uv` install but `uv --version` still fails, check the user install bin path:
-
-```bash
-python3 -m site --user-base
-```
-
-The executable is usually under that directory's `bin/`. Ask before editing shell startup files; otherwise tell the user to add that `bin/` directory to `PATH` or use the `uv` executable by absolute path for onboarding.
-
-## 2. Prefer pyenv
-
-If `pyenv` exists, install the newest available Python `3.14.x` and set it locally for the paper-library root:
-
-```bash
-pyenv install -l | rg '^\s*3\.14\.'
-pyenv install 3.14.x
-cd "{paper_library_root}"
-pyenv local 3.14.x
-python -m pip install --upgrade pip
-python -m pip install --user uv
+command -v uv
 uv --version
 ```
 
-Replace `3.14.x` with the newest listed patch release, for example `3.14.1`.
+If `uv --version` works, skip to [3. Sync the project](#3-sync-the-project).
 
-## 3. If pyenv is missing
+## 2. Install uv
 
-Use `AskUserQuestion` before installing anything:
-
-- `Install pyenv with Homebrew` - recommended for better Python version management.
-- `Install Python with Homebrew` - more straightforward, less flexible.
-
-If the user chooses pyenv:
+Prefer Homebrew on macOS when available:
 
 ```bash
-brew install pyenv
-pyenv install -l | rg '^\s*3\.14\.'
-pyenv install 3.14.x
-cd "{paper_library_root}"
-pyenv local 3.14.x
-python -m pip install --upgrade pip
-python -m pip install --user uv
+brew install uv
 uv --version
 ```
 
-If the user chooses Homebrew Python:
+If Homebrew is missing or the user does not want to use it, use the official standalone installer:
 
 ```bash
-brew install python@3.14
-python3.14 -m pip install --upgrade pip
-python3.14 -m pip install --user uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 uv --version
 ```
 
-If `brew` is also missing, ask the user to install Homebrew or Python manually. Do not silently choose a system-wide installer.
+If the standalone installer succeeds but `uv --version` still fails, the shell may not have the install directory on `PATH`. Ask before editing shell startup files; otherwise tell the user to restart their terminal or add the installer-reported bin directory to `PATH`.
 
-## 4. Finish
+If both Homebrew and the standalone installer are unavailable, ask the user to install either Homebrew or `uv` manually from the official uv documentation. Do not silently choose another system-wide installer.
 
-When `uv --version` succeeds, return to `onboard.md` and continue:
+## 3. Sync the project
+
+Return to `onboard.md` and run setup from the utilities directory:
 
 ```bash
 cd "{paperhub_utils_dir}"
 uv sync
+```
+
+`uv sync` should create `.venv` and use a compatible Python for the project. The project requires Python `>=3.11`; `uv` can download and manage Python when needed.
+
+If `uv sync` fails because no compatible Python is installed or downloadable automatically, install one through `uv`:
+
+```bash
+uv python install 3.12
+uv sync
+```
+
+If the project later pins a Python version with `.python-version`, use that version instead of `3.12`:
+
+```bash
+uv python install
+uv sync
+```
+
+If `uv sync` fails because the local environment is stale or broken, rebuild only the disposable local `.venv`:
+
+```bash
+rm -rf .venv
+uv sync
+```
+
+Never preserve or share `.venv` across iCloud-synced machines. `pyproject.toml` and `uv.lock` are the reproducible source of truth.
+
+## 4. Finish
+
+When setup succeeds, verify the environment from `paperhub_utils/`:
+
+```bash
+uv run python --version
+uv run python -m py_compile config.py prompt/builder.py paper_summarizer.py enrich.py
 ```

@@ -113,7 +113,7 @@ All engines accept additional user instructions and pass them through.
 | Scripts | `paperhub_utils/` (`paper_summarizer.py`, `enrich.py`, `config.py`) |
 | User config | `paperhub_utils/misc/config.json` (`config.py` loads and exports it) |
 | Onboarding questionnaire | `onboarding_questionnaire.md` at project root (deleted after successful onboarding) |
-| Prompts | `paperhub_utils/prompt/{shared,aspect}/*.txt` + `prompt/builder.py` (`prompt_template.txt` still read for `full`/`metadata-only`) |
+| Prompts | `paperhub_utils/prompt/{shared,aspect}/*.txt` + `prompt/builder.py` (all modes compose from fragments) |
 | Tag registry | `tags/_internal/`; initial taxonomy comes from `onboarding_questionnaire.md` when present, otherwise `paperhub_utils/seeds/default_tags.yaml` |
 
 ## What this skill does NOT do

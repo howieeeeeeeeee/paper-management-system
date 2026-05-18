@@ -79,7 +79,6 @@ GEMINI_CLI_MODEL = (
 )
 
 DEFAULT_PDF_ENGINE = "mistral-ocr"
-PROMPT_TEMPLATE_PATH = str(Path(__file__).parent / "prompt_template.txt")
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MAX_RETRIES = 2
 METADATA_ONLY_PAGE_LIMIT = _config_int(

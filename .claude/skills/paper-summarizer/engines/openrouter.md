@@ -13,7 +13,7 @@ paperhub_utils/paper_summarizer.py
 ## How the Script Works
 
 1. **PDF Encoding**: PDF is read and encoded to base64 for API transmission
-2. **Prompt Construction**: Reads `prompt_template.txt` and fills in dynamic values (date, research interests, user instructions)
+2. **Prompt Construction**: Composes the prompt from `prompt/shared/` and `prompt/aspect/` fragments via `prompt/builder.py` and fills in dynamic values (date, research interests, user instructions)
 3. **API Call**: Sends PDF (base64) + prompt to OpenRouter with `file-parser` plugin using `mistral-ocr` engine
 4. **Response Parsing**: Parses markdown sections (`# paper_label`, `# metadata`, plus `# ai_summary` in `full` mode), falls back to JSON
 5. **Output Generation**: Creates folder, writes metadata, writes summary in `full` mode, moves original PDF

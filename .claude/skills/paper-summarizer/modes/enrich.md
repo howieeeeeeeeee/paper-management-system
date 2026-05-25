@@ -2,7 +2,7 @@
 
 Use this mode when the user wants to add an `ai_summary.md` to a paper that is **already in `organized/`** (typically because the paper was first added in `metadata-only` mode, or the user wants to re-do / polish an existing summary). The PRIMARY job is generating the summary; patching any blank metadata fields is a secondary side effect of the same AI call.
 
-This mode works with all three engines: **OpenRouter** (default), **Gemini CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `enrich.py --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
+This mode works with **OpenRouter** (default), **Agy CLI**, legacy **Gemini CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `enrich.py --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
 
 ## Trigger phrases
 
@@ -11,7 +11,7 @@ This mode works with all three engines: **OpenRouter** (default), **Gemini CLI**
 - "complete metadata for `<folder>`" (still routes here — meta-fill is the secondary job)
 - "polish / redo / refine the summary for `<folder>`" (route here with past-summary reuse, see below)
 
-If the user mentions multiple folders, batch them in a single call (OpenRouter) or process sequentially (Gemini CLI).
+If the user mentions multiple folders, batch them in a single call (OpenRouter) or process sequentially (Agy CLI / Gemini CLI).
 
 ## What it does, per folder
 
@@ -88,41 +88,53 @@ For an explicit past-summary path (rare — only when you want to point at a dif
 
 The interactive stderr prompt fires only when `--force` is omitted; the skill should always pass `--force` after running the AskUserQuestion flow above.
 
-## Gemini CLI
+## Agy CLI
 
-Same handshake pattern as `engines/gemini_cli.md` — process **one folder at a time**. The model is read from `config.GEMINI_CLI_MODEL` (configured via `paperhub_utils/misc/config.json` key `gemini_cli_model`); never hardcode it here.
+Same handshake pattern as `engines/agy_cli.md` — process **one folder at a time**. The model is resolved from `config.AGY_CLI_MODEL` (configured via `paperhub_utils/misc/config.json` key `agy_cli_model`) unless the user requests an allowed `--agy-model`. The prepare step persists the selected model to `~/.gemini/antigravity-cli/settings.json`.
+
+This is the third Agy-supported mode: unlike `full` and `metadata-only`, it uses `enrich.py` instead of `paper_summarizer.py`, but it uses the same Agy `--add-dir`, absolute `@PDF`, sentinel, stderr/log, and model-label pattern.
 
 ```bash
-# 0. Read the configured Gemini model once
-GEMINI_MODEL=$(cd paperhub_utils && uv run python -c "from config import GEMINI_CLI_MODEL; print(GEMINI_CLI_MODEL)")
-
-# 1. Prepare prompt + PDF path
+# 1. Prepare prompt + PDF path and persist the Agy model.
 cd paperhub_utils
-uv run python enrich.py --prepare-cli-input --folder ACF2015 \
+uv run python enrich.py --engine agy-cli --prepare-cli-input --folder ACF2015 \
   [--instruction "..."] \
   [--use-past-summary] \
   [--no-summary] \
   > /tmp/paperhub_enrich_input.json
 
-# 2. Call gemini from the repo root with @<repo-relative pdf>
+# 2. Call Agy from the repo root with an absolute @PDF path.
 cd ..
 PROMPT=$(python3 -c "import json; print(open(json.load(open('/tmp/paperhub_enrich_input.json'))['prompt_path']).read())")
-PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['pdf_for_ai_gemini_path'])")
-gemini --skip-trust -y -p "@${PDF_PATH}
+PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['pdf_for_ai_agy_path'])")
+PAPERHUB_ROOT=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['paperhub_root'])")
+MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['agy_model_label'])")
+AGY_LOG="/tmp/paperhub_enrich_agy.log"
+AGY_STDERR="/tmp/paperhub_enrich_agy_stderr.txt"
+AGY_OUTPUT="/tmp/paperhub_enrich_agy_output.txt"
+
+agy --log-file "${AGY_LOG}" \
+  --print-timeout 10m \
+  --add-dir "${PAPERHUB_ROOT}" \
+  --print "@${PDF_PATH}
 
 Use only the attached PDF. Do not use web search. Do not infer from the filename.
 
-${PROMPT}" -m "${GEMINI_MODEL}" -o json 2>/tmp/gemini_stderr.txt > /tmp/gemini_output.json
+Return the complete PaperHub response between these exact sentinel lines:
+PAPERHUB_RESPONSE_BEGIN
+[response]
+PAPERHUB_RESPONSE_END
 
-# 3. Extract response + tokens, apply
-python3 -c "import json; d=json.load(open('/tmp/gemini_output.json')); open('/tmp/gemini_response.txt','w').write(d['response'])"
+${PROMPT}" \
+  2>"${AGY_STDERR}" > "${AGY_OUTPUT}"
+
+# 3. Apply raw Agy output. The script extracts the sentinel block.
 cd paperhub_utils
-uv run python enrich.py --from-response --folder ACF2015 \
-  --response-file /tmp/gemini_response.txt \
-  --model-label "${GEMINI_MODEL} (Gemini CLI)" \
-  --gemini-stderr-file /tmp/gemini_stderr.txt \
-  --gemini-output-json /tmp/gemini_output.json \
-  --tokens-prompt <p> --tokens-completion <c> --tokens-total <t>
+uv run python enrich.py --engine agy-cli --from-response --folder ACF2015 \
+  --response-file "${AGY_OUTPUT}" \
+  --model-label "${MODEL_LABEL}" \
+  --agy-stderr-file "${AGY_STDERR}" \
+  --agy-log-file "${AGY_LOG}"
 
 # 4. Cleanup
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['cleanup_dir'])")
@@ -158,7 +170,7 @@ The prepared JSON includes `"past_summary_used": true|false` so the skill can co
 
 `summary` is one of: `generated`, `overwritten`, `skipped`, `missing-from-response`. `past_summary_used` is only present when the past summary was embedded.
 
-If the OpenRouter/Gemini call succeeds but parsing still fails, `enrich.py` saves
+If the OpenRouter/Agy/Gemini call succeeds but parsing still fails, `enrich.py` saves
 the raw model text under `paperhub_utils/raw_outputs/` and returns
 `raw_content_file` in the failed result so the response can be repaired with
 `--from-response` instead of spending another API call.

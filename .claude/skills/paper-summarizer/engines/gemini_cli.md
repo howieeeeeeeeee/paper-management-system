@@ -1,5 +1,7 @@
 # Workflow: Gemini CLI
 
+> Legacy note: Gemini CLI is no longer the active direct-Google CLI workflow for PaperHub. Use `engines/agy_cli.md` for new requests. Keep this document only as a reference in case legacy Gemini CLI support is explicitly requested or restored later.
+
 This document covers the **Gemini CLI** paper summarization workflow. Read this file when the user requests processing "with gemini cli" or is routed here via the disambiguation flow.
 
 ## Prerequisites
@@ -247,15 +249,101 @@ uv run python paper_summarizer.py --cleanup-cli-input "${CLEANUP_DIR}"
 
 ## Multiple Papers
 
-Process papers **sequentially** (one Gemini CLI call per paper). For each paper:
+### Parallel Batching (Recommended)
+
+Process papers in **parallel batches of up to 3 papers** to optimize API quota and throughput. Larger batches may trigger rate limiting; smaller batches are safer but slower.
+
+**Workflow:**
+
+1. **Prepare inputs for all papers in a batch** (parallel is safe):
+   ```bash
+   for pdf in ../to_be_organized/paper1.pdf ../to_be_organized/paper2.pdf ../to_be_organized/paper3.pdf; do
+     uv run python paper_summarizer.py --prepare-cli-input \
+       --pdf-path-arg "$pdf" --summary-mode full > /tmp/paperhub_gemini_input_N.json &
+   done
+   wait  # Wait for all prepare calls to complete
+   ```
+
+2. **Call Gemini CLI for all papers in the batch in parallel** (run from repo root):
+   ```bash
+   for i in 1 2 3; do
+     PROMPT=$(python3 -c "import json; print(open(json.load(open(\"/tmp/paperhub_gemini_input_$i.json\"))[\"prompt_path\"]).read())")
+     PDF_PATH=$(python3 -c "import json; print(json.load(open(\"/tmp/paperhub_gemini_input_$i.json\"))[\"pdf_for_ai_gemini_path\"])")
+     gemini --skip-trust -y -p "@${PDF_PATH}
+   
+   Use only the attached PDF. Do not use web search. Do not infer from the filename.
+   
+   ${PROMPT}" -m "${GEMINI_MODEL}" -o json 2>/tmp/gemini_stderr_$i.txt > /tmp/gemini_output_$i.json &
+   done
+   wait  # Wait for all Gemini calls to complete (up to 10 minutes)
+   ```
+
+3. **Extract responses and process in parallel** (extract responses):
+   ```bash
+   for i in 1 2 3; do
+     python3 -c "import json; d=json.load(open(\"/tmp/gemini_output_$i.json\")); open(\"/tmp/gemini_response_$i.txt\",\"w\").write(d['response'])" &
+   done
+   wait
+   ```
+
+4. **Process responses sequentially** (organize files one at a time to avoid contention):
+   ```bash
+   for i in 1 2 3; do
+     # Extract token stats
+     python3 -c "
+   import json
+   d = json.load(open('/tmp/gemini_output_$i.json'))
+   models = d.get('stats',{}).get('models',{})
+   model_name = list(models.keys())[0]
+   tokens = models[model_name].get('tokens',{})
+   print(f'--tokens-prompt {tokens.get(\"prompt\",0)}')
+   print(f'--tokens-completion {tokens.get(\"candidates\",0)}')
+   print(f'--tokens-thinking {tokens.get(\"thoughts\",0)}')
+   print(f'--tokens-cached {tokens.get(\"cached\",0)}')
+   print(f'--tokens-total {tokens.get(\"total\",0)}')
+   " > /tmp/tokens_$i.txt
+     
+     # Call --from-response
+     TOKENS=$(cat /tmp/tokens_$i.txt | tr '\n' ' ')
+     ORIGINAL_PDF=$(python3 -c "import json; print(json.load(open(\"/tmp/paperhub_gemini_input_$i.json\"))[\"original_pdf_path\"])")
+     SUMMARY_MODE=$(python3 -c "import json; print(json.load(open(\"/tmp/paperhub_gemini_input_$i.json\"))[\"summary_mode\"])")
+     
+     cd paperhub_utils
+     uv run python paper_summarizer.py --from-response \
+       --response-file "/tmp/gemini_response_$i.txt" \
+       --pdf-path-arg "${ORIGINAL_PDF}" \
+       --summary-mode "${SUMMARY_MODE}" \
+       --model-label "${GEMINI_MODEL} (Gemini CLI)" \
+       --gemini-stderr-file "/tmp/gemini_stderr_$i.txt" \
+       --gemini-output-json "/tmp/gemini_output_$i.json" \
+       ${TOKENS}
+     cd ..
+   done
+   ```
+
+5. **Clean up temp files for all papers**:
+   ```bash
+   for i in 1 2 3; do
+     CLEANUP_DIR=$(python3 -c "import json; print(json.load(open(\"/tmp/paperhub_gemini_input_$i.json\"))[\"cleanup_dir\"])")
+     cd paperhub_utils
+     uv run python paper_summarizer.py --cleanup-cli-input "${CLEANUP_DIR}"
+     cd ..
+   done
+   ```
+
+6. Run tag classification, auto-fix, and commit (see `shared/post_ai.md` and `tags/post_summary_update.md`).
+
+### Sequential Processing (Fallback)
+
+If you encounter rate limiting with parallel batches, fall back to **sequential processing** (one Gemini CLI call per paper):
 
 1. Run `--prepare-cli-input` with the batch summary mode
 2. Call Gemini CLI
 3. Save response and call `--from-response` with the same summary mode
 4. Clean up `cleanup_dir`
-5. Collect results
+5. Repeat for next paper
 
-After all papers are processed, batch commit and report.
+After all papers are processed, run tag classification, batch commit, and report.
 
 ## Error Handling
 

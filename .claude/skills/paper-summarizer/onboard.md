@@ -59,20 +59,37 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
 5. Confirm these folders exist or create them if missing: `to_be_organized/`, `organized/`, and `tags/`.
 6. Read `paperhub_utils/misc/config.json` for `use_git`, `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
 7. Read `paperhub_utils/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `USE_GIT`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, and `MY_RESEARCH_INTERESTS`.
-8. Ensure `uv` is available:
-   - Run `uv --version`.
-   - If `uv` is missing, try to install it with an available Python/pip:
-
-     ```bash
-     python3 -m pip install --user uv
-     ```
-
-   - If `python3 -m pip` is unavailable, try `python -m pip install --user uv`.
-   - If no Python/pip path is available, or pip cannot install `uv`, read `setup/python_uv_recovery.md` and follow that recovery flow.
-   - After any install, run `uv --version` again. Continue only when `uv` is available.
-9. Run environment setup from the utilities directory:
+8. **Make sure `uv` is here.** Every other step in this skill calls `uv run python ...`; if `uv` is not on `PATH`, nothing else works — even when `paperhub_utils/.venv/` already exists from a previous machine. This check is non-optional.
 
    ```bash
+   command -v uv && uv --version
+   ```
+
+   If both commands succeed, skip to step 9. Otherwise `uv` is missing and must be installed before continuing — do not attempt to "work around" a missing `uv` by activating `.venv` manually, because downstream skill scripts hardcode `uv run`.
+
+   **Get `uv` installed.** Prefer the official standalone installer on macOS; it works regardless of Homebrew Python's PEP 668 lockdown, which makes `python3 -m pip install uv` fail on system Pythons:
+
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+   The installer writes `uv` to `~/.local/bin/uv`. If that directory is not already on `PATH`, either restart the shell or export it for the current session: `export PATH="$HOME/.local/bin:$PATH"`.
+
+   Fallbacks, in order:
+   - `brew install uv` if Homebrew is available and the user prefers it.
+   - `python3 -m pip install --user uv` only if a pip-managed Python is in use (not Homebrew/system Python — those will reject the install under PEP 668).
+   - If none of the above succeed, read `setup/python_uv_recovery.md` and follow that recovery flow.
+
+   After installing, verify again before moving on:
+
+   ```bash
+   uv --version
+   ```
+
+9. **Run `uv sync` to get the venv.** This is required even when `paperhub_utils/.venv/` already exists — without it, the lockfile and installed packages can drift, and a stale `.venv` from an iCloud-synced machine may be missing dependencies the current Python expects.
+
+   ```bash
+   cd "{paperhub_utils_dir}"
    uv sync
    ```
 
@@ -84,6 +101,12 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    ```
 
    Do not preserve or share `.venv` across iCloud-synced machines. `pyproject.toml` and `uv.lock` are the reproducible source of truth.
+
+   Quick smoke test that the environment is usable:
+
+   ```bash
+   uv run python -c "from config import GEMINI_CLI_MODEL; print(GEMINI_CLI_MODEL)"
+   ```
 
 ## 2. Apply setup choices from the questionnaire
 

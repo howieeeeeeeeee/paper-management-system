@@ -1,14 +1,20 @@
 """Prompt composition for paper-summarizer modes.
 
-Two responsibilities:
+All three modes (`full`, `metadata-only`, `enrich`) compose their prompt from
+the same fragments under `prompt/shared/` and `prompt/aspect/`. Dynamic
+context (today's date, research interests, user instructions, tag registry
+summary) is injected at composition time.
 
-1. `full` and `metadata-only` modes — render the legacy `prompt_template.txt`
-   and inject dynamic setup context such as research interests, user
-   instructions, and the current tag registry summary.
+Shared fragments:
+    shared/style.txt              — writing style rules
+    shared/paper_label.txt        — `# paper_label` section
+    shared/metadata_template.txt  — `# metadata` section and YAML fields
+    shared/tags_guidelines.txt    — tag selection rules
 
-2. `enrich` mode — compose a fresh prompt from fragments under `shared/` and
-   `aspect/`. The fragments are drop-in extracts of the legacy template, so the
-   shared style, paper_label format, and tag rules stay aligned across modes.
+Aspect fragments:
+    aspect/summary_full.txt       — `# ai_summary` body (full / enrich modes)
+    aspect/enrich_intro.txt       — enrich-mode preamble
+    aspect/past_summary.txt       — optional existing-summary reference
 
 Public API:
 
@@ -42,7 +48,6 @@ MODES = (MODE_FULL, MODE_METADATA_ONLY, MODE_ENRICH)
 _PROMPT_DIR = Path(__file__).resolve().parent
 _SHARED_DIR = _PROMPT_DIR / "shared"
 _ASPECT_DIR = _PROMPT_DIR / "aspect"
-_LEGACY_TEMPLATE = _PROMPT_DIR.parent / "prompt_template.txt"
 
 
 def _read(path: Path) -> str:
@@ -176,7 +181,7 @@ def build_prompt(
     instruction_section = render_instruction_section(additional_instruction)
 
     if mode == MODE_FULL:
-        return _build_legacy(
+        return _build_full_or_metadata_only(
             today=today,
             research_section=research_section,
             tag_context_section=tag_context_section,
@@ -184,7 +189,7 @@ def build_prompt(
             metadata_only=False,
         )
     if mode == MODE_METADATA_ONLY:
-        return _build_legacy(
+        return _build_full_or_metadata_only(
             today=today,
             research_section=research_section,
             tag_context_section=tag_context_section,
@@ -205,7 +210,7 @@ def build_prompt(
     )
 
 
-def _build_legacy(
+def _build_full_or_metadata_only(
     *,
     today: str,
     research_section: str,
@@ -213,40 +218,80 @@ def _build_legacy(
     instruction_section: str,
     metadata_only: bool,
 ) -> str:
-    """Render `full` / `metadata-only` from the legacy template."""
-    template = _read(_LEGACY_TEMPLATE)
-    prompt = template.replace("{today}", today)
-    prompt = prompt.replace(
-        "{research_interests_section}",
-        research_section + tag_context_section,
-    )
-    prompt = prompt.replace("{additional_instruction_section}", instruction_section)
+    """Compose `full` / `metadata-only` prompt from shared + aspect fragments.
 
-    if not metadata_only:
-        return prompt
+    Full mode emits three top-level sections: `# paper_label`, `# metadata`,
+    `# ai_summary`. Metadata-only emits the first two and explicitly forbids
+    the third.
+    """
+    style = _read(_SHARED_DIR / "style.txt").rstrip("\n")
+    paper_label = _read(_SHARED_DIR / "paper_label.txt").rstrip("\n")
+    metadata_template = _read(_SHARED_DIR / "metadata_template.txt").rstrip("\n")
+    metadata_template = metadata_template.replace("{today}", today)
+    tags_guidelines = _read(_SHARED_DIR / "tags_guidelines.txt").rstrip("\n")
 
-    prompt = prompt.split("\n# ai_summary", 1)[0].rstrip()
-    prompt = prompt.replace(
-        "Analyze this research paper and return Markdown with three top-level sections.",
-        (
+    parts: list[str] = []
+    if metadata_only:
+        parts.append(
             "Analyze the attached first pages of this research paper and return "
             "Markdown with two top-level sections."
-        ),
-    )
-    prompt = prompt.replace(
-        "Use exactly these level-1 headings (no code fences, no extra text outside):",
-        (
+        )
+    else:
+        parts.append(
+            "Analyze this research paper and return Markdown with three "
+            "top-level sections."
+        )
+    parts.append("")
+    parts.append(style)
+    if research_section:
+        parts.append(research_section.rstrip("\n"))
+    if tag_context_section:
+        parts.append(tag_context_section.rstrip("\n"))
+    parts.append("")
+    if metadata_only:
+        parts.append(
             "Use exactly these two level-1 headings "
             "(no code fences, no extra text outside):"
-        ),
-    )
-    prompt += (
-        "\n\nDo not write an AI summary, abstract, methodology summary, or "
-        "additional top-level sections. Return only # paper_label and # metadata."
-    )
+        )
+        parts.append("")
+        parts.append("# paper_label")
+        parts.append("# metadata")
+    else:
+        parts.append(
+            "Use exactly these level-1 headings "
+            "(no code fences, no extra text outside):"
+        )
+        parts.append("")
+        parts.append("# paper_label")
+        parts.append("# metadata")
+        parts.append("# ai_summary")
+    parts.append("")
+    parts.append(paper_label)
+    parts.append("")
+    parts.append(metadata_template)
+    parts.append("")
+    parts.append(tags_guidelines)
+
+    if not metadata_only:
+        summary_full = _read(_ASPECT_DIR / "summary_full.txt").rstrip("\n")
+        parts.append("")
+        parts.append(summary_full)
+    else:
+        parts.append("")
+        parts.append(
+            "Do not write an AI summary, abstract, methodology summary, or "
+            "additional top-level sections. Return only # paper_label and # metadata."
+        )
+
+    parts.append("")
+    parts.append("---")
+    parts.append("")
+    footer = f"**Summary Completed:** {today}"
     if instruction_section:
-        prompt += instruction_section
-    return prompt
+        footer += instruction_section
+    parts.append(footer)
+
+    return "\n".join(parts)
 
 
 def _build_enrich(

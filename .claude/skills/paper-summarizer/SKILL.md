@@ -1,6 +1,6 @@
 ---
 name: paper-summarizer
-description: Automated research paper organization using AI. Triggers when users ask to onboard, set up, configure, or first-run this paper library; when users upload PDFs and ask to summarize, organize, or add papers to their library; or when they ask to enrich an existing folder with an AI summary. Supports OpenRouter, Gemini CLI, and current-coding-agent engines across full / metadata-only / enrich modes.
+description: Automated research paper organization using AI. Triggers when users ask to onboard, set up, configure, or first-run this paper library; when users upload PDFs and ask to summarize, organize, or add papers to their library; or when they ask to enrich an existing folder with an AI summary. Supports OpenRouter, Agy CLI, legacy Gemini CLI, and current-coding-agent engines across full / metadata-only / enrich modes.
 ---
 
 # Research Paper Summarizer
@@ -14,7 +14,8 @@ SKILL.md                  ← you are here (router only)
 onboard.md                ← questionnaire-first setup inside an Obsidian vault
 engines/
   openrouter.md           ← default; uses paper_summarizer.py via OpenRouter API
-  gemini_cli.md           ← prepare/from-response handshake against `gemini` CLI
+  agy_cli.md              ← active direct-Google CLI workflow via `agy`
+  gemini_cli.md           ← legacy reference for old `gemini` CLI
   coding_agent.md         ← in-process; full / metadata-only / enrich (high quota for full+enrich)
 modes/
   full.md                 ← writes {paper_label}.md + ai_summary.md
@@ -48,8 +49,9 @@ For paper processing, pick **one engine** and **one mode** per batch.
 | User says | Engine | Read |
 |-----------|--------|------|
 | "use current coding agent" / "use you" / "no external AI" | `coding-agent` | `engines/coding_agent.md` (full / metadata-only / enrich; full+enrich gated for quota) |
-| "with gemini cli" / "use gemini cli" / "via gemini cli" | `gemini-cli` | `engines/gemini_cli.md` |
-| "use gemini" / "with gemini" (no "cli") | ASK first | `AskUserQuestion`: "Gemini via OpenRouter (script) or Gemini CLI (direct)?" |
+| "with agy cli" / "use antigravity cli" / "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
+| "with gemini cli" / "use gemini cli" / "via gemini cli" | `agy-cli` by default | `engines/agy_cli.md`; mention Gemini CLI is legacy and use `engines/gemini_cli.md` only if the user explicitly insists on legacy Gemini |
+| "use gemini" / "with gemini" (no "cli") | ASK first | `AskUserQuestion`: "Gemini via OpenRouter (script) or Agy CLI (direct Google CLI)?" |
 | anything else (default) | `openrouter` | `engines/openrouter.md` |
 
 ### Modes
@@ -74,9 +76,9 @@ For paper processing, pick **one engine** and **one mode** per batch.
 
 - Treat `.venv` as disposable local state. In iCloud-synced vaults, never preserve or share `.venv` across machines. If a `uv` command fails because the environment is stale or broken, run `uv sync` from `paperhub_utils/`; if it still fails, run `rm -rf .venv` and then `uv sync`.
 - **NEVER read the PDF directly** — except `engines/coding_agent.md`. In `metadata-only` mode it extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
-- For `openrouter` and `gemini-cli`, ALWAYS delegate PDF processing to the script or `gemini` CLI. Only validate and fix the output.
+- For `openrouter`, `agy-cli`, and legacy `gemini-cli`, ALWAYS delegate PDF processing to the script or external CLI. Only validate and fix the output.
 - **Handle partial failures via `AskUserQuestion`** — never decide unilaterally, never auto-switch models.
-- **ONLY use models from `config.py`'s `MODEL_LIST`** for `openrouter`. For `gemini-cli`, use Gemini model names.
+- **ONLY use models from `config.py`'s `MODEL_LIST`** for `openrouter`. For `agy-cli`, use `AGY_CLI_MODEL_LIST`; the selected model is persisted to Agy settings by `--prepare-cli-input`.
 - Metadata files MUST always include `contributions:` (empty YAML field) and `## Abstract` (verbatim from PDF when present).
 
 ## Post-AI flow
@@ -95,10 +97,11 @@ For partial batch failures, ask the user whether to abandon, retry, or choose an
 
 ```
 "Summarize this paper"                              → openrouter × ask-mode
-"Summarize these papers with gemini cli"            → gemini-cli × ask-mode
+"Summarize these papers with agy cli"               → agy-cli × ask-mode
+"Summarize these papers with gemini cli"            → agy-cli × ask-mode (legacy Gemini only if explicitly requested)
 "Summarize this paper. Focus on identification."    → openrouter × ask-mode + --instruction
 "Enrich ACF2015"                                    → openrouter × enrich
-"Add a summary to melitz2003trade with gemini cli"  → gemini-cli × enrich
+"Add a summary to melitz2003trade with agy cli"     → agy-cli × enrich
 ```
 
 All engines accept additional user instructions and pass them through.
@@ -113,7 +116,7 @@ All engines accept additional user instructions and pass them through.
 | Scripts | `paperhub_utils/` (`paper_summarizer.py`, `enrich.py`, `config.py`) |
 | User config | `paperhub_utils/misc/config.json` (`config.py` loads and exports it) |
 | Onboarding questionnaire | `onboarding_questionnaire.md` at project root (deleted after successful onboarding) |
-| Prompts | `paperhub_utils/prompt/{shared,aspect}/*.txt` + `prompt/builder.py` (`prompt_template.txt` still read for `full`/`metadata-only`) |
+| Prompts | `paperhub_utils/prompt/{shared,aspect}/*.txt` + `prompt/builder.py` (all modes compose from fragments) |
 | Tag registry | `tags/_internal/`; initial taxonomy comes from `onboarding_questionnaire.md` when present, otherwise `paperhub_utils/seeds/default_tags.yaml` |
 
 ## What this skill does NOT do

@@ -50,6 +50,8 @@ except ImportError:
 
 # Configuration - import from config.py
 from config import (
+    AGY_CLI_MODEL,
+    AGY_CLI_MODEL_LIST,
     DEFAULT_MODEL,
     MODEL_LIST,
     DEFAULT_PDF_ENGINE,
@@ -58,8 +60,19 @@ from config import (
     MAX_RETRIES,
     METADATA_ONLY_PAGE_LIMIT,
     MY_RESEARCH_INTERESTS,
+    PAPERHUB_ROOT,
 )
 from prompt.builder import build_prompt
+from cli_workflow.agy import (
+    AGY_RESPONSE_BEGIN,
+    AGY_RESPONSE_END,
+    agy_model_label,
+    agy_settings_path,
+    configure_agy_cli_model,
+    extract_agy_response_block,
+    resolve_agy_cli_model,
+    validate_agy_cli_run,
+)
 from cli_workflow.gemini import validate_gemini_cli_run
 from cli_workflow.pdf import (
     CLI_WORK_DIR,
@@ -1408,8 +1421,10 @@ def prepare_cli_input(
     pdf_path: Path,
     summary_mode: str,
     additional_instruction: str = "",
+    external_cli_engine: str = "gemini-cli",
+    agy_model: str | None = None,
 ) -> dict:
-    """Prepare prompt and Gemini-readable PDF input for a CLI run."""
+    """Prepare prompt and CLI-readable PDF input for an external CLI run."""
     error = validate_pdf_path(pdf_path)
     if error:
         return {"success": False, "pdf_path": str(pdf_path), "error": error}
@@ -1420,9 +1435,24 @@ def prepare_cli_input(
             "error": f"Unknown summary mode: {summary_mode}",
             "error_type": "ValueError",
         }
+    if external_cli_engine not in {"gemini-cli", "agy-cli"}:
+        return {
+            "success": False,
+            "pdf_path": str(pdf_path),
+            "error": f"Unknown external CLI engine: {external_cli_engine}",
+            "error_type": "ValueError",
+        }
+
+    resolved_agy_model = None
+    if external_cli_engine == "agy-cli":
+        resolved_agy_model = configure_agy_cli_model(
+            agy_model,
+            default_model=AGY_CLI_MODEL,
+            allowed_models=AGY_CLI_MODEL_LIST,
+        )
 
     run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
-    work_dir = CLI_WORK_DIR / f"gemini_{pdf_path.stem}_{run_id}"
+    work_dir = CLI_WORK_DIR / f"{external_cli_engine.replace('-cli', '')}_{pdf_path.stem}_{run_id}"
     work_dir.mkdir(parents=True, exist_ok=False)
 
     try:
@@ -1447,15 +1477,24 @@ def prepare_cli_input(
 
     result = {
         "success": True,
+        "external_cli_engine": external_cli_engine,
         "summary_mode": summary_mode,
         "prompt_path": str(prompt_path),
         "pdf_for_ai_path": str(pdf_for_ai),
         "pdf_for_ai_repo_relative": pdf_for_ai_repo_relative,
         "pdf_for_ai_gemini_path": gemini_at_path(pdf_for_ai),
+        "pdf_for_ai_agy_path": str(pdf_for_ai.resolve()),
         "original_pdf_path": str(pdf_path),
         "cleanup_dir": str(work_dir),
         "metadata_only_page_limit": METADATA_ONLY_PAGE_LIMIT,
     }
+    if resolved_agy_model is not None:
+        result["paperhub_root"] = str(PAPERHUB_ROOT)
+        result["agy_cli_model"] = resolved_agy_model
+        result["agy_model_label"] = agy_model_label(resolved_agy_model)
+        result["agy_settings_path"] = str(agy_settings_path())
+        result["response_begin"] = AGY_RESPONSE_BEGIN
+        result["response_end"] = AGY_RESPONSE_END
     if sample_info:
         result["pages_sent"] = sample_info.pages_sent
         result["total_pdf_pages"] = sample_info.total_pages
@@ -1463,7 +1502,7 @@ def prepare_cli_input(
 
 
 def cleanup_cli_input(path: Path) -> bool:
-    """Remove repo-local Gemini CLI temporary input files."""
+    """Remove repo-local external CLI temporary input files."""
     cleanup_path = ensure_safe_cli_cleanup_path(path)
     if cleanup_path.is_dir():
         shutil.rmtree(cleanup_path)
@@ -1514,7 +1553,18 @@ def main():
     parser.add_argument(
         "--prepare-cli-input",
         action="store_true",
-        help="Prepare prompt and Gemini-readable PDF input, then print JSON and exit",
+        help="Prepare prompt and external-CLI-readable PDF input, then print JSON and exit",
+    )
+    parser.add_argument(
+        "--external-cli-engine",
+        choices=("gemini-cli", "agy-cli", "coding-agent"),
+        default=None,
+        help="External engine used with --prepare-cli-input/--from-response",
+    )
+    parser.add_argument(
+        "--agy-model",
+        default=None,
+        help="Agy CLI model label; defaults to config AGY_CLI_MODEL",
     )
     parser.add_argument(
         "--cleanup-cli-input",
@@ -1587,6 +1637,16 @@ def main():
         metavar="PATH",
         help="Gemini CLI JSON output file to inspect before organizing --from-response output",
     )
+    parser.add_argument(
+        "--agy-stderr-file",
+        metavar="PATH",
+        help="Agy CLI stderr file to inspect before organizing --from-response output",
+    )
+    parser.add_argument(
+        "--agy-log-file",
+        metavar="PATH",
+        help="Agy CLI log file to inspect before organizing --from-response output",
+    )
 
     args = parser.parse_args()
 
@@ -1630,6 +1690,8 @@ def main():
                 pdf_path=Path(pdf_path_str).resolve(),
                 summary_mode=args.summary_mode,
                 additional_instruction=args.instruction,
+                external_cli_engine=args.external_cli_engine or "gemini-cli",
+                agy_model=args.agy_model,
             )
         except Exception as e:
             result = {
@@ -1665,25 +1727,60 @@ def main():
             )
             sys.exit(1)
 
-        content = response_path.read_text(encoding="utf-8")
+        raw_content = response_path.read_text(encoding="utf-8")
         pdf_path = Path(pdf_path_str).resolve()
         output_dir = Path(args.output_dir).resolve()
 
-        gemini_problems = validate_gemini_cli_run(
-            stderr_path=Path(args.gemini_stderr_file).resolve()
-            if args.gemini_stderr_file
-            else None,
-            output_json_path=Path(args.gemini_output_json).resolve()
-            if args.gemini_output_json
-            else None,
-        )
-        if gemini_problems:
+        external_cli_engine = args.external_cli_engine
+        if external_cli_engine is None:
+            if args.model_label.startswith("current-coding-agent"):
+                external_cli_engine = "coding-agent"
+            elif (
+                args.agy_stderr_file
+                or args.agy_log_file
+                or args.model_label.endswith(" (Agy CLI)")
+            ):
+                external_cli_engine = "agy-cli"
+            else:
+                external_cli_engine = "gemini-cli"
+
+        content = raw_content
+        cli_problems: list[str] = []
+        cli_error = "External CLI did not reliably read the PDF"
+        cli_error_type = "ExternalCliPdfReadError"
+        if external_cli_engine == "gemini-cli":
+            cli_problems = validate_gemini_cli_run(
+                stderr_path=Path(args.gemini_stderr_file).resolve()
+                if args.gemini_stderr_file
+                else None,
+                output_json_path=Path(args.gemini_output_json).resolve()
+                if args.gemini_output_json
+                else None,
+            )
+            cli_error = "Gemini CLI did not reliably read the PDF"
+            cli_error_type = "GeminiCliPdfReadError"
+        elif external_cli_engine == "agy-cli":
+            cli_problems = validate_agy_cli_run(
+                stdout_text=raw_content,
+                stderr_path=Path(args.agy_stderr_file).resolve()
+                if args.agy_stderr_file
+                else None,
+                log_path=Path(args.agy_log_file).resolve() if args.agy_log_file else None,
+            )
+            cli_error = "Agy CLI did not reliably read the PDF"
+            cli_error_type = "AgyCliPdfReadError"
+            if not cli_problems:
+                content = extract_agy_response_block(raw_content)
+        elif external_cli_engine != "coding-agent":
+            parser.error(f"Unknown external CLI engine: {external_cli_engine}")
+
+        if cli_problems:
             result = {
                 "success": False,
                 "pdf_path": str(pdf_path),
-                "error": "Gemini CLI did not reliably read the PDF",
-                "error_type": "GeminiCliPdfReadError",
-                "problems": gemini_problems,
+                "error": cli_error,
+                "error_type": cli_error_type,
+                "problems": cli_problems,
             }
             output = {
                 "success": False,
@@ -1694,6 +1791,20 @@ def main():
             }
             print(json.dumps(output, indent=2))
             sys.exit(1)
+
+        model_label = args.model_label
+        if external_cli_engine == "agy-cli" and model_label == "unknown":
+            resolved_agy_model = resolve_agy_cli_model(
+                args.agy_model,
+                default_model=AGY_CLI_MODEL,
+                allowed_models=AGY_CLI_MODEL_LIST,
+            )
+            model_label = agy_model_label(resolved_agy_model)
+
+        pdf_engine = {
+            "agy-cli": "agy-native",
+            "coding-agent": "coding-agent",
+        }.get(external_cli_engine, "gemini-native")
 
         usage = {}
         if args.tokens_prompt is not None:
@@ -1710,8 +1821,8 @@ def main():
         result = organize_from_response(
             content=content,
             pdf_path=pdf_path,
-            model_label=args.model_label,
-            pdf_engine="gemini-native",
+            model_label=model_label,
+            pdf_engine=pdf_engine,
             output_dir=output_dir,
             usage=usage or None,
             summary_mode=args.summary_mode,

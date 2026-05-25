@@ -78,8 +78,28 @@ GEMINI_CLI_MODEL = (
     else _GEMINI_CLI_MODEL_DEFAULT
 )
 
+# Agy CLI model used by skills/paper-summarizer/engines/agy_cli.md.
+# Override via misc/config.json's "agy_cli_model".
+AGY_CLI_MODEL_LIST = (
+    "Gemini 3.1 Pro (High)",
+    "Gemini 3.1 Pro (Low)",
+    "Gemini 3.5 Flash (High)",
+    "Gemini 3.5 Flash (Medium)",
+    "Gemini 3 Flash",
+    "Claude Sonnet 4.6 (Thinking)",
+    "Claude Opus 4.6 (Thinking)",
+    "GPT-OSS 120B (Medium)",
+    "GPT-OSS-120b",
+)
+_AGY_CLI_MODEL_DEFAULT = "Gemini 3.1 Pro (High)"
+_agy_cli_model_value = USER_CONFIG.get("agy_cli_model")
+AGY_CLI_MODEL = (
+    _agy_cli_model_value.strip()
+    if isinstance(_agy_cli_model_value, str) and _agy_cli_model_value.strip()
+    else _AGY_CLI_MODEL_DEFAULT
+)
+
 DEFAULT_PDF_ENGINE = "mistral-ocr"
-PROMPT_TEMPLATE_PATH = str(Path(__file__).parent / "prompt_template.txt")
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MAX_RETRIES = 2
 METADATA_ONLY_PAGE_LIMIT = _config_int(

@@ -1,7 +1,7 @@
 # paper_label
 Provide a single label in format `{first_author}{second_author}{year}{topic_keyword}` (all lowercase, no spaces)
 - Single author: `melitz2003heterogeneous`
-- Two authors: `cardkrueger1994minimum`
+- Two authors: `cardkrueger1994minimumwage`
 - Three+ authors: `autoretal2020trade`
 
-The topic keyword should be a brief descriptor of the paper's main subject.
+The topic keyword should be a brief descriptor of the paper's main subject, try to be as specific as possible.

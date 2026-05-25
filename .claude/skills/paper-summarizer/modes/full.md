@@ -4,7 +4,9 @@ Full PDF → AI generates `{paper_label}.md` (metadata) + `ai_summary.md` (detai
 
 Triggered by: "with summary" / "full summary" / "AI summary", or as the user's choice when asked. This is the default for direct `paper_summarizer.py` calls (`--summary-mode full`).
 
-Engines that support `full`: **OpenRouter** (`engines/openrouter.md`), **Gemini CLI** (`engines/gemini_cli.md`), **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap).
+Engines that support `full`: **OpenRouter** (`engines/openrouter.md`), **Agy CLI** (`engines/agy_cli.md`), legacy **Gemini CLI** (`engines/gemini_cli.md`), **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap).
+
+For Agy CLI, follow `engines/agy_cli.md` with `--summary-mode full`; the prepared JSON and `--from-response` command preserve the normal full-mode output contract.
 
 ## Folder structure produced
 
@@ -60,4 +62,4 @@ Tag updates this batch:
   - 0 tags reused without change: 11 of 17 tags this batch were already in the registry
 ```
 
-Always include token usage when available. For Gemini CLI, `cost: N/A`.
+Always include token usage when available. For Agy CLI and Gemini CLI, `cost: N/A`; Agy CLI token counts are unavailable.

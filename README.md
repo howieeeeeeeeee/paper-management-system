@@ -1,6 +1,18 @@
 # PaperHub
 
-PaperHub turns PDFs into an Obsidian-ready paper library. Drop PDFs into `to_be_organized/`, run the `paper-summarizer` skill in your coding agent, and get organized folders with metadata, optional `ai_summary.md`, canonical tags, and Bases-ready notes.
+PaperHub is an Obsidian-first paper library built around one rule: one paper, one folder, one metadata file.
+
+```text
+organized/
+`-- melitz2003trade/
+    |-- melitz_2003.pdf
+    |-- melitz2003trade.md
+    `-- ai_summary.md
+```
+
+The folder keeps the PDF, metadata, reading status, tags, and optional AI summary together. This makes the library easy to browse, link, and manage in Obsidian, especially through [Papers.base](Papers.base) and Obsidian Bases.
+
+AI integration handles the organizing work. Drop PDFs into `to_be_organized/`, run the `paper-summarizer` skill in your coding agent, and PaperHub creates the folder, metadata note, canonical tags, and optional `ai_summary.md` automatically.
 
 New to the workflow? Start with [Obsidian 101](quick_start/obsidian_101.md), then open [Papers.base](Papers.base) in Obsidian to browse the library.
 

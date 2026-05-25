@@ -1,6 +1,6 @@
 """Normalize `interest:` and `status:` frontmatter fields.
 
-Conventions (matching dominant form + prompt_template.txt):
+Conventions (matching dominant form + prompt/shared/metadata_template.txt):
 - `interest:` is a **scalar**.    Examples: `interest: none`, `interest: high`
 - `status:`   is a **list**.      Example:  `status:\n  - done`
 

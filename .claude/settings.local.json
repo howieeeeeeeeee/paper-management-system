@@ -57,6 +57,7 @@
       "Bash(git restore:*)",
       "Bash(git stash:*)",
       "Bash(git mv:*)",
+      "Bash(agy:*)",
       "Bash(gemini:*)",
       "Bash(pdfinfo:*)",
       "Bash(pdftotext:*)",

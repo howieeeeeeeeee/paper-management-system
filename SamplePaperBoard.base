@@ -12,7 +12,6 @@ views:
         - and:
             - "!title.isEmpty()"
             - '!status.containsAny("done", "reflecting", "archived")'
-            - file.inFolder("EconPhD/PaperHub")
     groupBy:
       property: status
       direction: DESC

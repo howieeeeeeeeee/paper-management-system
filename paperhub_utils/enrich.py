@@ -8,12 +8,12 @@ Usage:
         --engine openrouter [--no-summary] [--force] \\
         [--instruction "..."] [--use-past-summary] [--model MODEL_ID]
 
-    # Gemini CLI engine — two-step handshake (mirrors paper_summarizer.py):
-    uv run python enrich.py --prepare-cli-input --folder ACF2015 \\
+    # External CLI engine — two-step handshake (mirrors paper_summarizer.py):
+    uv run python enrich.py --engine agy-cli --prepare-cli-input --folder ACF2015 \\
         [--no-summary] [--use-past-summary] [--instruction "..."]
-    # ... orchestrator runs gemini CLI on the printed prompt + pdf path ...
-    uv run python enrich.py --from-response --folder ACF2015 \\
-        --response-file /tmp/resp.txt [--gemini-stderr-file ...] [--no-summary]
+    # ... orchestrator runs agy on the printed prompt + pdf path ...
+    uv run python enrich.py --engine agy-cli --from-response --folder ACF2015 \\
+        --response-file /tmp/resp.txt [--agy-stderr-file ...] [--no-summary]
 
 The PRIMARY task is generating `ai_summary.md`. Patching missing metadata fields
 (title/authors/year/journal/link/tags + abstract placeholder) is a secondary,
@@ -45,14 +45,27 @@ from uuid import uuid4
 import yaml
 
 from config import (
+    AGY_CLI_MODEL,
+    AGY_CLI_MODEL_LIST,
     DEFAULT_MODEL,
     DEFAULT_OUTPUT_DIR,
     DEFAULT_PDF_ENGINE,
     METADATA_ONLY_PAGE_LIMIT,
     MODEL_LIST,
     MY_RESEARCH_INTERESTS,
+    PAPERHUB_ROOT,
 )
 from prompt.builder import MODE_ENRICH, build_prompt
+from cli_workflow.agy import (
+    AGY_RESPONSE_BEGIN,
+    AGY_RESPONSE_END,
+    agy_model_label,
+    agy_settings_path,
+    configure_agy_cli_model,
+    extract_agy_response_block,
+    resolve_agy_cli_model,
+    validate_agy_cli_run,
+)
 from cli_workflow.gemini import validate_gemini_cli_run
 from cli_workflow.pdf import (
     CLI_WORK_DIR,
@@ -516,10 +529,24 @@ def prepare_cli_input(
     include_summary: bool,
     additional_instruction: str,
     past_summary_text: str = "",
+    external_cli_engine: str = "gemini-cli",
+    agy_model: str | None = None,
 ) -> dict:
     """Mirror paper_summarizer.prepare_cli_input for enrich mode."""
+    if external_cli_engine not in {"gemini-cli", "agy-cli"}:
+        raise ValueError(f"Unknown external CLI engine: {external_cli_engine}")
+
+    resolved_agy_model = None
+    if external_cli_engine == "agy-cli":
+        resolved_agy_model = configure_agy_cli_model(
+            agy_model,
+            default_model=AGY_CLI_MODEL,
+            allowed_models=AGY_CLI_MODEL_LIST,
+        )
+
     run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
-    work_dir = CLI_WORK_DIR / f"enrich_{art.paper_label}_{run_id}"
+    engine_slug = external_cli_engine.replace("-cli", "")
+    work_dir = CLI_WORK_DIR / f"enrich_{engine_slug}_{art.paper_label}_{run_id}"
     work_dir.mkdir(parents=True, exist_ok=False)
     try:
         prompt, missing_keys, emit_abstract = build_enrich_prompt_for_folder(
@@ -527,8 +554,9 @@ def prepare_cli_input(
         )
         prompt_path = work_dir / "prompt.txt"
         prompt_path.write_text(prompt, encoding="utf-8")
-        return {
+        result = {
             "success": True,
+            "external_cli_engine": external_cli_engine,
             "mode": MODE_ENRICH,
             "include_summary": include_summary,
             "paper_label": art.paper_label,
@@ -537,11 +565,20 @@ def prepare_cli_input(
             "pdf_for_ai_path": str(art.pdf_path),
             "pdf_for_ai_repo_relative": repo_relative_path(art.pdf_path),
             "pdf_for_ai_gemini_path": gemini_at_path(art.pdf_path),
+            "pdf_for_ai_agy_path": str(art.pdf_path.resolve()),
             "missing_keys": missing_keys,
             "emit_abstract": emit_abstract,
             "past_summary_used": bool(past_summary_text and past_summary_text.strip()),
             "cleanup_dir": str(work_dir),
         }
+        if resolved_agy_model is not None:
+            result["paperhub_root"] = str(PAPERHUB_ROOT)
+            result["agy_cli_model"] = resolved_agy_model
+            result["agy_model_label"] = agy_model_label(resolved_agy_model)
+            result["agy_settings_path"] = str(agy_settings_path())
+            result["response_begin"] = AGY_RESPONSE_BEGIN
+            result["response_end"] = AGY_RESPONSE_END
+        return result
     except Exception:
         import shutil
 
@@ -664,9 +701,10 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Enrich existing paper folders with AI summary.")
     p.add_argument("--folder", action="append", default=[], required=False,
                    help="Folder name under organized/ or absolute path. Repeat for multiple.")
-    p.add_argument("--engine", choices=("openrouter", "gemini-cli"), default="openrouter")
+    p.add_argument("--engine", choices=("openrouter", "gemini-cli", "agy-cli"), default="openrouter")
     p.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     p.add_argument("--model", default=None, help="OpenRouter model id (defaults to config DEFAULT_MODEL)")
+    p.add_argument("--agy-model", default=None, help="Agy CLI model label; defaults to config AGY_CLI_MODEL")
     p.add_argument("--pdf-engine", default=DEFAULT_PDF_ENGINE)
     p.add_argument("--instruction", default="", help="Additional instruction for the AI "
                    "(e.g., which parts to emphasize when polishing a past summary)")
@@ -683,9 +721,9 @@ def main() -> None:
                         "Overrides --use-past-summary auto-detection. Only valid with a single --folder.")
     p.add_argument("--verbose", action="store_true")
 
-    # Gemini CLI handshake (mirrors paper_summarizer.py)
+    # External CLI handshake (mirrors paper_summarizer.py)
     p.add_argument("--prepare-cli-input", action="store_true",
-                   help="Prepare prompt + PDF path for Gemini CLI; print JSON and exit. "
+                   help="Prepare prompt + PDF path for an external CLI; print JSON and exit. "
                         "Requires exactly one --folder.")
     p.add_argument("--from-response", action="store_true",
                    help="Apply a pre-generated AI response to the folder. "
@@ -695,13 +733,15 @@ def main() -> None:
                    help="Model label for ai_summary.md frontmatter (with --from-response)")
     p.add_argument("--gemini-stderr-file", help="Gemini CLI stderr file to validate (with --from-response)")
     p.add_argument("--gemini-output-json", help="Gemini CLI JSON output to validate (with --from-response)")
+    p.add_argument("--agy-stderr-file", help="Agy CLI stderr file to validate (with --from-response)")
+    p.add_argument("--agy-log-file", help="Agy CLI log file to validate (with --from-response)")
     p.add_argument("--tokens-prompt", type=int)
     p.add_argument("--tokens-completion", type=int)
     p.add_argument("--tokens-thinking", type=int)
     p.add_argument("--tokens-cached", type=int)
     p.add_argument("--tokens-total", type=int)
     p.add_argument("--cleanup-cli-input", metavar="PATH",
-                   help="Delete a repo-local Gemini CLI temp dir created by --prepare-cli-input")
+                   help="Delete a repo-local external CLI temp dir created by --prepare-cli-input")
 
     args = p.parse_args()
     logging.basicConfig(
@@ -738,6 +778,8 @@ def main() -> None:
             include_summary=not args.no_summary,
             additional_instruction=args.instruction,
             past_summary_text=past_summary_text,
+            external_cli_engine="agy-cli" if args.engine == "agy-cli" else "gemini-cli",
+            agy_model=args.agy_model,
         )
         print(json.dumps(result, indent=2))
         return
@@ -749,15 +791,52 @@ def main() -> None:
             p.error("--from-response requires --response-file")
         art = find_artifacts(args.folder[0], output_dir)
         is_coding_agent = args.model_label.startswith("current-coding-agent")
-        if not is_coding_agent:
+        external_cli_engine = args.engine
+        if is_coding_agent:
+            external_cli_engine = "coding-agent"
+        elif (
+            args.engine == "agy-cli"
+            or args.agy_stderr_file
+            or args.agy_log_file
+            or args.model_label.endswith(" (Agy CLI)")
+        ):
+            external_cli_engine = "agy-cli"
+        elif args.engine != "gemini-cli":
+            external_cli_engine = "gemini-cli"
+
+        response = Path(args.response_file).read_text(encoding="utf-8")
+        problems: list[str] = []
+        if external_cli_engine == "gemini-cli":
             problems = validate_gemini_cli_run(
                 stderr_path=Path(args.gemini_stderr_file).resolve() if args.gemini_stderr_file else None,
                 output_json_path=Path(args.gemini_output_json).resolve() if args.gemini_output_json else None,
             )
-            if problems:
-                print(json.dumps({"success": False, "problems": problems}, indent=2))
-                sys.exit(1)
-        response = Path(args.response_file).read_text(encoding="utf-8")
+        elif external_cli_engine == "agy-cli":
+            problems = validate_agy_cli_run(
+                stdout_text=response,
+                stderr_path=Path(args.agy_stderr_file).resolve() if args.agy_stderr_file else None,
+                log_path=Path(args.agy_log_file).resolve() if args.agy_log_file else None,
+            )
+            if not problems:
+                response = extract_agy_response_block(response)
+        if problems:
+            print(json.dumps({"success": False, "problems": problems}, indent=2))
+            sys.exit(1)
+
+        model_label = args.model_label
+        if external_cli_engine == "agy-cli" and model_label == "unknown":
+            resolved_agy_model = resolve_agy_cli_model(
+                args.agy_model,
+                default_model=AGY_CLI_MODEL,
+                allowed_models=AGY_CLI_MODEL_LIST,
+            )
+            model_label = agy_model_label(resolved_agy_model)
+
+        pdf_engine = {
+            "agy-cli": "agy-native",
+            "coding-agent": "coding-agent",
+        }.get(external_cli_engine, "gemini-native")
+
         # We don't have missing_keys/emit_abstract from prepare here; recompute.
         text = art.meta_path.read_text(encoding="utf-8")
         _, fm_text, body = split_frontmatter(text)
@@ -780,8 +859,8 @@ def main() -> None:
             include_summary=not args.no_summary,
             missing_keys=missing_keys,
             emit_abstract=emit_abstract,
-            model_label=args.model_label,
-            pdf_engine="coding-agent" if is_coding_agent else "gemini-native",
+            model_label=model_label,
+            pdf_engine=pdf_engine,
             usage=usage or None,
         )
         print(json.dumps(result, indent=2))
@@ -790,8 +869,8 @@ def main() -> None:
     # Default path: openrouter, possibly multiple folders
     if not args.folder:
         p.error("at least one --folder is required (unless using --cleanup-cli-input)")
-    if args.engine == "gemini-cli":
-        p.error("--engine gemini-cli requires --prepare-cli-input then --from-response (one folder at a time)")
+    if args.engine in {"gemini-cli", "agy-cli"}:
+        p.error(f"--engine {args.engine} requires --prepare-cli-input then --from-response (one folder at a time)")
     if args.past_summary_file and len(args.folder) != 1:
         p.error("--past-summary-file is only valid with a single --folder; use --use-past-summary for batches")
 

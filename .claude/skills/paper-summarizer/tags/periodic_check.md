@@ -119,6 +119,6 @@ If you want the user to review specific `?`-flagged or low-confidence tags (e.g.
 ## What this skill does NOT do here
 
 - Does not auto-run the periodic check on a schedule. User triggers it explicitly.
-- Does not modify `prompt_template.txt`'s injection block — that's Phase 2 of the broader plan.
+- Does not modify the prompt fragments under `prompt/shared/` and `prompt/aspect/` — that's Phase 2 of the broader plan.
 - Does not delete tags with count 0 — flag them in the report, leave the row in place.
 - Does not split `tags_summary.md` into per-type files — by design, one consolidated table is the user surface.

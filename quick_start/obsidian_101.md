@@ -1,21 +1,76 @@
-# Obsidian 101 for PaperHub
+# Obsidian 101
 
-PaperHub stores each paper as a small folder under `organized/<paper_label>/`. Inside you get the PDF, a metadata note named `<paper_label>.md`, and optionally `ai_summary.md`.
+PaperHub is an Obsidian-first paper library. Use a current Obsidian app with the Bases core plugin enabled. Each paper has one folder and one metadata note; that metadata note is the source of truth for links, reading status, tags, and Bases views.
 
-## Links and navigation
+## Obsidian Basics
 
-- Open the metadata note for a paper. Its title matches the `paper_label`, so you can link to it from anywhere in the vault with a wikilink: `[[paper_label]]`.
-- Keep the PDF in the same folder as the metadata note. If you move files, update links and any Bases filters that pointed at old paths.
+- Use `[[note-name]]` links for papers, ideas, authors, and projects.
+- Add `aliases:` when a paper has common short names, acronyms, or citation labels.
+- Use YAML properties for anything you want to sort or filter in Bases.
+- Use `tags:` for reusable categories; Obsidian and Bases can filter them directly.
+- Keep `Papers.base` as the dashboard, and treat paper metadata notes as the source of truth.
 
-## Properties you will edit
+## 1. Understand the Structure
 
-The metadata note has YAML frontmatter (Obsidian **Properties**) such as `title`, `authors`, `status`, `interest`, `tags`, and `journal`. Edit these like a normal note: they drive how papers show up in Bases tables and filters.
+```text
+organized/
+`-- melitz2003trade/
+    |-- melitz_2003.pdf
+    |-- melitz2003trade.md
+    `-- ai_summary.md
+```
 
-## Bases dashboard
+The PDF stays beside its metadata note. The optional `ai_summary.md` is supporting material; the metadata note remains the main Obsidian object.
 
-- Open `Papers.base` in Obsidian (Bases core plugin). It is a starter board with views over your library folder.
-- Filters use **paths relative to the vault root**. After you clone or move PaperHub, update the `file.inFolder(...)` strings in `Papers.base` (and `SamplePaperBoard.base` if you use it) so they match where this repo lives inside your vault—for example `PaperHub/organized` if the repo folder is named `PaperHub`.
+## 2. Link Papers
 
-## Where PDFs land before organizing
+The metadata note is the paper's Obsidian handle. Mention a paper from any note with:
 
-Drop new PDFs in `to_be_organized/`. After a skill run, papers appear under `organized/<paper_label>/` with notes ready for reading and tagging.
+```md
+[[melitz2003trade]]
+[[melitz2003trade#Quick Reference]]
+```
+
+## 3. Track Reading
+
+Edit the properties at the top of a paper note:
+
+```yaml
+status:
+  - digesting
+interest: high
+tags:
+  - industrial_organization
+  - experimental
+```
+
+Use `status` for workflow, `interest` for priority, and `tags` for fields, methods, topics, courses, or projects.
+
+## 4. Use `Papers.base`
+
+Open `Papers.base` in Obsidian. Use the view menu in the top-left corner to switch views. Each view can have its own filters, visible properties, sort order, and grouping. This repo includes:
+
+- `Backlog`: unfinished papers, filtered and grouped by `status`.
+- `Digesting` and `Reflecting`: active reading queues.
+- `Interesting Things`: papers with `interest: high`.
+- `IO Papers`, `Human AI Papers`, `Experiment`: topic shelves based on tags.
+- `All`: the full library sorted by recent edits.
+
+Duplicate a view, then adjust Filters, Sort, Group, or Properties to make your own course, seminar, topic, or project board.
+
+## Obsidian Tips
+
+- Sync: keep the vault inside an iCloud Drive-synced folder, or another sync service you trust, so the same library is available on desktop and mobile. Avoid editing the same note on two devices before sync finishes, or you risk conflict copies.
+- Overview: in Bases, combine filters such as status, tags, and interest with table or list views so one board can show active reading, methods shelves, or seminar queues. Start from `SamplePaperBoard.base` as a smaller example.
+
+## AI Integration
+
+AI is the ingestion layer, not the library model. Put PDFs in `to_be_organized/`, then ask your coding agent:
+
+```text
+paper-summarizer: metadata-only batch for everything in to_be_organized/.
+```
+
+Use `full summary` instead of `metadata-only` when you also want `ai_summary.md`. To customize generated metadata fields, edit [metadata_template.txt](../paperhub_utils/prompt/shared/metadata_template.txt). For full-summary shape, edit [summary_full.txt](../paperhub_utils/prompt/aspect/summary_full.txt). For shared style, edit [style.txt](../paperhub_utils/prompt/shared/style.txt).
+
+Further reading: [Properties](https://obsidian.md/help/properties), [Tags](https://obsidian.md/help/tags), [Internal links](https://obsidian.md/help/links), [Bases](https://obsidian.md/help/bases), [Bases views](https://obsidian.md/help/bases/views).

@@ -54,6 +54,35 @@ After onboarding, add one or a few PDFs to `to_be_organized/`, then ask your cod
 paper-summarizer: metadata-only batch for everything in to_be_organized/.
 ```
 
+## Finding & downloading papers (paper-finder)
+
+Don't have the PDF yet? Give your coding agent a paper's title/author, DOI, arXiv ID, or URL and the `paper-finder` skill searches for it, downloads the PDF into `to_be_organized/`, and writes a `{name}.citation.md` sidecar (title, authors, year, journal, DOI, abstract, BibTeX) next to it. It then offers to run `paper-summarizer` immediately — which auto-detects the sidecar and uses the citation as authoritative context, then moves it into the paper folder.
+
+For economics papers it fetches the **published journal version** first and falls back to a free **working-paper version** (NBER / SSRN / RePEc / author homepage) when the journal copy isn't freely available — always keeping the published citation.
+
+```text
+Find Coutts 2019 "good news and bad news are still news" and summarize it.
+Download arXiv 2504.09343.
+Get the bibtex for Melitz 2003 trade.
+Work through papers to find.md, open access only.
+```
+
+Modes (it asks if you don't say): **auto** (default — open access, then your VPN for paywalled, then working paper), **open-access only** (no browser), **browser/VPN** (paywalled journal via your school VPN), **citation-only** (sidecar, no PDF).
+
+### Browser backend (optional)
+
+The open-access and working-paper paths need nothing extra. Downloading a **paywalled journal PDF** through your school VPN uses the local [gstack](https://github.com/garrytan/gstack) browser, which is **optional** and needs a one-time setup:
+
+1. Install the [Bun](https://bun.sh) runtime.
+2. Make gstack available to the repo (so it travels with PaperHub):
+   ```bash
+   git submodule add https://github.com/garrytan/gstack.git .claude/skills/gstack
+   cd .claude/skills/gstack/browse && ./setup   # builds the browser; downloads Playwright Chromium
+   ```
+   (Or rely on a global `~/.claude/skills/gstack` — the skill detects either.)
+
+Without this, paper-finder still works for every open-access and working-paper source; it just asks you to grab paywalled-only PDFs manually.
+
 ## Quick launch
 
 Save a terminal snippet (e.g. Alfred *Terminal Command* with keyword `pp`, or Raycast). Command:

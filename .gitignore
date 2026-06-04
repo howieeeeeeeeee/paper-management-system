@@ -44,6 +44,7 @@ env/
 
 # Paper summarizer temporary files
 .paperhub_tmp/
+paperhub_utils/raw_outputs/
 
 
 .env

@@ -58,14 +58,45 @@ if _USE_GIT_ENV is not None:
     USE_GIT = _USE_GIT_ENV.strip().lower() in {"1", "true", "yes", "on"}
 
 # API Configuration
-DEFAULT_MODEL = {"model_id": "~moonshotai/kimi-latest"}
+REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh")
+# Set to None to disable reasoning, or choose an effort from REASONING_EFFORTS.
+# "exclude" keeps reasoning tokens out of the returned assistant message.
+DEFAULT_REASONING = {"effort": "medium", "exclude": True}
+
+# pdf_input options:
+# - "openrouter_file_parser": send the PDF file through OpenRouter's file-parser.
+# - "text_extraction": convert the PDF locally with pymupdf4llm and send that text.
+DEFAULT_MODEL = {
+    "model_id": "qwen/qwen3.7-max",
+    "provider": {},
+    "reasoning": DEFAULT_REASONING,
+    "pdf_input": "text_extraction",
+}
 MODEL_LIST = [
-    {"model_id": "deepseek/deepseek-v4-pro", "provider": {}},
+    {
+        "model_id": "qwen/qwen3.7-max",
+        "provider": {},
+        "reasoning": DEFAULT_REASONING,
+        "pdf_input": "text_extraction",
+    },
+    {
+        "model_id": "deepseek/deepseek-v4-pro",
+        "provider": {},
+        "reasoning": DEFAULT_REASONING,
+        "pdf_input": "text_extraction",
+    },
     {
         "model_id": "moonshotai/kimi-k2.6",
         "provider": {},
+        "reasoning": DEFAULT_REASONING,
+        "pdf_input": "openrouter_file_parser",
     },
-    {"model_id": "google/gemini-3.1-pro-preview", "provider": {}},
+    {
+        "model_id": "google/gemini-3.1-pro-preview",
+        "provider": {},
+        "reasoning": DEFAULT_REASONING,
+        "pdf_input": "openrouter_file_parser",
+    },
 ]
 
 # Gemini CLI model used by skills/paper-summarizer/engines/gemini_cli.md.

@@ -75,9 +75,12 @@ from cli_workflow.pdf import (
 )
 from paper_summarizer import (
     call_openrouter_api,
+    call_openrouter_text_api,
     encode_pdf_to_base64,
+    extract_pdf_context,
     format_yaml_model_value,
     get_api_key,
+    resolve_pdf_input_config,
     resolve_model_config,
     save_raw_content,
 )
@@ -507,21 +510,38 @@ def run_openrouter(
     prompt: str,
     model_arg,
     pdf_engine: str,
-) -> tuple[str, str, dict]:
-    """Returns (response_text, model_label, usage)."""
+) -> tuple[str, str, dict, str]:
+    """Returns (response_text, model_label, usage, effective_pdf_engine)."""
     api_key = get_api_key()
     cfg = resolve_model_config(model_arg)
     model_id = cfg["model_id"]
     provider = cfg.get("provider", {})
-    pdf_b64 = encode_pdf_to_base64(art.pdf_path)
-    result = call_openrouter_api(
-        api_key, model_id, pdf_b64, prompt, pdf_engine, provider
-    )
+    reasoning = cfg.get("reasoning")
+    pdf_input = resolve_pdf_input_config(cfg)
+    if pdf_input["mode"] == "text_extraction":
+        extractor = pdf_input["extractor"]
+        pdf_text = extract_pdf_context(art.pdf_path, extractor)
+        result = call_openrouter_text_api(
+            api_key=api_key,
+            model_id=model_id,
+            prompt=prompt,
+            pdf_text=pdf_text,
+            provider=provider,
+            reasoning=reasoning,
+            extractor=extractor,
+        )
+        effective_pdf_engine = extractor
+    else:
+        pdf_b64 = encode_pdf_to_base64(art.pdf_path)
+        result = call_openrouter_api(
+            api_key, model_id, pdf_b64, prompt, pdf_engine, provider, reasoning
+        )
+        effective_pdf_engine = pdf_engine
     if not result.get("success"):
         raise RuntimeError(
             f"OpenRouter call failed for {art.paper_label}: {result.get('error')}"
         )
-    return result.get("content") or "", model_id, result.get("usage") or {}
+    return result.get("content") or "", model_id, result.get("usage") or {}, effective_pdf_engine
 
 
 def prepare_cli_input(
@@ -605,7 +625,14 @@ def apply_response(
     except ValueError as e:
         raw_path = None
         if response_text.strip():
-            raw_path = save_raw_content(art.pdf_path, response_text, usage or {})
+            raw_path = save_raw_content(
+                art.pdf_path,
+                response_text,
+                usage or {},
+                model_label=model_label,
+                pdf_engine=pdf_engine,
+                summary_mode="enrich-meta-only" if meta_only else "enrich",
+            )
         raise EnrichParseError(
             f"Failed to parse enrich response: {e}"
             + (f" (raw response saved to {raw_path})" if raw_path else ""),
@@ -677,7 +704,9 @@ def process_folder_openrouter(
             "reason": "nothing_to_do",
         }
 
-    response, model_label, usage = run_openrouter(art, prompt, model_arg, pdf_engine)
+    response, model_label, usage, effective_pdf_engine = run_openrouter(
+        art, prompt, model_arg, pdf_engine
+    )
     result = apply_response(
         art,
         response,
@@ -685,7 +714,7 @@ def process_folder_openrouter(
         missing_keys=missing_keys,
         emit_abstract=emit_abstract,
         model_label=model_label,
-        pdf_engine=pdf_engine,
+        pdf_engine=effective_pdf_engine,
         usage=usage,
         meta_only=meta_only,
     )

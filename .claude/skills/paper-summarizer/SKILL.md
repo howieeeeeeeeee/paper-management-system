@@ -74,6 +74,9 @@ For paper processing, pick **one engine** and **one mode** per batch.
 
 ## Critical rules (apply always)
 
+- **Paths with spaces:** Pass literal paths (spaces as-is) to `Read`, `Edit`, and `Write` tools — do NOT backslash-escape spaces. Backslash escaping is only for Bash tool commands. If the project root contains spaces, escaping will cause "file not found" errors even when the file exists.
+- **uv run location:** Always `cd paperhub_utils` before running `uv run` commands, since `pyproject.toml` and `.venv` are stored there. Example: `cd paperhub_utils && uv run python paper_summarizer.py ... && cd ..`
+- **Batch processing paths:** Always cd into `paperhub_utils` first. Use `PAPERHUB_ROOT=$(cd .. && pwd)` to get the PaperHub root (works on any machine). For Agy: use `agy --add-dir "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON.
 - Treat `.venv` as disposable local state. In iCloud-synced vaults, never preserve or share `.venv` across machines. If a `uv` command fails because the environment is stale or broken, run `uv sync` from `paperhub_utils/`; if it still fails, run `rm -rf .venv` and then `uv sync`.
 - **NEVER read the PDF directly** — except `engines/coding_agent.md`. In `metadata-only` mode it extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
 - For `openrouter`, `agy-cli`, and legacy `gemini-cli`, ALWAYS delegate PDF processing to the script or external CLI. Only validate and fix the output.
@@ -105,6 +108,51 @@ For partial batch failures, ask the user whether to abandon, retry, or choose an
 ```
 
 All engines accept additional user instructions and pass them through.
+
+## Batch Processing (Multiple Papers)
+
+For batch workflows with **Agy CLI in parallel**:
+
+1. **Prepare:** `cd paperhub_utils`, call `--prepare-cli-input` for each paper, store JSONs as `prepare_1.json`, `prepare_2.json`, etc.
+2. **Call Agy in parallel:** Stay in `paperhub_utils`, launch background jobs with `--add-dir ..` (points to PaperHub root). Use numbered output files (`agy_output_1.txt`, `agy_stderr_1.txt`, `agy_log_1.log`).
+3. **Wait & process:** After `wait`, call `--from-response` sequentially for each paper (still in `paperhub_utils`).
+4. **Cleanup:** Call `--cleanup-cli-input` for each prepared temp PDF.
+
+### Parallel Agy CLI Example
+
+```bash
+cd paperhub_utils
+PAPERHUB_ROOT=$(cd .. && pwd)
+
+# 1. Prepare all papers
+for paper in "$PAPERHUB_ROOT"/to_be_organized/*.pdf; do
+  uv run python paper_summarizer.py --prepare-cli-input \
+    --external-cli-engine agy-cli \
+    --pdf-path-arg "$paper" \
+    --summary-mode full > "/tmp/prepare_$(basename "$paper").json"
+done
+
+# 2. Run Agy in parallel with distinct output files
+for i in {1..4}; do {
+  PDF=$(python3 -c "import json; print(json.load(open(...))['pdf_for_ai_agy_path'])")
+  agy --add-dir "$PAPERHUB_ROOT" --print "@$PDF\n...[prompt]..." > "/tmp/agy_output_$i.txt" 2> "/tmp/agy_stderr_$i.txt"
+} & done
+wait
+
+# 3. Process responses sequentially
+for i in {1..4}; do
+  uv run python paper_summarizer.py --from-response \
+    --external-cli-engine agy-cli \
+    --response-file "/tmp/agy_output_$i.txt" ...
+done
+```
+
+**Key safeguards:**
+- Stay in `paperhub_utils/` throughout (ensures `uv run` finds `.venv` and `pyproject.toml`).
+- Use `PAPERHUB_ROOT=$(cd .. && pwd)` (works on any machine, no hardcoded paths).
+- Use `agy --add-dir "$PAPERHUB_ROOT"` for absolute workspace reference.
+- Output/stderr/log files are numbered to prevent collisions.
+- Wait for all background jobs before processing responses.
 
 ## Configuration paths
 

@@ -21,7 +21,7 @@ This workflow reuses the same prompt and file-organization logic as the OpenRout
 
 In `metadata-only` mode, `--prepare-cli-input` creates a temporary first-`METADATA_ONLY_PAGE_LIMIT` PDF under `.paperhub_tmp/`; Agy receives that temporary PDF, while `--from-response` still moves the original PDF into `organized/`.
 
-**Critical Agy path rule:** use the absolute PDF path from `pdf_for_ai_agy_path` and always pass `--add-dir "$PAPERHUB_ROOT"`. Agy may otherwise resolve `@organized/...` relative to a parent project and fail to read the PDF.
+**Critical Agy path rule:** Always run from `paperhub_utils/`. Set `PAPERHUB_ROOT=$(cd .. && pwd)` first, then use `agy --add-dir "$PAPERHUB_ROOT"` with the PDF path from `pdf_for_ai_agy_path`. This ensures Agy resolves paths correctly on any machine.
 
 ## Mode Mapping
 
@@ -36,32 +36,33 @@ Use the same Agy call shape for all three modes: read `prompt_path`, `pdf_for_ai
 ## Full Or Metadata-Only Paper
 
 ```bash
-# 1. Prepare prompt/PDF and persist the configured Agy model.
+# From paperhub_utils/
 cd paperhub_utils
+PAPERHUB_ROOT=$(cd .. && pwd)
+
+# 1. Prepare prompt/PDF and persist the configured Agy model.
 uv run python paper_summarizer.py --prepare-cli-input \
   --external-cli-engine agy-cli \
-  --pdf-path-arg "../to_be_organized/paper.pdf" \
+  --pdf-path-arg "$PAPERHUB_ROOT/to_be_organized/paper.pdf" \
   --summary-mode full \
   > /tmp/paperhub_agy_input.json
 ```
 
-Use `--summary-mode metadata-only` for metadata-only mode. Do not change the Agy call shape; the prepared JSON will point Agy at the first-pages temp PDF.
+Use `--summary-mode metadata-only` for metadata-only mode. Do not change the Agy call shape.
 
 Add `--agy-model "Gemini 3.5 Flash (Medium)"` only when the user explicitly requests a different allowed Agy model.
 
 ```bash
-# 2. Call Agy from the paper-library root.
-cd ..
+# 2. Call Agy (still in paperhub_utils/).
 PROMPT=$(python3 -c "import json; print(open(json.load(open('/tmp/paperhub_agy_input.json'))['prompt_path']).read())")
 PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['pdf_for_ai_agy_path'])")
-PAPERHUB_ROOT=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['paperhub_root'])")
 AGY_LOG="/tmp/paperhub_agy.log"
 AGY_STDERR="/tmp/paperhub_agy_stderr.txt"
 AGY_OUTPUT="/tmp/paperhub_agy_output.txt"
 
 agy --log-file "${AGY_LOG}" \
   --print-timeout 10m \
-  --add-dir "${PAPERHUB_ROOT}" \
+  --add-dir "$PAPERHUB_ROOT" \
   --print "@${PDF_PATH}
 
 Use only the attached PDF. Do not use web search. Do not infer from the filename.
@@ -76,8 +77,7 @@ ${PROMPT}" \
 ```
 
 ```bash
-# 3. Organize from raw Agy output. The script extracts the sentinel block.
-cd paperhub_utils
+# 3. Organize from raw Agy output (still in paperhub_utils/).
 ORIGINAL_PDF=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['original_pdf_path'])")
 SUMMARY_MODE=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['summary_mode'])")
 MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['agy_model_label'])")
@@ -112,6 +112,19 @@ The `--from-response --external-cli-engine agy-cli` command enforces these via `
 ## Batches
 
 Process Agy papers sequentially by default. Parallel calls share the same global Agy settings file and are harder to debug. If the user explicitly wants parallelism, only batch papers using the same resolved Agy model and keep per-paper output/stderr/log paths distinct.
+
+### Parallel Batch Guidelines (When User Requests)
+
+1. **Preconditions:** All papers must use the same Agy model; verify `agy_model_label` is identical across all prepared JSONs.
+2. **Working directory:** Stay in `paperhub_utils/` throughout. Set `PAPERHUB_ROOT=$(cd .. && pwd)` once at the start.
+3. **File isolation:** Each paper needs distinct temp files:
+   - `prepare_N.json` (prepared input)
+   - `/tmp/paperhub_agy_output_N.txt` (Agy stdout)
+   - `/tmp/paperhub_agy_stderr_N.txt` (Agy stderr)
+   - `/tmp/paperhub_agy_log_N.log` (Agy log file)
+4. **Agy calls:** Use `agy --add-dir "$PAPERHUB_ROOT"` (variable ensures portability across machines).
+5. **Wait synchronization:** Use `wait` to block until all background Agy processes complete before starting response processing phase.
+6. **Error handling:** If any Agy call fails, report which paper(s) failed and ask user whether to retry, abandon, or switch models — never auto-recover.
 
 ## Error Handling
 

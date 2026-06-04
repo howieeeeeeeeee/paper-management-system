@@ -108,6 +108,31 @@ def resolve_model_config(model_arg) -> dict:
     return {"model_id": model_arg, "provider": {}}
 
 
+def resolve_pdf_input_config(model_config: dict) -> dict:
+    """Return a validated PDF input strategy for an OpenRouter model."""
+    raw_config = model_config.get("pdf_input", "openrouter_file_parser")
+    if isinstance(raw_config, str):
+        mode = raw_config
+        extractor = "pymupdf4llm"
+    elif isinstance(raw_config, dict):
+        mode = raw_config.get("mode", "openrouter_file_parser")
+        extractor = raw_config.get("extractor", "pymupdf4llm")
+    else:
+        raise ValueError(
+            f"pdf_input must be a string or dict, got {type(raw_config).__name__}"
+        )
+
+    if mode not in {"openrouter_file_parser", "text_extraction"}:
+        raise ValueError(f"Unsupported pdf_input mode: {mode}")
+    if mode == "text_extraction" and extractor != "pymupdf4llm":
+        raise ValueError(f"Unsupported PDF text extractor: {extractor}")
+
+    resolved = {"mode": mode}
+    if mode == "text_extraction":
+        resolved["extractor"] = extractor
+    return resolved
+
+
 # Setup logging
 def setup_logging(verbose: bool = False) -> logging.Logger:
     """Configure logging with appropriate level and format."""
@@ -193,6 +218,317 @@ def create_analysis_prompt(
     )
 
 
+def extract_text_from_file_annotations(error_body: dict) -> str:
+    """Flatten OpenRouter parsed PDF annotations into plain text."""
+    annotations = (
+        error_body.get("error", {})
+        .get("metadata", {})
+        .get("file_annotations", [])
+    )
+    text_parts: list[str] = []
+
+    if not isinstance(annotations, list):
+        return ""
+
+    for annotation in annotations:
+        if not isinstance(annotation, dict):
+            continue
+        file_info = annotation.get("file", {})
+        if not isinstance(file_info, dict):
+            continue
+        for part in file_info.get("content", []):
+            if not isinstance(part, dict):
+                continue
+            if part.get("type") == "text" and isinstance(part.get("text"), str):
+                text_parts.append(part["text"])
+
+    return "\n\n".join(text_parts).strip()
+
+
+def extract_pdf_context(pdf_path: Path, extractor: str) -> str:
+    """Convert a PDF into Markdown/text context for text-only model calls."""
+    if extractor == "pymupdf4llm":
+        try:
+            import pymupdf4llm
+        except ImportError as e:
+            raise RuntimeError(
+                "Missing dependency: install pymupdf4llm to use PDF text extraction"
+            ) from e
+
+        logger.info("Extracting PDF context with pymupdf4llm: %s", pdf_path)
+        text = pymupdf4llm.to_markdown(str(pdf_path))
+    else:
+        raise ValueError(f"Unsupported PDF text extractor: {extractor}")
+
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError(f"PDF text extraction produced no content: {pdf_path}")
+    return text.strip()
+
+
+def build_pdf_text_context_prompt(
+    prompt: str,
+    pdf_text: str,
+    source_note: str,
+) -> str:
+    """Create a text-only prompt from extracted PDF content."""
+    return (
+        f"{source_note} Use the extracted paper content below as the attached PDF.\n\n"
+        "<paper_pdf_text>\n"
+        f"{pdf_text}\n"
+        "</paper_pdf_text>\n\n"
+        f"{prompt}"
+    )
+
+
+def build_parsed_pdf_fallback_prompt(prompt: str, parsed_text: str) -> str:
+    """Create a text-only prompt from OpenRouter's parsed PDF content."""
+    return build_pdf_text_context_prompt(
+        prompt,
+        parsed_text,
+        (
+            "OpenRouter parsed the PDF into text, but the downstream provider "
+            "cannot accept the original PDF file block."
+        ),
+    )
+
+
+def build_local_pdf_text_prompt(prompt: str, pdf_text: str, extractor: str) -> str:
+    """Create a text-only prompt from locally extracted PDF content."""
+    return build_pdf_text_context_prompt(
+        prompt,
+        pdf_text,
+        f"The PDF was converted to Markdown locally with {extractor}.",
+    )
+
+
+def make_openrouter_headers(api_key: str) -> dict:
+    """Return common headers for OpenRouter chat-completions calls."""
+    return {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "X-Title": "Paper Summarizer",
+    }
+
+
+def parse_openrouter_success_response(response: requests.Response) -> dict:
+    """Parse a successful OpenRouter response into normalized content/usage."""
+    result = response.json()
+    content = (
+        result.get("choices", [{}])[0]
+        .get("message", {})
+        .get("content", "")
+    )
+    usage = result.get("usage", {})
+    if usage:
+        logger.info(
+            "Token usage - prompt: %s, completion: %s, total: %s",
+            usage.get("prompt_tokens"),
+            usage.get("completion_tokens"),
+            usage.get("total_tokens"),
+        )
+    return {"success": True, "content": content, "usage": usage}
+
+
+def call_openrouter_text_api(
+    api_key: str,
+    model_id: str,
+    prompt: str,
+    pdf_text: str,
+    provider: dict | None = None,
+    reasoning: dict | None = None,
+    extractor: str = "pymupdf4llm",
+) -> dict:
+    """Call OpenRouter with locally extracted PDF text instead of a file block."""
+    headers = make_openrouter_headers(api_key)
+    payload = {
+        "model": model_id,
+        "messages": [
+            {
+                "role": "user",
+                "content": build_local_pdf_text_prompt(prompt, pdf_text, extractor),
+            }
+        ],
+        "max_tokens": 16000,
+        "temperature": 0,
+    }
+
+    if reasoning:
+        payload["reasoning"] = reasoning
+    if provider:
+        payload["provider"] = provider
+
+    logger.info("Request details:")
+    logger.info("  URL: %s", OPENROUTER_API_URL)
+    logger.info("  Model: %s", model_id)
+    if provider:
+        logger.info("  Provider: %s", provider)
+    logger.info("  PDF input: local text extraction (%s)", extractor)
+    logger.info("  Extracted text length: %s characters", len(pdf_text))
+    logger.info("  Max tokens: %s", payload["max_tokens"])
+    logger.debug("  Prompt length: %s characters", len(prompt))
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            logger.info(
+                "Calling OpenRouter API with extracted text "
+                "(attempt %s/%s)...",
+                attempt + 1,
+                MAX_RETRIES,
+            )
+            response = requests.post(
+                OPENROUTER_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=300,
+            )
+            if response.status_code == 200:
+                try:
+                    result = parse_openrouter_success_response(response)
+                    result["pdf_input_mode"] = "text_extraction"
+                    result["pdf_text_extractor"] = extractor
+                    logger.info("API call successful")
+                    return result
+                except (ValueError, KeyError, IndexError) as parse_error:
+                    return {
+                        "success": False,
+                        "error": f"Failed to parse successful API response: {parse_error}",
+                        "status_code": response.status_code,
+                        "response_preview": response.text[:500],
+                    }
+
+            try:
+                error_body = response.json()
+                error_message = error_body.get("error", {}).get(
+                    "message", "Unknown error"
+                )
+                error_details = {
+                    "status_code": response.status_code,
+                    "status_reason": response.reason,
+                    "headers": dict(response.headers),
+                    "error_body": error_body,
+                }
+            except ValueError:
+                error_message = f"HTTP {response.status_code}: {response.reason}"
+                error_details = {
+                    "status_code": response.status_code,
+                    "status_reason": response.reason,
+                    "headers": dict(response.headers),
+                    "response_text": response.text[:2000],
+                }
+
+            logger.error("API Error Response:")
+            logger.error("  Status: %s %s", response.status_code, response.reason)
+            logger.error("  Error Message: %s", error_message)
+            if attempt < MAX_RETRIES - 1:
+                import time
+
+                wait_time = 2**attempt
+                logger.warning("Retrying in %s seconds...", wait_time)
+                time.sleep(wait_time)
+                continue
+
+            return {
+                "success": False,
+                "error": error_message,
+                "error_details": error_details,
+                "status_code": response.status_code,
+            }
+        except requests.exceptions.RequestException as e:
+            logger.error(
+                "Request exception (attempt %s/%s): %s",
+                attempt + 1,
+                MAX_RETRIES,
+                e,
+            )
+            if attempt < MAX_RETRIES - 1:
+                import time
+
+                wait_time = 2**attempt
+                logger.warning("Retrying in %s seconds...", wait_time)
+                time.sleep(wait_time)
+                continue
+            return {
+                "success": False,
+                "error": f"Request exception: {type(e).__name__}",
+                "error_type": type(e).__name__,
+                "error_details": str(e),
+            }
+
+    return {
+        "success": False,
+        "error": "API call failed after all retries",
+        "max_retries": MAX_RETRIES,
+    }
+
+
+def call_openrouter_text_fallback(
+    headers: dict,
+    model_id: str,
+    prompt: str,
+    parsed_text: str,
+    provider: dict | None,
+    max_tokens: int,
+    temperature: float,
+    reasoning: dict | None,
+) -> dict:
+    """Retry OpenRouter with parsed PDF text instead of a PDF file block."""
+    payload = {
+        "model": model_id,
+        "messages": [
+            {
+                "role": "user",
+                "content": build_parsed_pdf_fallback_prompt(prompt, parsed_text),
+            }
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+    }
+
+    if reasoning:
+        payload["reasoning"] = reasoning
+    if provider:
+        payload["provider"] = provider
+
+    response = requests.post(
+        OPENROUTER_API_URL,
+        headers=headers,
+        json=payload,
+        timeout=300,
+    )
+    if response.status_code != 200:
+        try:
+            error_body = response.json()
+        except ValueError:
+            error_body = {"response_text": response.text[:2000]}
+        return {
+            "success": False,
+            "error": f"Text fallback failed: HTTP {response.status_code}",
+            "status_code": response.status_code,
+            "error_details": error_body,
+        }
+
+    try:
+        result = response.json()
+        content = (
+            result.get("choices", [{}])[0]
+            .get("message", {})
+            .get("content", "")
+        )
+        return {
+            "success": True,
+            "content": content,
+            "usage": result.get("usage", {}),
+            "pdf_fallback": "parsed_text",
+        }
+    except (ValueError, KeyError, IndexError) as parse_error:
+        return {
+            "success": False,
+            "error": f"Failed to parse text fallback response: {parse_error}",
+            "status_code": response.status_code,
+            "response_preview": response.text[:500],
+        }
+
+
 def call_openrouter_api(
     api_key: str,
     model_id: str,
@@ -200,13 +536,10 @@ def call_openrouter_api(
     prompt: str,
     pdf_engine: str,
     provider: dict | None = None,
+    reasoning: dict | None = None,
 ) -> dict:
     """Call OpenRouter API with PDF content."""
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "X-Title": "Paper Summarizer",
-    }
+    headers = make_openrouter_headers(api_key)
 
     payload = {
         "model": model_id,
@@ -214,6 +547,7 @@ def call_openrouter_api(
             {
                 "role": "user",
                 "content": [
+                    {"type": "text", "text": prompt},
                     {
                         "type": "file",
                         "file": {
@@ -221,7 +555,6 @@ def call_openrouter_api(
                             "file_data": f"data:application/pdf;base64,{pdf_base64}",
                         },
                     },
-                    {"type": "text", "text": prompt},
                 ],
             }
         ],
@@ -233,9 +566,10 @@ def call_openrouter_api(
         ],
         "max_tokens": 16000,
         "temperature": 0,
-        "reasoning": {"enabled": True},
     }
 
+    if reasoning:
+        payload["reasoning"] = reasoning
     if provider:
         payload["provider"] = provider
 
@@ -268,22 +602,9 @@ def call_openrouter_api(
 
             if response.status_code == 200:
                 try:
-                    result = response.json()
-                    content = (
-                        result.get("choices", [{}])[0]
-                        .get("message", {})
-                        .get("content", "")
-                    )
-                    usage = result.get("usage", {})
-                    if usage:
-                        logger.info(
-                            "Token usage - prompt: %s, completion: %s, total: %s",
-                            usage.get("prompt_tokens"),
-                            usage.get("completion_tokens"),
-                            usage.get("total_tokens"),
-                        )
+                    result = parse_openrouter_success_response(response)
                     logger.info("API call successful")
-                    return {"success": True, "content": content, "usage": usage}
+                    return result
                 except (ValueError, KeyError, IndexError) as parse_error:
                     error_msg = (
                         f"Failed to parse successful API response: {parse_error}"
@@ -322,6 +643,30 @@ def call_openrouter_api(
                     logger.debug(
                         f"  Full error response: {json.dumps(error_body, indent=2)}"
                     )
+                    parsed_text = extract_text_from_file_annotations(error_body)
+                    if parsed_text:
+                        logger.warning(
+                            "OpenRouter parsed the PDF but the provider rejected "
+                            "the file payload; retrying with parsed text only"
+                        )
+                        fallback_result = call_openrouter_text_fallback(
+                            headers=headers,
+                            model_id=model_id,
+                            prompt=prompt,
+                            parsed_text=parsed_text,
+                            provider=provider,
+                            max_tokens=payload["max_tokens"],
+                            temperature=payload["temperature"],
+                            reasoning=payload.get("reasoning"),
+                        )
+                        if fallback_result.get("success"):
+                            logger.info("Parsed-text fallback succeeded")
+                            return fallback_result
+                        logger.error(
+                            "Parsed-text fallback failed: %s",
+                            fallback_result.get("error"),
+                        )
+                        error_details["text_fallback"] = fallback_result
                 except (ValueError, KeyError):
                     # Response is not JSON, log as text
                     error_details["response_text"] = response.text
@@ -1055,7 +1400,14 @@ def format_yaml_model_value(model_id: str) -> str:
     return model_id
 
 
-def save_raw_content(pdf_path: Path, content: str, usage: dict) -> Path:
+def save_raw_content(
+    pdf_path: Path,
+    content: str,
+    usage: dict,
+    model_label: str | None = None,
+    pdf_engine: str | None = None,
+    summary_mode: str | None = None,
+) -> Path:
     """Save raw API content to file for manual processing by the skill."""
     RAW_OUTPUTS_DIR.mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1063,6 +1415,12 @@ def save_raw_content(pdf_path: Path, content: str, usage: dict) -> Path:
     raw_path = RAW_OUTPUTS_DIR / f"{stem}_{timestamp}.md"
     # Prepend usage metadata as YAML frontmatter
     header = f'---\npdf_path: "{pdf_path}"\n'
+    if model_label:
+        header += f"model: {format_yaml_model_value(model_label)}\n"
+    if pdf_engine:
+        header += f"pdf_engine: {pdf_engine}\n"
+    if summary_mode:
+        header += f"summary_mode: {summary_mode}\n"
     if usage:
         header += f"prompt_tokens: {usage.get('prompt_tokens', 'N/A')}\n"
         header += f"completion_tokens: {usage.get('completion_tokens', 'N/A')}\n"
@@ -1095,6 +1453,42 @@ def validate_pdf_path(pdf_path: Path) -> str | None:
     if not pdf_path.suffix.lower() == ".pdf":
         return f"File is not a PDF: {pdf_path}"
     return None
+
+
+SIDECAR_SUFFIXES = (".citation.md",)
+
+
+def find_sidecar_for_pdf(pdf_path: Path) -> Path | None:
+    """Return a citation sidecar sharing the PDF's stem in the same directory.
+
+    The paper-finder skill drops a ``{stem}.citation.md`` next to each downloaded
+    PDF; this pairs them so the citation can be used as authoritative context.
+    """
+    for suffix in SIDECAR_SUFFIXES:
+        candidate = pdf_path.with_name(pdf_path.stem + suffix)
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def fold_sidecar_into_instruction(pdf_path: Path, instruction: str) -> str:
+    """Prepend citation-sidecar context (if any) to the user instruction."""
+    sidecar = find_sidecar_for_pdf(pdf_path)
+    if sidecar is None:
+        return instruction
+    try:
+        citation = sidecar.read_text(encoding="utf-8").strip()
+    except OSError:
+        return instruction
+    if not citation:
+        return instruction
+    block = (
+        "Authoritative bibliographic metadata for this paper was retrieved from a "
+        "citation database. Use it to fill title/authors/year/journal/DOI accurately "
+        "and do not contradict it:\n\n"
+        f"{citation}"
+    )
+    return f"{block}\n\n{instruction}".strip() if instruction else block
 
 
 def organize_from_response(
@@ -1155,7 +1549,14 @@ def organize_from_response(
             "summary_mode": summary_mode,
         }
         if content.strip():
-            raw_path = save_raw_content(pdf_path, content, usage)
+            raw_path = save_raw_content(
+                pdf_path,
+                content,
+                usage,
+                model_label=model_label,
+                pdf_engine=pdf_engine,
+                summary_mode=summary_mode,
+            )
             error_payload["raw_content_file"] = str(raw_path)
             logger.info(f"Raw content saved for manual processing: {raw_path}")
         return error_payload
@@ -1168,7 +1569,12 @@ def organize_from_response(
         paper_dir = create_directory_structure(output_dir, paper_label)
         actual_label = paper_dir.name
 
+        sidecar_src = find_sidecar_for_pdf(pdf_path)
         new_pdf_path = move_pdf(pdf_path, paper_dir)
+        if sidecar_src is not None and sidecar_src.exists():
+            sidecar_dest = paper_dir / sidecar_src.name
+            shutil.move(str(sidecar_src), str(sidecar_dest))
+            logger.info(f"Moved citation sidecar to: {sidecar_dest}")
 
         # Generate and write metadata
         metadata_value = parsed_data.get("metadata")
@@ -1288,9 +1694,26 @@ def process_pdf(
             "error_type": "ValueError",
         }
 
+    # Resolve model config before preparing the PDF because models choose how
+    # PDF content enters the OpenRouter request.
+    model_config = resolve_model_config(model)
+    model_id = model_config["model_id"]
+    provider = model_config.get("provider", {})
+    reasoning = model_config.get("reasoning")
+    pdf_input = resolve_pdf_input_config(model_config)
+    pdf_input_mode = pdf_input["mode"]
+    pdf_text_extractor = pdf_input.get("extractor")
+    effective_pdf_engine = (
+        pdf_text_extractor
+        if pdf_input_mode == "text_extraction"
+        else pdf_engine
+    )
+
     temp_pdf_dir = None
     pdf_for_ai = pdf_path
     sample_info = None
+    pdf_base64 = None
+    pdf_text = None
     try:
         if summary_mode == SUMMARY_MODE_METADATA_ONLY:
             temp_pdf_dir = TemporaryDirectory(prefix="paperhub_metadata_only_")
@@ -1307,7 +1730,10 @@ def process_pdf(
                 pdf_path.name,
             )
 
-        pdf_base64 = encode_pdf_to_base64(pdf_for_ai)
+        if pdf_input_mode == "text_extraction":
+            pdf_text = extract_pdf_context(pdf_for_ai, pdf_text_extractor)
+        else:
+            pdf_base64 = encode_pdf_to_base64(pdf_for_ai)
     except FileNotFoundError as e:
         error = f"PDF file not found: {e}"
         logger.error(error)
@@ -1338,7 +1764,7 @@ def process_pdf(
     except Exception as e:
         import traceback
 
-        error = f"Failed to read/encode PDF: {type(e).__name__}: {e}"
+        error = f"Failed to prepare PDF input: {type(e).__name__}: {e}"
         logger.error(error)
         logger.error(f"Traceback:\n{traceback.format_exc()}")
         return {
@@ -1353,18 +1779,31 @@ def process_pdf(
             temp_pdf_dir.cleanup()
             temp_pdf_dir = None
 
-    # Resolve model config (handles both dict and string model args)
-    model_config = resolve_model_config(model)
-    model_id = model_config["model_id"]
-    provider = model_config.get("provider", {})
-
     # Call API
+    additional_instruction = fold_sidecar_into_instruction(pdf_path, additional_instruction)
     prompt = create_analysis_prompt(additional_instruction, summary_mode)
     logger.info(f"Processing PDF: {pdf_path.name}")
     try:
-        api_result = call_openrouter_api(
-            api_key, model_id, pdf_base64, prompt, pdf_engine, provider
-        )
+        if pdf_input_mode == "text_extraction":
+            api_result = call_openrouter_text_api(
+                api_key=api_key,
+                model_id=model_id,
+                prompt=prompt,
+                pdf_text=pdf_text or "",
+                provider=provider,
+                reasoning=reasoning,
+                extractor=pdf_text_extractor,
+            )
+        else:
+            api_result = call_openrouter_api(
+                api_key,
+                model_id,
+                pdf_base64 or "",
+                prompt,
+                pdf_engine,
+                provider,
+                reasoning,
+            )
         if not api_result.get("success"):
             error = api_result.get("error", "Unknown API error")
             error_type = api_result.get("error_type", "Unknown")
@@ -1376,7 +1815,8 @@ def process_pdf(
             logger.error("=" * 60)
             logger.error(f"PDF file: {pdf_path}")
             logger.error(f"Model: {model_id}")
-            logger.error(f"PDF engine: {pdf_engine}")
+            logger.error(f"PDF input: {pdf_input_mode}")
+            logger.error(f"PDF engine: {effective_pdf_engine}")
             logger.error(f"Error type: {error_type}")
             logger.error(f"Error message: {error}")
             if status_code:
@@ -1395,7 +1835,8 @@ def process_pdf(
                 "status_code": status_code,
                 "error_details": error_details,
                 "model": model_id,
-                "pdf_engine": pdf_engine,
+                "pdf_engine": effective_pdf_engine,
+                "pdf_input_mode": pdf_input_mode,
                 "summary_mode": summary_mode,
             }
 
@@ -1404,7 +1845,7 @@ def process_pdf(
             content=api_result.get("content") or "",
             pdf_path=pdf_path,
             model_label=model_id,
-            pdf_engine=pdf_engine,
+            pdf_engine=effective_pdf_engine,
             output_dir=output_dir,
             usage=api_result.get("usage"),
             summary_mode=summary_mode,
@@ -1456,6 +1897,7 @@ def prepare_cli_input(
     work_dir.mkdir(parents=True, exist_ok=False)
 
     try:
+        additional_instruction = fold_sidecar_into_instruction(pdf_path, additional_instruction)
         prompt = create_analysis_prompt(additional_instruction, summary_mode)
         prompt_path = work_dir / "prompt.txt"
         prompt_path.write_text(prompt, encoding="utf-8")

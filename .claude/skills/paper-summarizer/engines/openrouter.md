@@ -12,14 +12,15 @@ paperhub_utils/paper_summarizer.py
 
 ## How the Script Works
 
-1. **PDF Encoding**: PDF is read and encoded to base64 for API transmission
+1. **PDF Preparation**: PDF is read and either encoded to base64 for file-parser models or converted locally to Markdown/text for text-extraction models.
 2. **Prompt Construction**: Composes the prompt from `prompt/shared/` and `prompt/aspect/` fragments via `prompt/builder.py` and fills in dynamic values (date, research interests, user instructions)
-3. **API Call**: Sends PDF (base64) + prompt to OpenRouter with `file-parser` plugin using `mistral-ocr` engine
-4. **Response Parsing**: Parses markdown sections (`# paper_label`, `# metadata`, plus `# ai_summary` in `full` mode), falls back to JSON
-5. **Output Generation**: Creates folder, writes metadata, writes summary in `full` mode, moves original PDF
-6. **Returns JSON** with per-paper status, token usage, and file paths
+3. **PDF Input Strategy**: Reads the selected model's `pdf_input` config. Models can either send PDF (base64) + prompt to OpenRouter with `file-parser`, or convert the PDF locally to Markdown/text first.
+4. **API Call**: Calls OpenRouter with either the PDF file block or the extracted PDF text context.
+5. **Response Parsing**: Parses markdown sections (`# paper_label`, `# metadata`, plus `# ai_summary` in `full` mode), falls back to JSON
+6. **Output Generation**: Creates folder, writes metadata, writes summary in `full` mode, moves original PDF
+7. **Returns JSON** with per-paper status, token usage, and file paths
 
-In `metadata-only` mode, the script creates a temporary first-`METADATA_ONLY_PAGE_LIMIT` PDF, sends only that temporary PDF to OpenRouter, writes metadata only, deletes the temporary PDF, and moves the original PDF into `organized/`.
+In `metadata-only` mode, the script creates a temporary first-`METADATA_ONLY_PAGE_LIMIT` PDF, sends only that temporary PDF through the selected PDF input strategy, writes metadata only, deletes the temporary PDF, and moves the original PDF into `organized/`.
 
 ## Calling the Script
 
@@ -132,6 +133,26 @@ paperhub_utils/config.py
 ```
 
 Override with `--model` flag (e.g., `--model "xxx"`). The script looks up the provider order from `MODEL_LIST` automatically.
+
+Each `MODEL_LIST` entry may include:
+
+```python
+{
+    "model_id": "qwen/qwen3.7-max",
+    "provider": {},
+    "reasoning": {"effort": "medium", "exclude": True},
+    "pdf_input": "text_extraction",
+}
+```
+
+Reasoning efforts listed in `config.py`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`.
+
+PDF input modes:
+
+- `openrouter_file_parser`: send a PDF file block through OpenRouter `file-parser` with `DEFAULT_PDF_ENGINE`.
+- `text_extraction`: convert the PDF locally to Markdown/text first, then send that text as context. The current extractor is `pymupdf4llm`.
+
+Use `text_extraction` for providers that reject OpenRouter PDF file blocks, such as Qwen via Alibaba.
 
 ## Handling Partial Failures
 

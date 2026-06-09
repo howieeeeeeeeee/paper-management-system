@@ -100,14 +100,18 @@ uv run python paper_summarizer.py --cleanup-cli-input "${CLEANUP_DIR}"
 
 ## Validation Guards
 
-Treat these as fatal and do **not** organize output:
+Hard-fatal — do **not** organize output:
 
 - Agy exits with `Error: timed out waiting for response`.
-- Agy stdout is missing `PAPERHUB_RESPONSE_BEGIN` or `PAPERHUB_RESPONSE_END`.
+- Agy stdout is missing `PAPERHUB_RESPONSE_BEGIN` or `PAPERHUB_RESPONSE_END`, or the response block is empty.
 - Agy stderr/log contains file-read or workspace failures.
-- Agy stderr/log contains visible tool-call failures or web-search markers.
+- Agy stderr/log contains web-search markers.
 
-The `--from-response --external-cli-engine agy-cli` command enforces these via `cli_workflow/agy.py`.
+Recoverable — tolerated when a valid, non-empty sentinel response was produced:
+
+- `invalid tool call error` / `Model output error` in the log. Gemini routinely emits spurious agentic tool-call steps in print mode (e.g. `echo`-ing a status line), and Agy's arg-marshalling can make them fail, but the model usually recovers and still returns a complete response. These markers are only fatal when no valid response exists.
+
+The `--from-response --external-cli-engine agy-cli` command enforces this split via `validate_agy_cli_run` in `cli_workflow/agy.py` (`AGY_CLI_HARD_FATAL_MARKERS` vs `AGY_CLI_RECOVERABLE_MARKERS`).
 
 ## Batches
 

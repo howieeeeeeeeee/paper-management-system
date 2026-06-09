@@ -85,7 +85,7 @@ git commit -m "feat(papers): add {N} papers
 
 Use the per-mode completion-report template in `modes/{mode}.md`. Always include:
 
-- Token usage when available (Agy CLI: token counts unavailable, `cost: N/A`; Gemini CLI: `cost: N/A`; Coding Agent: no token info).
+- Token usage when available (Agy CLI: token counts unavailable, `cost: N/A`; Coding Agent: no token info).
 - **Tag updates line/section** — count + list of newly added tags (with type), count + list of merges (`new_variant -> existing_canonical`), count of tags reused unchanged. If nothing changed: `Tag updates: all N tags reused from registry, no changes.`
 
 ## 6. Handle partial failures

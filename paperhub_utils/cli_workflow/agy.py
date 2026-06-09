@@ -12,7 +12,9 @@ AGY_RESPONSE_END = "PAPERHUB_RESPONSE_END"
 AGY_CLI_MODEL_SUFFIX = " (Agy CLI)"
 AGY_CLI_SETTINGS_ENV = "AGY_CLI_SETTINGS_PATH"
 
-AGY_CLI_FATAL_MARKERS = (
+# Always fatal: PDF-read failures, workspace errors, timeouts, and web-search
+# contamination mean the output is not reliably grounded in the attached PDF.
+AGY_CLI_HARD_FATAL_MARKERS = (
     "Error: timed out waiting for response",
     "Print mode: timed out",
     "failed to read file",
@@ -20,11 +22,20 @@ AGY_CLI_FATAL_MARKERS = (
     "No valid file paths found in @ commands",
     "No valid file paths, resources, or agents found in @ commands",
     "error executing cascade step",
-    "invalid tool call error",
-    "Model output error",
     "google_web_search",
     "web_search",
 )
+
+# Recoverable: Gemini frequently emits spurious agentic tool-call steps in print
+# mode, and Agy's arg-marshalling bugs make them fail and log these markers. The
+# model usually recovers and still produces a complete response, so these are
+# only fatal when no valid sentinel response was produced.
+AGY_CLI_RECOVERABLE_MARKERS = (
+    "invalid tool call error",
+    "Model output error",
+)
+
+AGY_CLI_FATAL_MARKERS = AGY_CLI_HARD_FATAL_MARKERS + AGY_CLI_RECOVERABLE_MARKERS
 
 
 def agy_settings_path() -> Path:
@@ -116,17 +127,31 @@ def validate_agy_cli_run(
     stderr_path: Path | None = None,
     log_path: Path | None = None,
 ) -> list[str]:
-    """Return problems indicating Agy did not reliably produce PDF-grounded output."""
+    """Return problems indicating Agy did not reliably produce PDF-grounded output.
+
+    Hard-fatal markers always count. Recoverable markers (spurious tool-call
+    failures the model recovers from) only count when no valid, non-empty
+    sentinel response was produced.
+    """
     problems: list[str] = []
+    recoverable_problems: list[str] = []
+    has_valid_response = False
 
     if stdout_text is not None:
-        problems.extend(_scan_text_for_fatal_markers(stdout_text, "Agy stdout"))
+        problems.extend(
+            _scan_text_for_markers(stdout_text, "Agy stdout", AGY_CLI_HARD_FATAL_MARKERS)
+        )
+        recoverable_problems.extend(
+            _scan_text_for_markers(stdout_text, "Agy stdout", AGY_CLI_RECOVERABLE_MARKERS)
+        )
         try:
             response = extract_agy_response_block(stdout_text)
         except ValueError as e:
             problems.append(str(e))
         else:
-            if not response:
+            if response:
+                has_valid_response = True
+            else:
                 problems.append("Agy response block is empty")
 
     for label, path in (("Agy stderr", stderr_path), ("Agy log", log_path)):
@@ -136,14 +161,22 @@ def validate_agy_cli_run(
             problems.append(f"{label} file not found: {path}")
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        problems.extend(_scan_text_for_fatal_markers(text, label))
+        problems.extend(_scan_text_for_markers(text, label, AGY_CLI_HARD_FATAL_MARKERS))
+        recoverable_problems.extend(
+            _scan_text_for_markers(text, label, AGY_CLI_RECOVERABLE_MARKERS)
+        )
+
+    if not has_valid_response:
+        problems.extend(recoverable_problems)
 
     return problems
 
 
-def _scan_text_for_fatal_markers(text: str, source_label: str) -> list[str]:
+def _scan_text_for_markers(
+    text: str, source_label: str, markers: tuple[str, ...]
+) -> list[str]:
     return [
         f"{source_label} indicates Agy failure: {marker}"
-        for marker in AGY_CLI_FATAL_MARKERS
+        for marker in markers
         if marker in text
     ]

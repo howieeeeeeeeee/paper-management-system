@@ -1,6 +1,6 @@
 # Workflow: Current Coding Agent
 
-This workflow uses the **current coding-agent session** (you, right now) as the AI engine — no OpenRouter API, no Gemini CLI. Use it when the user explicitly asks for the current coding agent / "use you" / "no external AI".
+This workflow uses the **current coding-agent session** (you, right now) as the AI engine — no OpenRouter API, no Agy CLI. Use it when the user explicitly asks for the current coding agent / "use you" / "no external AI".
 
 Supports all three modes: `metadata-only` (cheap), `full` (expensive), and `enrich` (expensive).
 
@@ -28,12 +28,12 @@ Skip the gate only when the user already explicitly opted in (e.g., "I know it's
 
 For `full` and `enrich` via this engine, refuse more than **3 papers per invocation** without a second `AskUserQuestion` confirmation. Process the first 3 and ask again before continuing — never let a batch silently balloon.
 
-## How this engine differs from OpenRouter / Gemini CLI
+## How this engine differs from OpenRouter / Agy CLI
 
-| Step | OpenRouter / Gemini CLI | Coding agent (this doc) |
+| Step | OpenRouter / Agy CLI | Coding agent (this doc) |
 |---|---|---|
 | Build prompt | script reads `prompt/builder.py` | same — call `--prepare-cli-input` |
-| Read PDF | API plugin / Gemini native | `Read` tool reads PDF directly |
+| Read PDF | API plugin / Agy native | `Read` tool reads PDF directly |
 | Generate content | API call | YOU generate it in this turn |
 | Lay down files (full / metadata-only) | script `--from-response` | direct `Bash mkdir / mv` + `Write` |
 | Lay down files (enrich) | script `--from-response` | script `--from-response` (merge logic is non-trivial) |
@@ -261,7 +261,7 @@ Then `shared/post_ai.md` for validation + tag handoff + commit. The `ai_summary.
 
 Run the pre-flight `AskUserQuestion` gate. Also run the **existing-summary `AskUserQuestion` flow** from `modes/enrich.md` (Polish past / Overwrite from scratch / Meta-fill only / Skip) before processing each folder that already has `ai_summary.md`.
 
-`--use-past-summary` and `--instruction` work the same as for OpenRouter / Gemini CLI — pass them through to `--prepare-cli-input`.
+`--use-past-summary` and `--instruction` work the same as for OpenRouter / Agy CLI — pass them through to `--prepare-cli-input`.
 
 ### Step 1 — prepare prompt
 
@@ -328,7 +328,7 @@ uv run python enrich.py --from-response --folder ACF2015 \
   [--no-summary]
 ```
 
-The `current-coding-agent` model label triggers `pdf_engine: coding-agent` in the resulting `ai_summary.md` frontmatter and skips Gemini CLI validation. Token args are optional — leave them off; the frontmatter records `N/A`.
+The `current-coding-agent` model label triggers `pdf_engine: coding-agent` in the resulting `ai_summary.md` frontmatter and skips external-CLI artifact validation. Token args are optional — leave them off; the frontmatter records `N/A`.
 
 ### Step 5 — cleanup + post-AI flow
 

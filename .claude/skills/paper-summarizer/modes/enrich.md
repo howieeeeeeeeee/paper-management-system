@@ -2,7 +2,7 @@
 
 Use this mode when the user wants to add an `ai_summary.md` to a paper that is **already in `organized/`** (typically because the paper was first added in `metadata-only` mode, or the user wants to re-do / polish an existing summary). The PRIMARY job is generating the summary; patching any blank metadata fields is a secondary side effect of the same AI call.
 
-This mode works with **OpenRouter** (default), **Agy CLI**, legacy **Gemini CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `enrich.py --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
+This mode works with **OpenRouter** (default), **Agy CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `enrich.py --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
 
 ## Trigger phrases
 
@@ -11,7 +11,7 @@ This mode works with **OpenRouter** (default), **Agy CLI**, legacy **Gemini CLI*
 - "complete metadata for `<folder>`" (still routes here — meta-fill is the secondary job)
 - "polish / redo / refine the summary for `<folder>`" (route here with past-summary reuse, see below)
 
-If the user mentions multiple folders, batch them in a single call (OpenRouter) or process sequentially (Agy CLI / Gemini CLI).
+If the user mentions multiple folders, batch them in a single call (OpenRouter) or process sequentially (Agy CLI).
 
 ## What it does, per folder
 
@@ -170,7 +170,7 @@ The prepared JSON includes `"past_summary_used": true|false` so the skill can co
 
 `summary` is one of: `generated`, `overwritten`, `skipped`, `missing-from-response`. `past_summary_used` is only present when the past summary was embedded.
 
-If the OpenRouter/Agy/Gemini call succeeds but parsing still fails, `enrich.py` saves
+If the OpenRouter/Agy call succeeds but parsing still fails, `enrich.py` saves
 the raw model text under `paperhub_utils/raw_outputs/` and returns
 `raw_content_file` in the failed result so the response can be repaired with
 `--from-response` instead of spending another API call.

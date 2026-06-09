@@ -105,7 +105,7 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    Quick smoke test that the environment is usable:
 
    ```bash
-   uv run python -c "from config import GEMINI_CLI_MODEL; print(GEMINI_CLI_MODEL)"
+   uv run python -c "from config import AGY_CLI_MODEL; print(AGY_CLI_MODEL)"
    ```
 
 ## 2. Apply setup choices from the questionnaire
@@ -136,7 +136,7 @@ Ask only for missing or conflicting information.
   - If the questionnaire says OpenRouter is not desired, record the selected alternate engine if available.
 - **AI engine**:
   - OpenRouter is the recommended default when a key is loadable.
-  - Gemini CLI is acceptable when the questionnaire selects it and `gemini` is available.
+  - Antigravity CLI is acceptable when the questionnaire selects it and `agy` is available.
   - Current coding agent is acceptable for metadata-only first runs.
   - If the chosen engine is not available, ask whether to configure it, switch to an available engine, or skip engine setup.
 - **Metadata page depth**:
@@ -269,7 +269,7 @@ The tag context output may be empty only if tag prompt context is disabled or th
 End onboarding with:
 
 1. The resolved paper-library root, utilities directory, organized directory, tags directory, vault-relative base path, and Git setting.
-2. Whether OpenRouter, Gemini CLI, or current-agent processing is available.
+2. Whether OpenRouter, Antigravity CLI, or current-agent processing is available.
 3. A short instruction to add PDFs to `to_be_organized/`.
 4. A recommended first request: run metadata-only mode on one or a small batch of PDFs.
 5. A note that `full` mode creates `ai_summary.md`, while `enrich` adds or refreshes summaries for folders that already exist.

@@ -1,6 +1,6 @@
 # Workflow: OpenRouter Script
 
-This document covers the **default** paper summarization workflow using `paper_summarizer.py` via the OpenRouter API. Read this file when the user does not request Agy CLI, legacy Gemini CLI, or the current coding agent.
+This document covers the **default** paper summarization workflow using `paper_summarizer.py` via the OpenRouter API. Read this file when the user does not request Agy CLI or the current coding agent.
 
 ## Script Location
 

@@ -51,17 +51,17 @@ Obsidian vault absolute path:
 
 ## 3. Engine And Runtime
 
-PaperHub can summarize papers with different AI engines. OpenRouter is usually the simplest option for full summaries because it only needs an API key. Gemini CLI can work if you already have it installed and configured. The current coding agent can also run PaperHub directly, including full-summary mode, but full summaries may use a lot of tokens.
+PaperHub can summarize papers with different AI engines. OpenRouter is usually the simplest option for full summaries because it only needs an API key. Antigravity CLI can work if you already have it installed and configured. The current coding agent can also run PaperHub directly, including full-summary mode, but full summaries may use a lot of tokens.
 
 Preferred AI engine:
 
 - [ ] OpenRouter
-- [ ] Gemini CLI
+- [ ] Antigravity CLI
 - [ ] Current coding agent, full summaries
 - [ ] Current coding agent, metadata-only first
 - [ ] Not sure, ask me only if the agent cannot infer a working option
 
-Choose OpenRouter if you want full AI-written paper summaries and you are comfortable creating an API key. Choose Gemini CLI only if you already know it is installed on your machine. Choose the current coding agent if you want to run onboarding without setting up a separate AI service. If you choose current coding agent full summaries, expect substantially higher token usage, especially for long PDFs or batches of many papers.
+Choose OpenRouter if you want full AI-written paper summaries and you are comfortable creating an API key. Choose Antigravity CLI only if you already know it is installed on your machine (highly recommended, since Gemini 3.1 Pro is excellent at understanding papers and provides a generous amount of quota). Choose the current coding agent if you want to run onboarding without setting up a separate AI service. If you choose the current coding agent for full summaries, expect substantially higher token usage, especially for long PDFs or batches of many papers.
 
 OpenRouter setup:
 
@@ -94,10 +94,10 @@ ls paperhub_utils/.env
 
 Do not paste the real API key into this questionnaire or into chat.
 
-Gemini CLI setup:
+Antigravity CLI setup:
 
-- [ ] I already installed and authenticated Gemini CLI on this machine.
-- [ ] I do not know what Gemini CLI is, so do not assume it is available.
+- [ ] I already installed and authenticated Antigravity CLI on this machine.
+- [ ] I do not know what Antigravity CLI is, so do not assume it is available.
 
 Current coding agent setup:
 

@@ -10,11 +10,11 @@ organized/
     `-- ai_summary.md
 ```
 
-The folder keeps the PDF, metadata, reading status, tags, and optional AI summary together. This makes the library easy to browse, link, and manage in Obsidian, especially through [Papers.base](Papers.base) and Obsidian Bases.
+The folder keeps the PDF, metadata, reading status, tags, and optional AI summary together. This makes the library easy to browse, link, and manage in Obsidian, especially through Obsidian Bases.
 
 AI integration handles the organizing work. Drop PDFs into `to_be_organized/`, run the `paper-summarizer` skill in your coding agent, and PaperHub creates the folder, metadata note, canonical tags, and optional `ai_summary.md` automatically.
 
-New to the workflow? Start with [Obsidian 101](quick_start/obsidian_101.md), then open [Papers.base](Papers.base) in Obsidian to browse the library.
+New to the workflow? Start with [Obsidian 101](quick_start/obsidian_101.md), then open [SamplePaperBoard.base](SamplePaperBoard.base) in Obsidian to browse the library.
 
 ## Onboarding
 
@@ -54,9 +54,10 @@ After onboarding, add one or a few PDFs to `to_be_organized/`, then ask your cod
 paper-summarizer: metadata-only batch for everything in to_be_organized/.
 ```
 
+
 ## Quick launch
 
-Save a terminal snippet (e.g. Alfred *Terminal Command* with keyword `pp`, or Raycast). Command:
+Save a terminal snippet (e.g. Alfred *Terminal Command* with keyword, or Raycast). This is what my command looks like:
 
 ```bash
 cd "/Users/howieee/Library/Mobile Documents/iCloud~md~obsidian/Documents/Howie iCloud/EconPhD/PaperHub" && claude --model claude-haiku-4-5-20251001
@@ -67,7 +68,6 @@ Optional: append `--dangerously-skip-permissions` if permission prompts break lo
 ## Use cases
 
 Run all commands from the repository root. Reference paths are relative pointers only: use `to_be_organized/` for new PDFs and `organized/<folder>/` for existing paper folders.
-
 
 | Scenario                  | Reference          | Mode            | Prompt                                                                      |
 | ------------------------- | ------------------ | --------------- | --------------------------------------------------------------------------- |

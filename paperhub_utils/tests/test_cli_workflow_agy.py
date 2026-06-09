@@ -127,6 +127,52 @@ class AgyWorkflowTests(unittest.TestCase):
         self.assertTrue(any("timed out" in problem for problem in problems))
         self.assertTrue(any(AGY_RESPONSE_BEGIN in problem for problem in problems))
 
+    def test_recoverable_tool_call_error_ignored_when_response_valid(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "agy.log"
+            log.write_text(
+                "model output error: invalid tool call error (invalid_signature)\n"
+                "Model output error: cannot unmarshal string into uint64\n"
+                "text_drip: Drip stopped: charIdx=8893, length=10315\n",
+                encoding="utf-8",
+            )
+            stdout = (
+                f"{AGY_RESPONSE_BEGIN}\n"
+                "# paper_label\nsample2026paper\n"
+                f"{AGY_RESPONSE_END}\n"
+            )
+
+            problems = validate_agy_cli_run(stdout_text=stdout, log_path=log)
+
+        self.assertEqual(problems, [])
+
+    def test_recoverable_tool_call_error_fatal_when_no_response(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "agy.log"
+            log.write_text(
+                "model output error: invalid tool call error (invalid_signature)\n",
+                encoding="utf-8",
+            )
+
+            problems = validate_agy_cli_run(stdout_text="no sentinels here", log_path=log)
+
+        self.assertTrue(any("invalid tool call error" in p for p in problems))
+        self.assertTrue(any(AGY_RESPONSE_BEGIN in p for p in problems))
+
+    def test_hard_fatal_marker_fatal_even_with_valid_response(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "agy.log"
+            log.write_text("google_web_search invoked\n", encoding="utf-8")
+            stdout = (
+                f"{AGY_RESPONSE_BEGIN}\n"
+                "# paper_label\nsample2026paper\n"
+                f"{AGY_RESPONSE_END}\n"
+            )
+
+            problems = validate_agy_cli_run(stdout_text=stdout, log_path=log)
+
+        self.assertTrue(any("web_search" in p for p in problems))
+
     def test_agy_model_label(self) -> None:
         self.assertEqual(
             agy_model_label("Gemini 3.1 Pro (High)"),

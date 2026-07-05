@@ -50,5 +50,5 @@ env/
 paperhub_utils/output/
 paperhub_utils/config/utility_state.json
 paperhub_utils/misc/utility_state.json
-
+paperhub_utils/raw_outputs/
 .env

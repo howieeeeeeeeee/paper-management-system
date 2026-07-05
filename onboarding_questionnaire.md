@@ -112,11 +112,6 @@ Codex CLI model and thinking default:
 - [ ] `gpt-5.5` + `high` reasoning, recommended default
 - [ ] `gpt-5.5` + `medium` reasoning
 - [ ] `gpt-5.5` + `xhigh` reasoning
-- [ ] Custom allowed pair:
-
-```text
-
-```
 
 Current coding agent setup:
 
@@ -157,9 +152,9 @@ Research interests:
 
 ## 5. Starter Tag Taxonomy
 
-PaperHub comes with the default starter taxonomy below from `paperhub_utils/config/default_tags.yaml`. These tags give the agent a conservative economics-PhD vocabulary before it has seen your own paper library.
+PaperHub comes with the default starter taxonomy below from `paperhub_utils/config/default_tags.yaml`. These tags give the agent a conservative vocabulary before it has seen your own paper library.
 
-Please review and modify these lists before onboarding. Delete tags you do not want, add tags you know you will use, and leave any section blank if you do not have a preference yet. Lowercase with underscores is easiest to maintain, such as `international_trade`, `labor`, `field_experiment`, or `reading_list_macro`.
+Please review and modify these lists before onboarding. Delete tags you do not want, add tags you know you will use, and leave any section blank if you do not have a preference yet. Lowercase with underscores is easiest to maintain, such as `international_trade`, `labor`, `field_experiment`.
 
 Field tags:
 
@@ -199,20 +194,14 @@ search_frictions
 decision_making
 ```
 
-Meta tags, such as courses, reading lists, seminars, projects, or workflow labels:
-
-```text
-
-```
 
 ## 6. Paper Label Format
 
-Paper labels become folder names, file names, and Obsidian link targets. For example, a paper by Melitz from 2003 might become `melitz2003heterogeneous`. Compact lowercase labels are recommended for maximum compatibility, but any option below is fine if it matches your existing system.
+Paper labels become folder names, file names, and Obsidian link targets. For example, a paper by Melitz from 2003 might become `melitz2003heterogeneousfirms`. Compact lowercase labels are recommended for maximum compatibility, but any option below is fine if it matches your existing system.
 
 Choose one:
 
-- [ ] Recommended compact author-year-topic: `melitz2003heterogeneous`, `cardkrueger1994minimum`, `autoretal2020trade`
-- [ ] Compact author-year-title keywords: `melitz2003heterogeneousfirms`, `cardkrueger1994minimumwage`, `autoretal2020importcompetition`
+- [ ] Recommended compact author-year-title keywords: `melitz2003heterogeneousfirms`, `cardkrueger1994minimumwage`, `autoretal2020importcompetition`
 - [ ] First-author plus etal for multi-author papers: `melitz2003heterogeneous`, `cardetal1994minimum`, `autoretal2020trade`
 - [ ] Author-year only, shortest labels: `melitz2003`, `cardkrueger1994`, `autoretal2020`
 - [ ] Readable snake_case: `melitz_2003_heterogeneous`, `card_krueger_1994_minimum`, `autor_etal_2020_trade`
@@ -252,5 +241,5 @@ Use this space for preferences that do not fit above. Examples: where PDFs are c
 After filling the questionnaire, paste this into your coding agent, make sure you have `cd` to the `PaperHub` folder:
 
 ```text
-Use the paper-summarizer skill to onboard this project from scratch.
+Use the \paper-summarizer skill to onboard this project from scratch.
 ```

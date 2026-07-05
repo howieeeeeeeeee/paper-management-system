@@ -15,16 +15,16 @@ flowchart TD
     C --> D[Metadata note]
     C --> E[Optional ai_summary.md]
     D --> F[Mention paper_label across the Obsidian vault]
-    E --> G[Read AI summary when useful]
     D --> H[Browse from Obsidian Base / Paperbase]
     H --> I[Reading queue, status, tags, and interest views]
     D --> J[Run paper-finder with keywords or vague memory]
     E --> J
+	 E --> G[Read AI summary when useful]
 ```
 
 ## Quick Start
 
-Use the best model available for this one-time setup. Routine paper runs can use a faster or cheaper model.
+Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) for this one-time setup. Routine paper runs can use a faster or cheaper model (I use haiku, and it works smoothly).
 
 1. Clone the template inside your Obsidian vault:
 
@@ -46,7 +46,7 @@ Use the best model available for this one-time setup. Routine paper runs can use
 3. Open your coding agent from the `PaperHub` folder and paste:
 
    ```text
-   Use the paper-summarizer skill to onboard this project from scratch.
+   Use the \paper-summarizer skill to onboard this project from scratch.
    ```
 
 ## Daily Workflow

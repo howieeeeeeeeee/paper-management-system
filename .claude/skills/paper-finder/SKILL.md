@@ -1,89 +1,60 @@
 ---
 name: paper-finder
-description: Find, download, and cite research papers, then hand off to paper-summarizer. Triggers when users want to find, fetch, download, get, pull, or grab a paper (or several) by title/author, DOI, arXiv ID, or URL; resolve a citation/BibTeX; or process the "papers to find.md" backlog. Searches open-access APIs (arXiv/OpenAlex/Crossref/Unpaywall) and, for paywalled journals, drives the local gstack browser over the user's school VPN for legitimate institutional access. Real published version first, free working-paper version as fallback. Always writes a citation sidecar and offers to summarize.
+description: Locate papers ALREADY IN this library from a vague or partial memory. Triggers when the user half-remembers a paper and wants to know which one it is - "which paper was it that...", "I vaguely remember a paper about...", "can't remember the paper that showed...", "do I already have a paper on...", "search/find in my library". Expands the description into search terms, runs one paper_search.py call over organized/, and presents a ranked candidate list with metadata labels and summary snippets. NOT for downloading new papers (paper-downloader) and NOT for summarizing (paper-summarizer).
 ---
 
-# Research Paper Finder
+# Paper Finder (library recall)
 
-The front-end to `paper-summarizer`. Given paper info, this **resolves metadata → downloads a PDF into `to_be_organized/` → writes a `{stem}.citation.md` sidecar → offers to summarize**. The summarizer auto-detects that sidecar and uses it as authoritative context, so the citation flows through automatically.
+Turns a fuzzy memory ("that one about ignoring information in a dictator game...?") into a ranked list of candidate papers from `organized/`. The library is far too large to read directly (~6 MB of notes), so **never Read candidate files wholesale** — `paperhub_utils/paper_search.py` does the filtering and returns a token-bounded digest; that digest is your context.
 
-**Read only the doc(s) you need** — this file routes; the details live in the sub-docs.
+## Workflow
 
-## File map
+### 1. Expand the query
 
+From the user's description, generate **5–10 search terms**: the words they used, synonyms, method words ("dictator game", "RCT", "structural"), likely author surnames, result phrases, and plausible canonical tags. Multi-word phrases are fine (the script matches them exactly, case-insensitive). If unsure which tags exist, skim `tags/tags_summary.md` — but only when topic words feel off.
+
+Term quality notes:
+- The scorer rewards **distinct-term coverage** over repetition — a few diverse, specific terms beat many near-duplicates.
+- Avoid ultra-generic terms ("model", "experiment", "economics") — they match half the library and dilute ranking.
+
+### 2. One search call
+
+```bash
+cd paperhub_utils && uv run python paper_search.py \
+  --terms "moral wiggle room" "dictator game" "self-image" "Dana" \
+  --top 15 --detail 5
 ```
-SKILL.md                       ← you are here (router only)
-input_types/
-  resolve_input.md             ← classify title/DOI/arXiv/URL/batch; expand wiki-link labels
-modes/
-  auto.md                      ← DEFAULT: real paper first (OA → ask → VPN), WP fallback
-  open_access.md               ← API + working-paper only; never opens a browser
-  browser.md                   ← gstack/VPN download of a paywalled real paper
-  citation_only.md             ← metadata + sidecar only, no PDF
-shared/
-  fetcher_contract.md          ← the exact `paper_fetcher.py` CLI + JSON contract
-  browser_download.md          ← gstack recipe, cookie-bridge, handoff/resume, ETHICS boundary
-  handoff_to_summarizer.md     ← end-of-flow "summarize now?" + how to invoke paper-summarizer
-```
 
-## Core flow
+- `--top 15 --detail 5` is the default presentation: 5 full cards + 10 brief lines (~1.5–2K tokens).
+- Scoring: field-weighted term hits (title 3.0, tags/authors 2.5, abstract 1.5, metadata body 1.0, ai_summary body 0.5), per-field count cap, plus a distinct-term coverage bonus. Cards show label, title, authors/year/journal, status/interest/importance, tags, abstract (~80 words), and ai_summary opening (~100 words).
 
-1. **Classify the input and pick the mode.** If either is ambiguous, run the *Ask gate* below. Read `input_types/resolve_input.md` when the input form is unclear or it's a batch.
-2. **Read the one mode doc** that matches and execute it. Every mode calls `paper_fetcher.py` (see `shared/fetcher_contract.md`) and writes a sidecar.
-3. **Handoff.** After files land in `to_be_organized/`, read `shared/handoff_to_summarizer.md` and ask whether to summarize now.
+### 3. Present the candidates
 
-## Routing — modes
+Show a ranked list in chat:
+- **Top matches (up to 5):** for each — `[[label]]`, title, authors (year, journal), status/interest, tags, and a one-line **"why it matches"** tying the user's memory to the digest evidence. Quote the abstract/summary snippet only where it helps.
+- **Other candidates:** the brief tail as one line each (`[[label]]` — title, year).
 
-| User says | Mode | Read |
-|-----------|------|------|
-| "find / get / download / fetch / grab X", or no mode given | `auto` (default) | `modes/auto.md` |
-| "open access only" / "no VPN/browser" / "working paper is fine" | `open-access` | `modes/open_access.md` |
-| "use the VPN" / "it's on JSTOR/ScienceDirect/Springer" / "behind a paywall" / "I have access through my school" | `browser` | `modes/browser.md` |
-| "just the citation" / "bibtex only" / "I already have the PDF" / "add it to papers to find" | `citation-only` | `modes/citation_only.md` |
+Do not pad: if only 2 papers plausibly match, show 2 detailed and say so.
 
-## Routing — input types
+### 4. Iterate if weak
 
-Classify by regex (details + normalization in `input_types/resolve_input.md`):
+If top scores are low, results look off-topic, or the user says "none of these":
+- Swap in broader/alternative vocabulary (different literature's phrasing, English vs. jargon variants), drop terms that matched everything, re-run. Up to ~3 rounds — each is <1s and cheap.
+- If the user remembers an **exact phrase** (a quote, a payoff like "$6", a dataset name), fall back to `grep -ril "<phrase>" organized/` and map hits back to folder labels.
 
-| Input | Detect | Fetcher arg |
-|-------|--------|-------------|
-| arXiv ID | `^(arXiv:)?\d{4}\.\d{4,5}(v\d+)?$` | `--arxiv <id>` |
-| DOI | `^10\.\d{4,9}/\S+` (strip `https://doi.org/`) | `--doi <doi>` |
-| Direct URL | `^https?://…` (not doi.org) | `--url <url>` |
-| Title / author | free text with spaces | `--title "…" [--author "…"]` |
-| Batch | "papers to find" / "the list" / a path to it | iterate `to_be_organized/papers to find.md` |
+### 5. On a pick
 
-## Ask gate ("ask which mode and type if not specified")
+When the user identifies the paper, offer to open its full metadata note (`organized/<label>/<label>.md`) and/or `ai_summary.md`, or hand off ("enrich <label>" → paper-summarizer).
 
-Before doing any work, if the message does **not** clearly encode **both** a classifiable input **and** a mode keyword, call **AskUserQuestion** (one call, up to two questions):
+## Critical rules
 
-- **Q1 — mode** (only if no mode keyword): `Auto (recommended)` / `Open-access only` / `Browser via school VPN` / `Citation only`.
-- **Q2 — input type** (only if the regex cannot classify the input): `Title / author` / `DOI` / `arXiv ID` / `Direct URL` / `Batch from "papers to find.md"`.
-
-Skip a question whenever it's already determined. If the user pasted a DOI and said "download it", skip both and go straight to `auto`.
-
-## Critical rules (apply always)
-
-- **uv run location:** always `cd paperhub_utils` before `uv run`, since `pyproject.toml` and `.venv` live there. Example: `cd paperhub_utils && uv run python paper_fetcher.py --arxiv 2504.09343`.
-- **Paths with spaces:** pass literal paths (spaces as-is) to `Read`/`Edit`/`Write`; only backslash-escape inside Bash. The project root contains spaces.
-- **The fetcher prints JSON to stdout, logs to stderr.** Parse stdout as JSON; never assume a field — read `shared/fetcher_contract.md` for the schema.
-- **Real published version first.** The working-paper copy (NBER/SSRN/RePEc/author site) is a *fallback*; the sidecar always carries the latest published citation regardless of which PDF was obtained.
-- **Browser = legitimate access only.** The gstack/VPN path is for open-access sources and for paywalled publishers reached through the user's own institutional entitlement. **Never** Sci-Hub / LibGen / paywall circumvention. If a paper is neither free nor institutionally accessible, stop at "sidecar written, PDF unavailable" and say so.
-- **Confirm low-confidence matches.** For title search (especially batch), show the top candidate (title / authors / year) and confirm before downloading unless the user said "just grab them".
-- **Never overwrite an existing PDF/sidecar** — the fetcher's `unique_stem` handles collisions; don't fight it.
-
-## Quick start
-
-```
-"Find Coutts 2019 good news bad news belief updating"   → auto × title
-"Download arxiv 2504.09343"                              → auto × arXiv
-"Get me 10.1257/aer.20181169, it's on the AEA site"     → browser × DOI
-"Just the bibtex for Melitz 2003 trade"                 → citation-only × title
-"Work through papers to find.md, open access only"      → open-access × batch
-```
+- **Paths with spaces:** pass literal paths (spaces as-is) to `Read`/`Edit`/`Write`; backslash-escape only inside Bash commands. The project root contains spaces.
+- **uv run location:** always `cd paperhub_utils` before `uv run` (that's where `pyproject.toml` and `.venv` live). If uv is stale/broken: `uv sync`; if that fails, `rm -rf .venv && uv sync`. The script needs only stdlib + pyyaml, so `python3 paper_search.py ...` also works as a fallback.
+- **Token budget:** rely on the script digest; keep each search round's chat output ≤ ~4K tokens. Only Read a paper's full files after the user picks it.
+- **Read-only skill:** never modify paper folders, metadata, or tags here.
 
 ## What this skill does NOT do
 
-- Does NOT summarize or organize papers itself — it hands off to `paper-summarizer`.
-- Does NOT circumvent paywalls — institutional/VPN and open-access only.
-- Does NOT invent metadata — everything in the sidecar comes from a citation database (or is left blank for the summarizer to fill from the PDF).
+- Does NOT download or fetch new papers — that is `paper-downloader`.
+- Does NOT summarize, organize, or enrich — that is `paper-summarizer`.
+- Does NOT search the web; it only searches `organized/`.

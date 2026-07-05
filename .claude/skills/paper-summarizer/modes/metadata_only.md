@@ -6,9 +6,11 @@ Triggered by: "metadata only" / "no summary" / "without summary", or as the user
 
 The page limit is `metadata_only_page_limit` in `paperhub_utils/misc/config.json`, exported to scripts as `METADATA_ONLY_PAGE_LIMIT` in `paperhub_utils/config.py`.
 
-Engines that support `metadata-only`: **OpenRouter** (`engines/openrouter.md`), **Agy CLI** (`engines/agy_cli.md`), **Coding Agent** (`engines/coding_agent.md` — cheapest mode for this engine; reads only the first `METADATA_ONLY_PAGE_LIMIT` pages, no quota gate).
+Engines that support `metadata-only`: **OpenRouter** (`engines/openrouter.md`), **Agy CLI** (`engines/agy_cli.md`), **Codex CLI** (`engines/codex_cli.md`), **Coding Agent** (`engines/coding_agent.md` — cheapest mode for this engine; reads only the first `METADATA_ONLY_PAGE_LIMIT` pages, no quota gate).
 
 For Agy CLI, follow `engines/agy_cli.md` with `--summary-mode metadata-only`; the prepare step sends only the first configured pages to Agy and `--from-response` still moves the original PDF.
+
+For Codex CLI, follow `engines/codex_cli.md` with `--summary-mode metadata-only`; the prepare step sends only the first configured pages to Codex and `--from-response` still moves the original PDF.
 
 ## Folder structure produced
 
@@ -62,4 +64,4 @@ Tag updates this batch:
   - 2 tags merged into existing: ...
 ```
 
-Always include token usage when available. For Agy CLI, `cost: N/A`. For Agy CLI and Coding Agent, no token info.
+Always include token usage when available. For Agy CLI and the standard Codex CLI flow, `cost: N/A`. For Agy CLI, Codex CLI, and Coding Agent, no token info.

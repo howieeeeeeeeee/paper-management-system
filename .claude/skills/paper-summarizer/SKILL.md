@@ -1,6 +1,6 @@
 ---
 name: paper-summarizer
-description: Automated research paper organization using AI. Triggers when users ask to onboard, set up, configure, or first-run this paper library; when users upload PDFs and ask to summarize, organize, or add papers to their library; or when they ask to enrich an existing folder with an AI summary. Supports OpenRouter, Agy CLI, and current-coding-agent engines across full / metadata-only / enrich modes.
+description: Automated research paper organization using AI. Triggers when users ask to onboard, set up, configure, or first-run this paper library; when users upload PDFs and ask to summarize, organize, or add papers to their library; or when they ask to enrich an existing folder with an AI summary. Supports OpenRouter, Agy CLI, Codex CLI, and current-coding-agent engines across full / metadata-only / enrich modes.
 ---
 
 # Research Paper Summarizer
@@ -15,6 +15,7 @@ onboard.md                ← questionnaire-first setup inside an Obsidian vault
 engines/
   openrouter.md           ← default; uses paper_summarizer.py via OpenRouter API
   agy_cli.md              ← active direct-Google CLI workflow via `agy`
+  codex_cli.md            ← OpenAI Codex CLI workflow via `codex exec`
   coding_agent.md         ← in-process; full / metadata-only / enrich (high quota for full+enrich)
 modes/
   full.md                 ← writes {paper_label}.md + ai_summary.md
@@ -48,6 +49,7 @@ For paper processing, pick **one engine** and **one mode** per batch.
 | User says | Engine | Read |
 |-----------|--------|------|
 | "use current coding agent" / "use you" / "no external AI" | `coding-agent` | `engines/coding_agent.md` (full / metadata-only / enrich; full+enrich gated for quota) |
+| "with codex cli" / "use codex cli" / "direct OpenAI CLI" | `codex-cli` | `engines/codex_cli.md` |
 | "with agy cli" / "use antigravity cli" / "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
 | "with gemini cli" / "use gemini cli" / "via gemini cli" | `agy-cli` | `engines/agy_cli.md` — Gemini CLI has been replaced by Agy CLI (Google Antigravity) |
 | "use gemini" / "with gemini" (no "cli") | ASK first | `AskUserQuestion`: "Gemini via OpenRouter (script) or Agy CLI (direct Google CLI)?" |
@@ -75,12 +77,12 @@ For paper processing, pick **one engine** and **one mode** per batch.
 
 - **Paths with spaces:** Pass literal paths (spaces as-is) to `Read`, `Edit`, and `Write` tools — do NOT backslash-escape spaces. Backslash escaping is only for Bash tool commands. If the project root contains spaces, escaping will cause "file not found" errors even when the file exists.
 - **uv run location:** Always `cd paperhub_utils` before running `uv run` commands, since `pyproject.toml` and `.venv` are stored there. Example: `cd paperhub_utils && uv run python paper_summarizer.py ... && cd ..`
-- **Batch processing paths:** Always cd into `paperhub_utils` first. Use `PAPERHUB_ROOT=$(cd .. && pwd)` to get the PaperHub root (works on any machine). For Agy: use `agy --add-dir "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON.
+- **Batch processing paths:** Always cd into `paperhub_utils` first. Use `PAPERHUB_ROOT=$(cd .. && pwd)` to get the PaperHub root (works on any machine). For Agy: use `agy --add-dir "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON. For Codex: use `codex exec --cd "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON; PaperHub's default Codex path uses local yolo/full-access mode with web search disabled.
 - Treat `.venv` as disposable local state. In iCloud-synced vaults, never preserve or share `.venv` across machines. If a `uv` command fails because the environment is stale or broken, run `uv sync` from `paperhub_utils/`; if it still fails, run `rm -rf .venv` and then `uv sync`.
 - **NEVER read the PDF directly** — except `engines/coding_agent.md`. In `metadata-only` mode it extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
-- For `openrouter` and `agy-cli`, ALWAYS delegate PDF processing to the script or external CLI. Only validate and fix the output.
+- For `openrouter`, `agy-cli`, and `codex-cli`, ALWAYS delegate PDF processing to the script or external CLI. Only validate and fix the output.
 - **Handle partial failures via `AskUserQuestion`** — never decide unilaterally, never auto-switch models.
-- **ONLY use models from `config.py`'s `MODEL_LIST`** for `openrouter`. For `agy-cli`, use `AGY_CLI_MODEL_LIST`; the selected model is persisted to Agy settings by `--prepare-cli-input`.
+- **ONLY use models from `config.py`'s `MODEL_LIST`** for `openrouter`. For `agy-cli`, use `AGY_CLI_MODEL_LIST`; the selected model is persisted to Agy settings by `--prepare-cli-input`. For `codex-cli`, use `CODEX_CLI_MODEL_REASONING_PAIRS`; the selected model is passed per run with `codex exec --model`, and the thinking level is passed per run with `-c model_reasoning_effort=...`.
 - Metadata files MUST always include `contributions:` (empty YAML field) and `## Abstract` (verbatim from PDF when present).
 
 ## Post-AI flow
@@ -93,17 +95,19 @@ After the selected engine finishes and the paper files are written, read `shared
 4. Commit the organized files unless the user asked not to commit, `USE_GIT = False` (loaded from `paperhub_utils/misc/config.json`), or the output is outside the paper-library Git repo.
 5. Report the result with token usage when available, tag updates, auto-fixes, and any failed papers.
 
-For partial batch failures, ask the user whether to abandon, retry, or choose another allowed model. Never switch models automatically.
+For partial batch failures, ask the user whether to abandon, retry, or choose another allowed model for the active engine. Never switch models automatically.
 
 ## Quick start
 
 ```
 "Summarize this paper"                              → openrouter × ask-mode
 "Summarize these papers with agy cli"               → agy-cli × ask-mode
+"Summarize these papers with codex cli"             → codex-cli × ask-mode
 "Summarize these papers with gemini cli"            → agy-cli × ask-mode (Gemini CLI replaced by Agy CLI)
 "Summarize this paper. Focus on identification."    → openrouter × ask-mode + --instruction
 "Enrich ACF2015"                                    → openrouter × enrich
 "Add a summary to melitz2003trade with agy cli"     → agy-cli × enrich
+"Add a summary to melitz2003trade with codex cli"   → codex-cli × enrich
 ```
 
 All engines accept additional user instructions and pass them through.

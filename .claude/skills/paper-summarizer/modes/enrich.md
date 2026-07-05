@@ -2,7 +2,7 @@
 
 Use this mode when the user wants to add an `ai_summary.md` to a paper that is **already in `organized/`** (typically because the paper was first added in `metadata-only` mode, or the user wants to re-do / polish an existing summary). The PRIMARY job is generating the summary; patching any blank metadata fields is a secondary side effect of the same AI call.
 
-This mode works with **OpenRouter** (default), **Agy CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `enrich.py --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
+This mode works with **OpenRouter** (default), **Agy CLI**, **Codex CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `enrich.py --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
 
 ## Trigger phrases
 
@@ -11,7 +11,7 @@ This mode works with **OpenRouter** (default), **Agy CLI**, and **Coding Agent**
 - "complete metadata for `<folder>`" (still routes here — meta-fill is the secondary job)
 - "polish / redo / refine the summary for `<folder>`" (route here with past-summary reuse, see below)
 
-If the user mentions multiple folders, batch them in a single call (OpenRouter) or process sequentially (Agy CLI).
+If the user mentions multiple folders, batch them in a single call (OpenRouter) or process sequentially (Agy CLI or Codex CLI).
 
 ## What it does, per folder
 
@@ -144,6 +144,66 @@ uv run python enrich.py --cleanup-cli-input "${CLEANUP_DIR}"
 The past-summary text (when `--use-past-summary` is passed) is baked into the prepared prompt during step 1, so step 3 (`--from-response`) does not need any extra flag.
 
 The prepared JSON includes `"past_summary_used": true|false` so the skill can confirm the reference was embedded.
+
+## Codex CLI
+
+Same handshake pattern as `engines/codex_cli.md` — process **one folder at a time**. The model/reasoning pair is resolved from `config.CODEX_CLI_MODEL` and `config.CODEX_CLI_REASONING_EFFORT` (configured via `paperhub_utils/misc/config.json` keys `codex_cli_model` and `codex_cli_reasoning_effort`) unless the user requests an allowed `--codex-model` and/or `--codex-reasoning-effort`.
+
+This is the third Codex-supported mode: unlike `full` and `metadata-only`, it uses `enrich.py` instead of `paper_summarizer.py`, but it uses the same `codex exec`, sentinel, stderr, and model-label pattern.
+
+```bash
+# 1. Prepare prompt + PDF path and resolve the Codex model/reasoning pair.
+cd paperhub_utils
+PAPERHUB_ROOT=$(cd .. && pwd)
+uv run python enrich.py --engine codex-cli --prepare-cli-input --folder ACF2015 \
+  [--instruction "..."] \
+  [--use-past-summary] \
+  [--no-summary] \
+  > /tmp/paperhub_enrich_codex_input.json
+
+# 2. Call Codex with local yolo/full access from the PaperHub root.
+PROMPT=$(python3 -c "import json; print(open(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['prompt_path']).read())")
+PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['pdf_for_ai_codex_path'])")
+CODEX_MODEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['codex_cli_model'])")
+CODEX_REASONING_EFFORT=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['codex_cli_reasoning_effort'])")
+MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['codex_model_label'])")
+CODEX_STDERR="/tmp/paperhub_enrich_codex_stderr.txt"
+CODEX_OUTPUT="/tmp/paperhub_enrich_codex_output.txt"
+
+codex exec \
+  --cd "$PAPERHUB_ROOT" \
+  --dangerously-bypass-approvals-and-sandbox \
+  --ephemeral \
+  --model "$CODEX_MODEL" \
+  -c "model_reasoning_effort=\"${CODEX_REASONING_EFFORT}\"" \
+  -c 'web_search="disabled"' \
+  "You are running the PaperHub Codex CLI workflow.
+
+Read and analyze the PDF at this absolute path:
+${PDF_PATH}
+
+Use only that PDF. Do not use web search. Do not infer from the filename. Do not edit files.
+
+Return the complete PaperHub response between these exact sentinel lines:
+PAPERHUB_RESPONSE_BEGIN
+[response]
+PAPERHUB_RESPONSE_END
+
+${PROMPT}" \
+  2>"${CODEX_STDERR}" > "${CODEX_OUTPUT}"
+
+# 3. Apply raw Codex output. The script extracts the sentinel block.
+uv run python enrich.py --engine codex-cli --from-response --folder ACF2015 \
+  --response-file "${CODEX_OUTPUT}" \
+  --model-label "${MODEL_LABEL}" \
+  --codex-stderr-file "${CODEX_STDERR}"
+
+# 4. Cleanup
+CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['cleanup_dir'])")
+uv run python enrich.py --cleanup-cli-input "${CLEANUP_DIR}"
+```
+
+The past-summary text (when `--use-past-summary` is passed) is baked into the prepared prompt during step 1, so step 3 (`--from-response`) does not need any extra flag.
 
 ## Output JSON
 

@@ -58,7 +58,7 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    - If the paper-library folder is not inside the provided vault and Bases setup is requested, ask where the library will live inside the vault before editing `.base` files.
 5. Confirm these folders exist or create them if missing: `to_be_organized/`, `organized/`, and `tags/`.
 6. Read `paperhub_utils/misc/config.json` for `use_git`, `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
-7. Read `paperhub_utils/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `USE_GIT`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, and `MY_RESEARCH_INTERESTS`.
+7. Read `paperhub_utils/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `USE_GIT`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS`.
 8. **Make sure `uv` is here.** Every other step in this skill calls `uv run python ...`; if `uv` is not on `PATH`, nothing else works — even when `paperhub_utils/.venv/` already exists from a previous machine. This check is non-optional.
 
    ```bash
@@ -105,7 +105,7 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    Quick smoke test that the environment is usable:
 
    ```bash
-   uv run python -c "from config import AGY_CLI_MODEL; print(AGY_CLI_MODEL)"
+   uv run python -c "from config import AGY_CLI_MODEL, CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT, CODEX_CLI_YOLO; print(AGY_CLI_MODEL, CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT, CODEX_CLI_YOLO)"
    ```
 
 ## 2. Apply setup choices from the questionnaire
@@ -137,8 +137,16 @@ Ask only for missing or conflicting information.
 - **AI engine**:
   - OpenRouter is the recommended default when a key is loadable.
   - Antigravity CLI is acceptable when the questionnaire selects it and `agy` is available.
+  - Codex CLI is acceptable when the questionnaire selects it and `codex` is available/authenticated.
   - Current coding agent is acceptable for metadata-only first runs.
   - If the chosen engine is not available, ask whether to configure it, switch to an available engine, or skip engine setup.
+  - If Codex CLI is selected, persist `codex_cli_model`, `codex_cli_reasoning_effort`, and `codex_cli_yolo` in `paperhub_utils/misc/config.json`. Default to `gpt-5.5`, `high`, and `true` when unspecified.
+  - Validate the selected Codex pair against `CODEX_CLI_MODEL_REASONING_PAIRS`; reject or ask about invalid pairs instead of silently changing the thinking level.
+  - Verify Codex CLI availability without starting a paper run:
+
+    ```bash
+    command -v codex && codex exec --help
+    ```
 - **Metadata page depth**:
   - Use the questionnaire value if present.
   - Recommended values are `2` for fast first-run triage or `4` for more introduction/context.
@@ -269,7 +277,7 @@ The tag context output may be empty only if tag prompt context is disabled or th
 End onboarding with:
 
 1. The resolved paper-library root, utilities directory, organized directory, tags directory, vault-relative base path, and Git setting.
-2. Whether OpenRouter, Antigravity CLI, or current-agent processing is available.
+2. Whether OpenRouter, Antigravity CLI, Codex CLI, or current-agent processing is available.
 3. A short instruction to add PDFs to `to_be_organized/`.
 4. A recommended first request: run metadata-only mode on one or a small batch of PDFs.
 5. A note that `full` mode creates `ai_summary.md`, while `enrich` adds or refreshes summaries for folders that already exist.

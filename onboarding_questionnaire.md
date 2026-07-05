@@ -51,17 +51,18 @@ Obsidian vault absolute path:
 
 ## 3. Engine And Runtime
 
-PaperHub can summarize papers with different AI engines. OpenRouter is usually the simplest option for full summaries because it only needs an API key. Antigravity CLI can work if you already have it installed and configured. The current coding agent can also run PaperHub directly, including full-summary mode, but full summaries may use a lot of tokens.
+PaperHub can summarize papers with different AI engines. OpenRouter is usually the simplest option for full summaries because it only needs an API key. Antigravity CLI and Codex CLI can work if you already have them installed and authenticated. The current coding agent can also run PaperHub directly, including full-summary mode, but full summaries may use a lot of tokens.
 
 Preferred AI engine:
 
 - [ ] OpenRouter
 - [ ] Antigravity CLI
+- [ ] Codex CLI
 - [ ] Current coding agent, full summaries
 - [ ] Current coding agent, metadata-only first
 - [ ] Not sure, ask me only if the agent cannot infer a working option
 
-Choose OpenRouter if you want full AI-written paper summaries and you are comfortable creating an API key. Choose Antigravity CLI only if you already know it is installed on your machine (highly recommended, since Gemini 3.1 Pro is excellent at understanding papers and provides a generous amount of quota). Choose the current coding agent if you want to run onboarding without setting up a separate AI service. If you choose the current coding agent for full summaries, expect substantially higher token usage, especially for long PDFs or batches of many papers.
+Choose OpenRouter if you want full AI-written paper summaries and you are comfortable creating an API key. Choose Antigravity CLI only if you already know it is installed on your machine (highly recommended, since Gemini 3.1 Pro is excellent at understanding papers and provides a generous amount of quota). Choose Codex CLI if you already use OpenAI Codex locally and want PaperHub to run through `codex exec`. Choose the current coding agent if you want to run onboarding without setting up a separate AI service. If you choose the current coding agent for full summaries, expect substantially higher token usage, especially for long PDFs or batches of many papers.
 
 OpenRouter setup:
 
@@ -98,6 +99,24 @@ Antigravity CLI setup:
 
 - [ ] I already installed and authenticated Antigravity CLI on this machine.
 - [ ] I do not know what Antigravity CLI is, so do not assume it is available.
+
+Codex CLI setup:
+
+- [ ] I already installed and authenticated Codex CLI on this machine.
+- [ ] I want Codex CLI to use local yolo/full-access mode for smoother PaperHub runs from this trusted folder.
+- [ ] Keep Codex CLI sandboxed/read-only instead of yolo mode.
+- [ ] I do not know what Codex CLI is, so do not assume it is available.
+
+Codex CLI model and thinking default:
+
+- [ ] `gpt-5.5` + `high` reasoning, recommended default
+- [ ] `gpt-5.5` + `medium` reasoning
+- [ ] `gpt-5.5` + `xhigh` reasoning
+- [ ] Custom allowed pair:
+
+```text
+
+```
 
 Current coding agent setup:
 

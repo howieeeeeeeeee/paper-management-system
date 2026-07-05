@@ -76,6 +76,16 @@ Run all commands from the repository root. Reference paths are relative pointers
 
 For enrich runs, extra instructions, citation hints, and model-specific examples, see [quick_start/use-cases.md](quick_start/use-cases.md).
 
+## Finding a half-remembered paper
+
+If you know a paper is somewhere in the library but can't recall which one, describe what you remember:
+
+```text
+paper-finder: which paper was it where dictators avoided knowing the recipient's payoff?
+```
+
+The `paper-finder` skill expands your description into search terms, ranks every organized paper with a fast local script (`paperhub_utils/paper_search.py`, no API calls), and shows the top candidates with their metadata labels, status, interest, and summary snippets. If none fit, it broadens the terms and searches again.
+
 ## Output Layout
 
 ```text

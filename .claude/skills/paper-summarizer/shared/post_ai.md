@@ -85,7 +85,7 @@ git commit -m "feat(papers): add {N} papers
 
 Use the per-mode completion-report template in `modes/{mode}.md`. Always include:
 
-- Token usage when available (Agy CLI: token counts unavailable, `cost: N/A`; Coding Agent: no token info).
+- Token usage when available (Agy CLI and the standard Codex CLI flow: token counts unavailable, `cost: N/A`; Coding Agent: no token info).
 - **Tag updates line/section** — count + list of newly added tags (with type), count + list of merges (`new_variant -> existing_canonical`), count of tags reused unchanged. If nothing changed: `Tag updates: all N tags reused from registry, no changes.`
 
 ## 6. Handle partial failures
@@ -96,6 +96,6 @@ For batches, check the script's `failed` count. If > 0, surface to the user via 
 - Question: "{N} paper(s) failed. What would you like to do?"
 - Options: `Abandon`, `Retry`, `Try a different model`
 
-If "Try a different model" → second AskUserQuestion with options from `config.py`'s `MODEL_LIST`.
+If "Try a different model" → second AskUserQuestion with options from the active engine's allowlist (`MODEL_LIST`, `AGY_CLI_MODEL_LIST`, or `CODEX_CLI_MODEL_REASONING_PAIRS` for Codex CLI).
 
-**Never auto-retry with a different model. Never present a model not in `MODEL_LIST`.**
+**Never auto-retry with a different model. Never present a model not in the active engine's allowlist.**

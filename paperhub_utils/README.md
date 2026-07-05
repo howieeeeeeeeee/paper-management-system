@@ -18,7 +18,7 @@ All three modes (`full`, `metadata-only`, `enrich`) compose their prompt from th
 ## Config Files
 
 - `.env.example`: copy to `.env`, then add local API keys. Do not commit `.env`.
-- `misc/config.json`: runtime options, including git commits, metadata-only page limit, Agy/Gemini CLI model defaults, and tag prompt limits.
+- `misc/config.json`: runtime options, including git commits, metadata-only page limit, Agy/Gemini CLI model defaults, Codex CLI model/reasoning/yolo defaults, and tag prompt limits.
 - `config.py`: model allowlist, script constants, and fallback research-interest text.
 - `seeds/default_tags.yaml`: first-run canonical tag seed list.
 

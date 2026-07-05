@@ -13,7 +13,7 @@ working-paper version (NBER/SSRN/RePEc/author site) is a fallback, but the
 sidecar always carries the latest published citation.
 
 This module does NO browser automation. For paywalled journals it reports
-`needs_browser_fallback` and a `browser_hint`; the paper-finder skill drives the
+`needs_browser_fallback` and a `browser_hint`; the paper-downloader skill drives the
 local gstack browser over the user's VPN and calls back here with
 `--url <pdf_url> --cookies <jar>` to download the bytes.
 
@@ -122,7 +122,7 @@ def build_session(email: str = CONTACT_EMAIL) -> requests.Session:
     session = requests.Session()
     session.headers.update(
         {
-            "User-Agent": f"PaperHub-paper-finder/1.0 (mailto:{email})",
+            "User-Agent": f"PaperHub-paper-downloader/1.0 (mailto:{email})",
             "Accept": "application/json",
         }
     )

@@ -52,6 +52,10 @@ except ImportError:
 from config import (
     AGY_CLI_MODEL,
     AGY_CLI_MODEL_LIST,
+    CODEX_CLI_MODEL,
+    CODEX_CLI_MODEL_REASONING_PAIRS,
+    CODEX_CLI_REASONING_EFFORT,
+    CODEX_CLI_YOLO,
     DEFAULT_MODEL,
     MODEL_LIST,
     DEFAULT_PDF_ENGINE,
@@ -72,6 +76,14 @@ from cli_workflow.agy import (
     extract_agy_response_block,
     resolve_agy_cli_model,
     validate_agy_cli_run,
+)
+from cli_workflow.codex import (
+    CODEX_RESPONSE_BEGIN,
+    CODEX_RESPONSE_END,
+    codex_model_label,
+    extract_codex_response_block,
+    resolve_codex_cli_settings,
+    validate_codex_cli_run,
 )
 from cli_workflow.gemini import validate_gemini_cli_run
 from cli_workflow.pdf import (
@@ -1461,7 +1473,7 @@ SIDECAR_SUFFIXES = (".citation.md",)
 def find_sidecar_for_pdf(pdf_path: Path) -> Path | None:
     """Return a citation sidecar sharing the PDF's stem in the same directory.
 
-    The paper-finder skill drops a ``{stem}.citation.md`` next to each downloaded
+    The paper-downloader skill drops a ``{stem}.citation.md`` next to each downloaded
     PDF; this pairs them so the citation can be used as authoritative context.
     """
     for suffix in SIDECAR_SUFFIXES:
@@ -1864,6 +1876,8 @@ def prepare_cli_input(
     additional_instruction: str = "",
     external_cli_engine: str = "gemini-cli",
     agy_model: str | None = None,
+    codex_model: str | None = None,
+    codex_reasoning_effort: str | None = None,
 ) -> dict:
     """Prepare prompt and CLI-readable PDF input for an external CLI run."""
     error = validate_pdf_path(pdf_path)
@@ -1876,7 +1890,7 @@ def prepare_cli_input(
             "error": f"Unknown summary mode: {summary_mode}",
             "error_type": "ValueError",
         }
-    if external_cli_engine not in {"gemini-cli", "agy-cli"}:
+    if external_cli_engine not in {"gemini-cli", "agy-cli", "codex-cli"}:
         return {
             "success": False,
             "pdf_path": str(pdf_path),
@@ -1885,11 +1899,24 @@ def prepare_cli_input(
         }
 
     resolved_agy_model = None
+    resolved_codex_model = None
+    resolved_codex_reasoning_effort = None
     if external_cli_engine == "agy-cli":
         resolved_agy_model = configure_agy_cli_model(
             agy_model,
             default_model=AGY_CLI_MODEL,
             allowed_models=AGY_CLI_MODEL_LIST,
+        )
+    elif external_cli_engine == "codex-cli":
+        (
+            resolved_codex_model,
+            resolved_codex_reasoning_effort,
+        ) = resolve_codex_cli_settings(
+            codex_model,
+            codex_reasoning_effort,
+            default_model=CODEX_CLI_MODEL,
+            default_reasoning_effort=CODEX_CLI_REASONING_EFFORT,
+            allowed_model_reasoning_pairs=CODEX_CLI_MODEL_REASONING_PAIRS,
         )
 
     run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
@@ -1926,6 +1953,7 @@ def prepare_cli_input(
         "pdf_for_ai_repo_relative": pdf_for_ai_repo_relative,
         "pdf_for_ai_gemini_path": gemini_at_path(pdf_for_ai),
         "pdf_for_ai_agy_path": str(pdf_for_ai.resolve()),
+        "pdf_for_ai_codex_path": str(pdf_for_ai.resolve()),
         "original_pdf_path": str(pdf_path),
         "cleanup_dir": str(work_dir),
         "metadata_only_page_limit": METADATA_ONLY_PAGE_LIMIT,
@@ -1937,6 +1965,18 @@ def prepare_cli_input(
         result["agy_settings_path"] = str(agy_settings_path())
         result["response_begin"] = AGY_RESPONSE_BEGIN
         result["response_end"] = AGY_RESPONSE_END
+    if resolved_codex_model is not None:
+        result["paperhub_root"] = str(PAPERHUB_ROOT)
+        result["codex_cli_model"] = resolved_codex_model
+        result["codex_cli_reasoning_effort"] = resolved_codex_reasoning_effort
+        result["codex_cli_yolo"] = CODEX_CLI_YOLO
+        result["codex_cli_web_search"] = "disabled"
+        result["codex_model_label"] = codex_model_label(
+            resolved_codex_model,
+            resolved_codex_reasoning_effort,
+        )
+        result["response_begin"] = CODEX_RESPONSE_BEGIN
+        result["response_end"] = CODEX_RESPONSE_END
     if sample_info:
         result["pages_sent"] = sample_info.pages_sent
         result["total_pdf_pages"] = sample_info.total_pages
@@ -1999,7 +2039,7 @@ def main():
     )
     parser.add_argument(
         "--external-cli-engine",
-        choices=("gemini-cli", "agy-cli", "coding-agent"),
+        choices=("gemini-cli", "agy-cli", "codex-cli", "coding-agent"),
         default=None,
         help="External engine used with --prepare-cli-input/--from-response",
     )
@@ -2007,6 +2047,16 @@ def main():
         "--agy-model",
         default=None,
         help="Agy CLI model label; defaults to config AGY_CLI_MODEL",
+    )
+    parser.add_argument(
+        "--codex-model",
+        default=None,
+        help="Codex CLI model id; defaults to config CODEX_CLI_MODEL",
+    )
+    parser.add_argument(
+        "--codex-reasoning-effort",
+        default=None,
+        help="Codex CLI reasoning effort; defaults to config CODEX_CLI_REASONING_EFFORT",
     )
     parser.add_argument(
         "--cleanup-cli-input",
@@ -2089,6 +2139,11 @@ def main():
         metavar="PATH",
         help="Agy CLI log file to inspect before organizing --from-response output",
     )
+    parser.add_argument(
+        "--codex-stderr-file",
+        metavar="PATH",
+        help="Codex CLI stderr file to inspect before organizing --from-response output",
+    )
 
     args = parser.parse_args()
 
@@ -2134,6 +2189,8 @@ def main():
                 additional_instruction=args.instruction,
                 external_cli_engine=args.external_cli_engine or "gemini-cli",
                 agy_model=args.agy_model,
+                codex_model=args.codex_model,
+                codex_reasoning_effort=args.codex_reasoning_effort,
             )
         except Exception as e:
             result = {
@@ -2183,6 +2240,11 @@ def main():
                 or args.model_label.endswith(" (Agy CLI)")
             ):
                 external_cli_engine = "agy-cli"
+            elif (
+                args.codex_stderr_file
+                or args.model_label.endswith(" (Codex CLI)")
+            ):
+                external_cli_engine = "codex-cli"
             else:
                 external_cli_engine = "gemini-cli"
 
@@ -2213,6 +2275,17 @@ def main():
             cli_error_type = "AgyCliPdfReadError"
             if not cli_problems:
                 content = extract_agy_response_block(raw_content)
+        elif external_cli_engine == "codex-cli":
+            cli_problems = validate_codex_cli_run(
+                stdout_text=raw_content,
+                stderr_path=Path(args.codex_stderr_file).resolve()
+                if args.codex_stderr_file
+                else None,
+            )
+            cli_error = "Codex CLI did not reliably read the PDF"
+            cli_error_type = "CodexCliPdfReadError"
+            if not cli_problems:
+                content = extract_codex_response_block(raw_content)
         elif external_cli_engine != "coding-agent":
             parser.error(f"Unknown external CLI engine: {external_cli_engine}")
 
@@ -2242,9 +2315,22 @@ def main():
                 allowed_models=AGY_CLI_MODEL_LIST,
             )
             model_label = agy_model_label(resolved_agy_model)
+        elif external_cli_engine == "codex-cli" and model_label == "unknown":
+            resolved_codex_model, resolved_codex_reasoning_effort = resolve_codex_cli_settings(
+                args.codex_model,
+                args.codex_reasoning_effort,
+                default_model=CODEX_CLI_MODEL,
+                default_reasoning_effort=CODEX_CLI_REASONING_EFFORT,
+                allowed_model_reasoning_pairs=CODEX_CLI_MODEL_REASONING_PAIRS,
+            )
+            model_label = codex_model_label(
+                resolved_codex_model,
+                resolved_codex_reasoning_effort,
+            )
 
         pdf_engine = {
             "agy-cli": "agy-native",
+            "codex-cli": "codex-cli",
             "coding-agent": "coding-agent",
         }.get(external_cli_engine, "gemini-native")
 

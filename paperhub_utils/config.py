@@ -61,7 +61,7 @@ if _USE_GIT_ENV is not None:
 REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh")
 # Set to None to disable reasoning, or choose an effort from REASONING_EFFORTS.
 # "exclude" keeps reasoning tokens out of the returned assistant message.
-DEFAULT_REASONING = {"effort": "medium", "exclude": True}
+DEFAULT_REASONING = {"effort": "high", "exclude": True}
 
 # pdf_input options:
 # - "openrouter_file_parser": send the PDF file through OpenRouter's file-parser.
@@ -129,6 +129,40 @@ AGY_CLI_MODEL = (
     if isinstance(_agy_cli_model_value, str) and _agy_cli_model_value.strip()
     else _AGY_CLI_MODEL_DEFAULT
 )
+
+# Codex CLI model/reasoning pairs used by
+# skills/paper-summarizer/engines/codex_cli.md. Override via
+# misc/config.json's "codex_cli_model" and "codex_cli_reasoning_effort".
+CODEX_CLI_MODEL_REASONING_PAIRS = (
+    ("gpt-5.5", "low"),
+    ("gpt-5.5", "medium"),
+    ("gpt-5.5", "high"),
+    ("gpt-5.5", "xhigh"),
+)
+CODEX_CLI_MODEL_LIST = tuple(
+    dict.fromkeys(model for model, _ in CODEX_CLI_MODEL_REASONING_PAIRS)
+)
+CODEX_CLI_REASONING_EFFORT_LIST = tuple(
+    dict.fromkeys(effort for _, effort in CODEX_CLI_MODEL_REASONING_PAIRS)
+)
+_CODEX_CLI_MODEL_DEFAULT = "gpt-5.5"
+_CODEX_CLI_REASONING_EFFORT_DEFAULT = "xhigh"
+_codex_cli_model_value = USER_CONFIG.get("codex_cli_model")
+CODEX_CLI_MODEL = (
+    _codex_cli_model_value.strip()
+    if isinstance(_codex_cli_model_value, str) and _codex_cli_model_value.strip()
+    else _CODEX_CLI_MODEL_DEFAULT
+)
+_codex_cli_reasoning_effort_value = USER_CONFIG.get("codex_cli_reasoning_effort")
+CODEX_CLI_REASONING_EFFORT = (
+    _codex_cli_reasoning_effort_value.strip()
+    if (
+        isinstance(_codex_cli_reasoning_effort_value, str)
+        and _codex_cli_reasoning_effort_value.strip()
+    )
+    else _CODEX_CLI_REASONING_EFFORT_DEFAULT
+)
+CODEX_CLI_YOLO = _config_bool(USER_CONFIG, "codex_cli_yolo", True)
 
 DEFAULT_PDF_ENGINE = "mistral-ocr"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"

@@ -11,7 +11,7 @@ Usage:
     # External CLI engine — two-step handshake (mirrors paper_summarizer.py):
     uv run python enrich.py --engine agy-cli --prepare-cli-input --folder ACF2015 \\
         [--no-summary] [--use-past-summary] [--instruction "..."]
-    # ... orchestrator runs agy on the printed prompt + pdf path ...
+    # ... orchestrator runs agy/codex on the printed prompt + pdf path ...
     uv run python enrich.py --engine agy-cli --from-response --folder ACF2015 \\
         --response-file /tmp/resp.txt [--agy-stderr-file ...] [--no-summary]
 
@@ -47,6 +47,10 @@ import yaml
 from config import (
     AGY_CLI_MODEL,
     AGY_CLI_MODEL_LIST,
+    CODEX_CLI_MODEL,
+    CODEX_CLI_MODEL_REASONING_PAIRS,
+    CODEX_CLI_REASONING_EFFORT,
+    CODEX_CLI_YOLO,
     DEFAULT_MODEL,
     DEFAULT_OUTPUT_DIR,
     DEFAULT_PDF_ENGINE,
@@ -65,6 +69,14 @@ from cli_workflow.agy import (
     extract_agy_response_block,
     resolve_agy_cli_model,
     validate_agy_cli_run,
+)
+from cli_workflow.codex import (
+    CODEX_RESPONSE_BEGIN,
+    CODEX_RESPONSE_END,
+    codex_model_label,
+    extract_codex_response_block,
+    resolve_codex_cli_settings,
+    validate_codex_cli_run,
 )
 from cli_workflow.gemini import validate_gemini_cli_run
 from cli_workflow.pdf import (
@@ -551,17 +563,32 @@ def prepare_cli_input(
     past_summary_text: str = "",
     external_cli_engine: str = "gemini-cli",
     agy_model: str | None = None,
+    codex_model: str | None = None,
+    codex_reasoning_effort: str | None = None,
 ) -> dict:
     """Mirror paper_summarizer.prepare_cli_input for enrich mode."""
-    if external_cli_engine not in {"gemini-cli", "agy-cli"}:
+    if external_cli_engine not in {"gemini-cli", "agy-cli", "codex-cli"}:
         raise ValueError(f"Unknown external CLI engine: {external_cli_engine}")
 
     resolved_agy_model = None
+    resolved_codex_model = None
+    resolved_codex_reasoning_effort = None
     if external_cli_engine == "agy-cli":
         resolved_agy_model = configure_agy_cli_model(
             agy_model,
             default_model=AGY_CLI_MODEL,
             allowed_models=AGY_CLI_MODEL_LIST,
+        )
+    elif external_cli_engine == "codex-cli":
+        (
+            resolved_codex_model,
+            resolved_codex_reasoning_effort,
+        ) = resolve_codex_cli_settings(
+            codex_model,
+            codex_reasoning_effort,
+            default_model=CODEX_CLI_MODEL,
+            default_reasoning_effort=CODEX_CLI_REASONING_EFFORT,
+            allowed_model_reasoning_pairs=CODEX_CLI_MODEL_REASONING_PAIRS,
         )
 
     run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
@@ -586,6 +613,7 @@ def prepare_cli_input(
             "pdf_for_ai_repo_relative": repo_relative_path(art.pdf_path),
             "pdf_for_ai_gemini_path": gemini_at_path(art.pdf_path),
             "pdf_for_ai_agy_path": str(art.pdf_path.resolve()),
+            "pdf_for_ai_codex_path": str(art.pdf_path.resolve()),
             "missing_keys": missing_keys,
             "emit_abstract": emit_abstract,
             "past_summary_used": bool(past_summary_text and past_summary_text.strip()),
@@ -598,6 +626,18 @@ def prepare_cli_input(
             result["agy_settings_path"] = str(agy_settings_path())
             result["response_begin"] = AGY_RESPONSE_BEGIN
             result["response_end"] = AGY_RESPONSE_END
+        if resolved_codex_model is not None:
+            result["paperhub_root"] = str(PAPERHUB_ROOT)
+            result["codex_cli_model"] = resolved_codex_model
+            result["codex_cli_reasoning_effort"] = resolved_codex_reasoning_effort
+            result["codex_cli_yolo"] = CODEX_CLI_YOLO
+            result["codex_cli_web_search"] = "disabled"
+            result["codex_model_label"] = codex_model_label(
+                resolved_codex_model,
+                resolved_codex_reasoning_effort,
+            )
+            result["response_begin"] = CODEX_RESPONSE_BEGIN
+            result["response_end"] = CODEX_RESPONSE_END
         return result
     except Exception:
         import shutil
@@ -730,10 +770,13 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Enrich existing paper folders with AI summary.")
     p.add_argument("--folder", action="append", default=[], required=False,
                    help="Folder name under organized/ or absolute path. Repeat for multiple.")
-    p.add_argument("--engine", choices=("openrouter", "gemini-cli", "agy-cli"), default="openrouter")
+    p.add_argument("--engine", choices=("openrouter", "gemini-cli", "agy-cli", "codex-cli"), default="openrouter")
     p.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     p.add_argument("--model", default=None, help="OpenRouter model id (defaults to config DEFAULT_MODEL)")
     p.add_argument("--agy-model", default=None, help="Agy CLI model label; defaults to config AGY_CLI_MODEL")
+    p.add_argument("--codex-model", default=None, help="Codex CLI model id; defaults to config CODEX_CLI_MODEL")
+    p.add_argument("--codex-reasoning-effort", default=None,
+                   help="Codex CLI reasoning effort; defaults to config CODEX_CLI_REASONING_EFFORT")
     p.add_argument("--pdf-engine", default=DEFAULT_PDF_ENGINE)
     p.add_argument("--instruction", default="", help="Additional instruction for the AI "
                    "(e.g., which parts to emphasize when polishing a past summary)")
@@ -764,6 +807,7 @@ def main() -> None:
     p.add_argument("--gemini-output-json", help="Gemini CLI JSON output to validate (with --from-response)")
     p.add_argument("--agy-stderr-file", help="Agy CLI stderr file to validate (with --from-response)")
     p.add_argument("--agy-log-file", help="Agy CLI log file to validate (with --from-response)")
+    p.add_argument("--codex-stderr-file", help="Codex CLI stderr file to validate (with --from-response)")
     p.add_argument("--tokens-prompt", type=int)
     p.add_argument("--tokens-completion", type=int)
     p.add_argument("--tokens-thinking", type=int)
@@ -807,8 +851,10 @@ def main() -> None:
             include_summary=not args.no_summary,
             additional_instruction=args.instruction,
             past_summary_text=past_summary_text,
-            external_cli_engine="agy-cli" if args.engine == "agy-cli" else "gemini-cli",
+            external_cli_engine=args.engine if args.engine in {"agy-cli", "codex-cli"} else "gemini-cli",
             agy_model=args.agy_model,
+            codex_model=args.codex_model,
+            codex_reasoning_effort=args.codex_reasoning_effort,
         )
         print(json.dumps(result, indent=2))
         return
@@ -830,6 +876,12 @@ def main() -> None:
             or args.model_label.endswith(" (Agy CLI)")
         ):
             external_cli_engine = "agy-cli"
+        elif (
+            args.engine == "codex-cli"
+            or args.codex_stderr_file
+            or args.model_label.endswith(" (Codex CLI)")
+        ):
+            external_cli_engine = "codex-cli"
         elif args.engine != "gemini-cli":
             external_cli_engine = "gemini-cli"
 
@@ -848,6 +900,13 @@ def main() -> None:
             )
             if not problems:
                 response = extract_agy_response_block(response)
+        elif external_cli_engine == "codex-cli":
+            problems = validate_codex_cli_run(
+                stdout_text=response,
+                stderr_path=Path(args.codex_stderr_file).resolve() if args.codex_stderr_file else None,
+            )
+            if not problems:
+                response = extract_codex_response_block(response)
         if problems:
             print(json.dumps({"success": False, "problems": problems}, indent=2))
             sys.exit(1)
@@ -860,9 +919,22 @@ def main() -> None:
                 allowed_models=AGY_CLI_MODEL_LIST,
             )
             model_label = agy_model_label(resolved_agy_model)
+        elif external_cli_engine == "codex-cli" and model_label == "unknown":
+            resolved_codex_model, resolved_codex_reasoning_effort = resolve_codex_cli_settings(
+                args.codex_model,
+                args.codex_reasoning_effort,
+                default_model=CODEX_CLI_MODEL,
+                default_reasoning_effort=CODEX_CLI_REASONING_EFFORT,
+                allowed_model_reasoning_pairs=CODEX_CLI_MODEL_REASONING_PAIRS,
+            )
+            model_label = codex_model_label(
+                resolved_codex_model,
+                resolved_codex_reasoning_effort,
+            )
 
         pdf_engine = {
             "agy-cli": "agy-native",
+            "codex-cli": "codex-cli",
             "coding-agent": "coding-agent",
         }.get(external_cli_engine, "gemini-native")
 
@@ -898,7 +970,7 @@ def main() -> None:
     # Default path: openrouter, possibly multiple folders
     if not args.folder:
         p.error("at least one --folder is required (unless using --cleanup-cli-input)")
-    if args.engine in {"gemini-cli", "agy-cli"}:
+    if args.engine in {"gemini-cli", "agy-cli", "codex-cli"}:
         p.error(f"--engine {args.engine} requires --prepare-cli-input then --from-response (one folder at a time)")
     if args.past_summary_file and len(args.folder) != 1:
         p.error("--past-summary-file is only valid with a single --folder; use --use-past-summary for batches")

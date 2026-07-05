@@ -42,7 +42,7 @@ Location: organized/melitz2003trade/
 Files created:
    - melitz2003trade.md (AI-generated metadata)
    - melitz_2003.pdf (original paper)
-Git: Committed "feat(papers): add melitz2003trade"
+Versioned: committed "feat(papers): add melitz2003trade" to backup repo (pushed)
 Model used: <model name>
 Pages sent: 3 of 42
 Token usage: X prompt + Y completion = Z total
@@ -57,7 +57,7 @@ Summary (3/3 succeeded, metadata-only):
 |-----------------|-------|--------|------------|--------|-------|
 | melitz2003trade | 3/42  | 4,500  | 1,200      | 5,700  | $0.02 |
 ...
-Git: Committed "feat(papers): add 3 papers"
+Versioned: committed "feat(papers): add 3 papers" to backup repo (pushed)
 
 Tag updates this batch:
   - 4 new tags added: ...

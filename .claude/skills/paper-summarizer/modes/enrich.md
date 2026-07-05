@@ -23,7 +23,7 @@ If the user mentions multiple folders, batch them in a single call (OpenRouter) 
 6. Surgically merge the returned `# metadata_patch` into the existing frontmatter — only blank fields, never `contributions` / `status` / `interest`.
 7. Write `ai_summary.md` (with model + token frontmatter, plus `enriched: true`).
 8. Run the standard post-summary tag flow (see `tags/post_summary_update.md`).
-9. Commit: `feat(papers): enrich {folder}` (or `enrich {N} folders`).
+9. Version via the `versioning-with-git` skill (see `shared/post_ai.md` §4) with message `feat(papers): enrich {folder}` (or `enrich {N} folders`).
 
 ## Existing-summary handling (AskUserQuestion flow)
 
@@ -245,7 +245,7 @@ Enriched 2 paper(s):
   melitz2003trade — summary generated (no past), no meta changes
 Token usage: ... (sum across folders)
 Tag updates: ... (from post-summary tag flow)
-Git: Committed "feat(papers): enrich 2 folders"
+Versioned: committed "feat(papers): enrich 2 folders" to backup repo (pushed)
 ```
 
 Mention "polished from past" for any folder where `past_summary_used` is true so the user knows the reference was applied.

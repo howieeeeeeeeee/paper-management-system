@@ -22,7 +22,7 @@ modes/
   metadata_only.md        ← writes {paper_label}.md only (sends first N pages)
   enrich.md               ← writes ai_summary.md for an EXISTING folder; patches blank meta
 shared/
-  post_ai.md              ← validation, autofix, git, tag handoff, partial-failure handling
+  post_ai.md              ← validation, autofix, versioning (git backup), tag handoff, partial-failure handling
 setup/
   python_uv_recovery.md   ← read only if uv is missing and pip cannot install it
 tags/
@@ -91,7 +91,7 @@ After the selected engine finishes and the paper files are written, read `shared
 1. Validate the output folder, moved PDF, metadata file, and mode-specific summary requirements.
 2. Auto-fix small output issues: AI markup artifacts, tag spaces, missing required YAML fields, and missing `## Abstract`.
 3. Run the batch tag handoff in `tags/post_summary_update.md` so new tags are added or merged against the registry.
-4. Commit the organized files unless the user asked not to commit, `USE_GIT = False` (loaded from `paperhub_utils/config/config.json`), or the output is outside the paper-library Git repo.
+4. Version the organized files by running the `versioning-with-git` skill (mirrors the vault into the out-of-iCloud git backup repo and commits/pushes there — the vault itself has no `.git`), unless the user asked not to commit. It self-skips when `USE_GIT = False` or no backup path is set (loaded from `paperhub_utils/config/config.json`).
 5. Report the result with token usage when available, tag updates, auto-fixes, and any failed papers.
 
 For partial batch failures, ask the user whether to abandon, retry, or choose another allowed model for the active engine. Never switch models automatically.
@@ -161,7 +161,7 @@ done
 |---|---|
 | Project root | current paper-library root (`PAPERHUB_ROOT` overrides auto-detection) |
 | Output dir | `organized/` |
-| Git repo | project root |
+| Git backup repo | `git.backup_abs_path` in `config.json` — a git repo OUTSIDE iCloud; the vault has no `.git`. Commits go through the `versioning-with-git` skill |
 | Entry scripts | `paperhub_utils/scripts/` (`scripts.paper_summarizer`, `scripts.enrich`, `scripts.paper_search`, `scripts.update_utils`) |
 | Python package | `paperhub_utils/paperhub/` (`config.py`, `cli_workflow/`, `tag_utils/`, `prompt/builder.py`) |
 | User config | `paperhub_utils/config/config.json` (`paperhub.config` loads and exports it) |

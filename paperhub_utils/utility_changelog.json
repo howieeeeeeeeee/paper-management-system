@@ -1,8 +1,25 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.05.3",
+  "latest_version": "2026.07.06.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.06.1": {
+      "date": "2026-07-06",
+      "title": "Out-of-vault Git Versioning",
+      "update_kind": "structural + content",
+      "summary": "Moves git versioning out of the (iCloud-synced) library folder into a separate git backup repo, so a live .git no longer risks iCloud corruption. Adds a versioning-with-git skill, a config.json git block, and matching onboarding.",
+      "how_to_apply": "Config shape changed: git settings moved from top-level use_git into a git block { use_git, sync_to_remote, backup_abs_path } and schema_version is now 2. config.py reads the git block with a legacy fallback to top-level use_git, so existing configs keep working with no change. To enable out-of-vault versioning, set git.backup_abs_path to a plain local folder OUTSIDE iCloud (re-run onboarding or edit config.json); commits then mirror the library into that repo instead of committing in place. Remove any .git left inside the library folder once the backup repo holds the current state.",
+      "added": [
+        "versioning-with-git skill: mirrors the library into an out-of-iCloud git backup repo, commits all changes there, and optionally pulls/pushes a remote.",
+        "config.json git block: use_git, sync_to_remote, backup_abs_path (with PAPERHUB_SYNC_TO_REMOTE_GIT and PAPERHUB_GIT_BACKUP env overrides).",
+        "Onboarding questionnaire git section (3 settings) plus iCloud 'Keep Downloaded' guidance and the rule that the backup folder must live outside iCloud."
+      ],
+      "changed": [
+        "paper-summarizer post-AI, tag, and enrich flows now commit via the versioning-with-git skill instead of running git inside the library folder.",
+        "config schema_version bumped to 2; use_git relocated under the git block (legacy top-level use_git still honored).",
+        "onboard.md git logic no longer runs git init in the vault; it configures the backup repo and removes any in-vault .git."
+      ]
+    },
     "2026.07.05.1": {
       "date": "2026-07-05",
       "title": "CLI Routes and Paper Finder",

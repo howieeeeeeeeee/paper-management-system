@@ -38,7 +38,7 @@ Do not guess the user's vault path, API key, starter taxonomy, or Git preference
 8. Before doing work, verify any step marked `done` against the filesystem/config. If the artifact is missing or the config no longer matches, set that step back to `pending` with a short note.
 9. Summarize what is already done and what remains before continuing.
 10. When starting a step, mark it `in_progress`. When it finishes, update it to `done`, `skipped`, or `blocked`, set `completed_at` for finished/skipped steps, update relevant `context` fields, and save the JSON immediately.
-11. If a step changes a real project setting, update `paperhub_utils/config/config.json` too. For example, Git preference belongs in JSON as `use_git`; `paperhub_utils/paperhub/config.py` exposes it as `USE_GIT` for Python code.
+11. If a step changes a real project setting, update `paperhub_utils/config/config.json` too. For example, Git preferences belong in JSON under the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`); `paperhub_utils/paperhub/config.py` exposes them as `USE_GIT`, `SYNC_TO_REMOTE_GIT`, and `GIT_BACKUP_ABS_PATH` for Python code.
 
 Do not use `onboarding.json` as the only source of truth. It is a progress ledger; always verify important setup artifacts.
 
@@ -57,8 +57,8 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    - The agent should discover the paper-library root from the working directory or nearest project marker; do not ask the user for the PaperHub path during normal onboarding.
    - If the paper-library folder is not inside the provided vault and Bases setup is requested, ask where the library will live inside the vault before editing `.base` files.
 5. Confirm these folders exist or create them if missing: `to_be_organized/`, `organized/`, and `tags/`.
-6. Read `paperhub_utils/config/config.json` for `use_git`, `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
-7. Read `paperhub_utils/paperhub/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `USE_GIT`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS`.
+6. Read `paperhub_utils/config/config.json` for the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`), `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
+7. Read `paperhub_utils/paperhub/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `USE_GIT`, `SYNC_TO_REMOTE_GIT`, `GIT_BACKUP_ABS_PATH`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS`.
 8. **Make sure `uv` is here.** Every other step in this skill calls `uv run python ...`; if `uv` is not on `PATH`, nothing else works — even when `paperhub_utils/.venv/` already exists from a previous machine. This check is non-optional.
 
    ```bash
@@ -113,11 +113,32 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
 Ask only for missing or conflicting information.
 
 - **Root path**: if the discovered root conflicts with `paperhub/config.py`, ask whether to use the detected root or the configured root.
-- **Git**:
-  - If `.git/` exists at the paper-library root, set `"use_git": true`, update `context.use_git` to `true`, and skip asking unless the questionnaire explicitly says not to use Git.
-  - If the questionnaire says not to use Git, set `"use_git": false` and skip all Git steps.
-  - If `.git/` is missing and the questionnaire asks to use Git, verify `git --version`, run `git init -b main`, stage, make an initial setup commit if possible, and persist `"use_git": true`.
-  - If Git is requested but unavailable, ask the user to install/configure Git and rerun onboarding; set `"use_git": false` until Git is available.
+- **Git (out-of-vault versioning)**: the vault must hold **no** `.git` — a live `.git` under
+  iCloud gets corrupted. History lives in a separate git backup folder outside iCloud, driven by
+  the `versioning-with-git` skill. Settings live in `config.json` under the `git` block:
+  `use_git`, `sync_to_remote`, `backup_abs_path`. Parse the questionnaire's Section 3 "Git
+  behavior" (three answers) and:
+  - **If the questionnaire says not to use git versioning**, set `git.use_git = false`, update
+    `context.use_git = false`, and skip the rest of the Git steps.
+  - **If git versioning is requested**, set `git.use_git = true` and resolve the backup folder:
+    - Take `git.backup_abs_path` from the questionnaire's "Git backup folder" answer. If blank,
+      ask the user for an absolute path (`AskUserQuestion`).
+    - **Validate it is outside any cloud folder.** If the path contains `Mobile Documents`,
+      `Dropbox`, `Google Drive`, or `OneDrive`, warn and ask for a plain local path instead —
+      do not proceed with a cloud path.
+    - Set `sync_to_remote` from the "Sync to a remote" answer.
+    - Persist all three into `config.json`'s `git` block and mirror `context.use_git`,
+      `context.sync_to_remote`, `context.git_backup_abs_path` in `onboarding.json`.
+  - **Set up the backup repo (first-time).** Verify `git --version`. If the backup folder has no
+    `.git`, run the `versioning-with-git` skill's *First-time setup* (create the folder, mirror
+    the vault in, `git init -b main`, initial commit). If `sync_to_remote` is true, ask the user
+    for the remote URL and wire up `origin` — never invent a URL.
+  - **Remove any legacy in-vault `.git`.** If a `.git` exists at the paper-library root, tell the
+    user it must be removed (its history is preserved in the backup folder + remote) and, once the
+    backup repo holds the current state, `rm -rf` it from the vault. Never `git init` inside the
+    vault.
+  - **If git is requested but unavailable**, ask the user to install/configure git and rerun
+    onboarding; set `git.use_git = false` until git is available.
 - **OpenRouter API key**:
   - If the questionnaire says OpenRouter is desired, verify that `OPENROUTER_API_KEY` is available from the environment or `paperhub_utils/config/.env`.
   - Verify without printing the key:
@@ -276,7 +297,7 @@ The tag context output may be empty only if tag prompt context is disabled or th
 
 End onboarding with:
 
-1. The resolved paper-library root, utilities directory, organized directory, tags directory, vault-relative base path, and Git setting.
+1. The resolved paper-library root, utilities directory, organized directory, tags directory, vault-relative base path, and the Git settings (versioning on/off, backup folder path, remote sync on/off).
 2. Whether OpenRouter, Agy CLI, Codex CLI, or current-agent processing is available.
 3. A short instruction to add PDFs to `to_be_organized/`.
 4. A recommended first request: run metadata-only mode on one or a small batch of PDFs.
@@ -285,4 +306,4 @@ End onboarding with:
 
 If onboarding is complete and `onboarding_questionnaire.md` still exists, delete it from the root after recording the final state. Do not delete it if onboarding is blocked, if required answers remain unresolved, or if the user explicitly asks to keep it.
 
-Onboarding is complete when config paths are valid, `use_git` is explicit in `paperhub_utils/config/config.json`, the tag registry exists, base files are configured or explicitly skipped, and the `uv` environment is installed in `paperhub_utils/`.
+Onboarding is complete when config paths are valid, the `git` block is explicit in `paperhub_utils/config/config.json` (and, when `use_git` is true, `backup_abs_path` points to an initialized out-of-iCloud repo and no `.git` remains in the vault), the tag registry exists, base files are configured or explicitly skipped, and the `uv` environment is installed in `paperhub_utils/`.

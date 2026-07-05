@@ -101,11 +101,12 @@ This is a heavier flow that surfaces accumulated drift since the last check.
    cp /tmp/round_N_merges.json ../tags/_internal/round_N_merges.json
    ```
 
-8. **Commit.**
+8. **Commit** via the **`versioning-with-git`** skill (the vault has no `.git`; it mirrors the
+   vault into the out-of-iCloud backup repo and commits/pushes there). Read
+   `.claude/skills/versioning-with-git/SKILL.md` and pass the commit message:
 
-   ```bash
-   git add tags/ organized/
-   git commit -m "chore(tags): periodic tag normalization (round N)"
+   ```text
+   chore(tags): periodic tag normalization (round N)
    ```
 
 9. **Report.** Show the user: "Round N done. Was X tags, now Y. Top merges: `old → new` (N papers). Anything else to clean?"

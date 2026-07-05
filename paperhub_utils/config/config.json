@@ -1,6 +1,10 @@
 {
-  "schema_version": 1,
-  "use_git": true,
+  "schema_version": 2,
+  "git": {
+    "use_git": true,
+    "sync_to_remote": false,
+    "backup_abs_path": null
+  },
   "metadata_only_page_limit": 2,
   "agy_cli_model": "Gemini 3.1 Pro (High)",
   "codex_cli_model": "gpt-5.5",

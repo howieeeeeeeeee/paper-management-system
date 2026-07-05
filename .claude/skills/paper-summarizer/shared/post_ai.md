@@ -44,42 +44,32 @@ Always report any auto-fixes in the completion report.
 
 After auto-fix, ALWAYS run the post-summary tag flow once for the batch (see `tags/post_summary_update.md`). Capture: count of new tags added (with type), count of merges, count of tags reused unchanged.
 
-## 4. Git commit
+## 4. Version (git commit via the backup repo)
 
-Before committing, check `USE_GIT` from the Python config. It is loaded from `paperhub_utils/config/config.json` unless `PAPERHUB_USE_GIT` overrides it:
+The vault has **no** `.git` (it lives in an iCloud folder). Do not run `git` inside the vault.
+Instead, run the **`versioning-with-git` skill** — it mirrors the vault into the out-of-iCloud
+git backup folder, commits **all** changes there (papers + tags + any config/prompt edits from
+this run, in one commit), and pushes if the user syncs to a remote. Read
+`.claude/skills/versioning-with-git/SKILL.md` and follow it, passing the commit message:
 
-```bash
-cd paperhub_utils
-uv run python -c "from paperhub.config import USE_GIT; print(USE_GIT)"
-```
+- Single paper: `feat(papers): add {paper_label}`
+- `enrich` mode: `feat(papers): enrich {paper_label}` (or `enrich {N} folders`)
+- Multiple papers: `feat(papers): add {label1}, {label2}, ...`
+- Many papers — multi-line body:
 
-Single paper:
+  ```text
+  feat(papers): add {N} papers
 
-```bash
-# Run from the paper-library root.
-git add .
-git commit -m "feat(papers): add {paper_label}"
-```
+  - {label1}
+  - {label2}
+  ...
+  ```
 
-For `enrich` mode use `feat(papers): enrich {paper_label}` (or `enrich {N} folders`).
+The versioning skill already checks `USE_GIT`, `SYNC_TO_REMOTE_GIT`, and `GIT_BACKUP_ABS_PATH`
+and skips cleanly when versioning is off or the backup folder is unset.
 
-Multiple papers:
-
-```bash
-git commit -m "feat(papers): add {label1}, {label2}, ..."
-```
-
-Or many:
-
-```bash
-git commit -m "feat(papers): add {N} papers
-
-- {label1}
-- {label2}
-..."
-```
-
-**Skip git if:** `USE_GIT` is false, the user explicitly said no commit, output is outside the git repo, or git is unavailable.
+**Skip this step if:** the user explicitly said no commit. (Everything else — `USE_GIT` false,
+no backup path, git unavailable — the versioning skill handles and reports.)
 
 ## 5. Report
 

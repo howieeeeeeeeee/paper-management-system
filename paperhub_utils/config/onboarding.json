@@ -18,6 +18,8 @@
     "questionnaire_status": null,
     "questionnaire_deleted": false,
     "use_git": null,
+    "sync_to_remote": null,
+    "git_backup_abs_path": null,
     "ai_engine": null,
     "metadata_only_page_limit": null,
     "paper_label_format": null
@@ -53,7 +55,7 @@
     },
     {
       "id": "configure_git",
-      "name": "Decide and persist Git behavior",
+      "name": "Decide and persist Git behavior (out-of-iCloud backup repo, optional remote sync); remove any in-vault .git",
       "status": "pending",
       "completed_at": null,
       "notes": null

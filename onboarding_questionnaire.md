@@ -17,10 +17,7 @@ This section helps the agent confirm that it is working in the correct folder an
 
 - [ ] I cloned or copied this repository into the Obsidian vault, or into the folder where I want my paper library to live.
 - [ ] I opened Terminal at the PaperHub folder.
-- [ ] I removed the upstream Git history and initialized my own local repository, or I intentionally do not want Git. This keeps my private paper library separate from the original template repository.
-
-_Note: Complete the three steps above after pasting the git command from the README in your chosen folder._
-
+- [ ] I understand this paper-library folder should **not** keep a `.git` inside it — especially under iCloud, where a live `.git` gets corrupted. If I copied a template that came with a `.git`, I will let onboarding remove it. Version history is kept in a **separate git backup folder** (configured in Section 3, "Git behavior") that lives **outside** iCloud.
 - [ ] I opened my coding agent from the PaperHub folder, so file changes happen inside this project.
 
 If you are not sure whether Terminal is at the PaperHub folder, run this command:
@@ -49,82 +46,72 @@ Obsidian vault absolute path:
 
 ```
 
+**Strongly recommended: keep your Obsidian vault inside iCloud (or another cloud sync).** That way your paper library syncs across your devices automatically. If you do, also set the vault folder to **"Keep Downloaded"** (in Finder, right-click the vault folder → **Keep Downloaded**) so every file is stored locally as a real file, not an `.icloud` placeholder. The git backup step copies real files; if the vault is not fully downloaded, placeholders would be backed up instead of your actual notes.
+
+**Just as important: the git backup folder (Section 3) must NOT live inside iCloud/Dropbox/any cloud folder.** A live `.git` inside a cloud-synced folder gets corrupted. Put the backup folder somewhere plain and local, such as `~/Personal/PaperHub` or `~/git/PaperHub`.
+
 ## 3. Engine And Runtime
 
-PaperHub can summarize papers with different AI engines. OpenRouter is usually the simplest option for full summaries because it only needs an API key. Agy CLI and Codex CLI can work if you already have them installed and authenticated. The current coding agent can also run PaperHub directly, including full-summary mode, but full summaries may use a lot of tokens.
+PaperHub summarizes papers with different AI engines. Pick your preferred one(s); if it is not available, the agent falls back to whatever works.
 
-Preferred AI engine:
+**Preferred AI engine** (pick one):
 
-- [ ] OpenRouter
-- [ ] Agy CLI
-- [ ] Codex CLI
-- [ ] Current coding agent, full summaries
-- [ ] Current coding agent, metadata-only first
-- [ ] Not sure, ask me only if the agent cannot infer a working option
+- [ ] OpenRouter — simplest for full summaries; just needs an API key (recommended)
+- [ ] Agy CLI — direct Google/Gemini CLI (recommended if subscribing to Google AI Pro, only if already installed)
+- [ ] Codex CLI — OpenAI `codex exec` (only if already installed)
+- [ ] Current coding agent — allow full summaries (no separate service; higher token use)
+- [ ] Current coding agent — metadata-only first, ask before full summaries
+- [ ] Not sure — let the agent infer a working option
 
-Choose OpenRouter if you want full AI-written paper summaries and you are comfortable creating an API key. Choose Agy CLI only if you already know it is installed on your machine. Choose Codex CLI if you already use OpenAI Codex locally and want PaperHub to run through `codex exec`. Choose the current coding agent if you want to run onboarding without setting up a separate AI service. If you choose the current coding agent for full summaries, expect substantially higher token usage, especially for long PDFs or batches of many papers.
+**Set up only the engine you picked:**
 
-OpenRouter setup:
-
-- [ ] I want to use OpenRouter for full summaries and enrich runs.
-- [ ] I do not want OpenRouter now.
-
-If you want to use OpenRouter:
-
-1. Go to [openrouter.ai](https://openrouter.ai/).
-2. Sign in or create an account.
-3. Create an API key.
-4. Open Terminal at the PaperHub folder.
-5. Copy the example environment file:
+_OpenRouter._ Create a key at [openrouter.ai](https://openrouter.ai/), then in Terminal at the PaperHub folder copy the example env file and paste your key into it (never paste the key here or in chat):
 
 ```bash
 cp paperhub_utils/config/.env.example paperhub_utils/config/.env
+nano paperhub_utils/config/.env   # replace YOUR_OPENROUTER_API_KEY, then Ctrl+O, Enter, Ctrl+X
 ```
 
-6. Open the copied `.env` file and replace `YOUR_OPENROUTER_API_KEY` with your real key:
+_Agy CLI._ Confirm it actually runs: type `agy` in your Terminal and check it launches and is signed in.
 
-```bash
-nano paperhub_utils/config/.env
-```
+- [ ] I ran `agy` in Terminal and it works.
 
-In nano, save with `Ctrl+O`, press `Enter`, then exit with `Ctrl+X`. After saving, confirm that the file exists:
+_Codex CLI._ Confirm it actually runs: type `codex` in your Terminal and check it launches and is signed in.
 
-```bash
-ls paperhub_utils/config/.env
-```
+- [ ] I ran `codex` in Terminal and it works.
+- [ ] Use local yolo/full-access mode (smoother from this trusted folder). Leave unchecked to keep it sandboxed/read-only.
 
-Do not paste the real API key into this questionnaire or into chat.
+Codex model + reasoning default:
 
-Agy CLI setup:
-
-- [ ] I already installed and authenticated Agy CLI on this machine.
-- [ ] I do not know what Agy CLI is, so do not assume it is available.
-
-Codex CLI setup:
-
-- [ ] I already installed and authenticated Codex CLI on this machine.
-- [ ] I want Codex CLI to use local yolo/full-access mode for smoother PaperHub runs from this trusted folder.
-- [ ] Keep Codex CLI sandboxed/read-only instead of yolo mode.
-- [ ] I do not know what Codex CLI is, so do not assume it is available.
-
-Codex CLI model and thinking default:
-
-- [ ] `gpt-5.5` + `high` reasoning, recommended default
-- [ ] `gpt-5.5` + `medium` reasoning
-- [ ] `gpt-5.5` + `xhigh` reasoning
-
-Current coding agent setup:
-
-- [ ] Use the current coding agent for full summaries. I understand this may use a lot of tokens.
-- [ ] Use the current coding agent for metadata-only first, then ask me before full summaries.
-- [ ] Stop and ask me before using the current coding agent for full-summary mode.
+- [ ] `gpt-5.5` + `high` (recommended)
+- [ ] `gpt-5.5` + `medium`
+- [ ] `gpt-5.5` + `xhigh`
 
 Git behavior:
 
-Git lets the agent save clean checkpoints after organizing papers, editing configuration, or updating generated files. If you are new to Git, it is fine to choose "Do not use Git commits" for now.
+Git lets the agent save clean checkpoints (versions) after organizing papers, editing configuration, or updating generated files, so you can look back or roll back. If you are new to Git, it is fine to choose "Do not use Git versioning" for now.
 
-- [ ] Use Git commits for organized papers, tag updates, and setup changes.
-- [ ] Do not use Git commits for this library.
+**How versioning works here:** because your library likely lives in iCloud, and a live `.git` inside an iCloud folder gets corrupted, PaperHub does **not** keep a `.git` in this folder. Instead it keeps a **separate git backup folder outside iCloud**. After each batch the agent copies (mirrors) your library into that folder and commits there. Three settings below control this.
+
+**1. Use git versioning?**
+
+- [ ] Yes — version my library (mirror + commit into a separate git backup folder).
+- [ ] No — do not use git versioning for this library.
+
+**2. Git backup folder — absolute path.**
+
+Paste the absolute path of a **plain local folder outside iCloud/Dropbox/any cloud folder** where the git history should live (e.g. `/Users/you/Personal/PaperHub` or `/Users/you/git/PaperHub`). It can be empty or not exist yet — the agent will create and initialize it. If you leave this blank while choosing "Yes" above, the agent will ask for it during onboarding.
+
+```text
+
+```
+
+**3. Sync to a remote (GitHub/GitLab)?**
+
+If yes, each versioning run will `git pull` before and `git push` after, keeping a remote copy in sync (useful across devices).
+
+- [ ] Yes — pull before and push after each versioning run. (After onboarding I will add the remote, e.g. `git remote add origin <url>`, and confirm I can push. The agent can help wire this up.)
+- [ ] No — keep versions local in the backup folder only.
 
 Metadata-only page limit:
 
@@ -230,7 +217,7 @@ Notes for Bases filters or views, if any:
 
 ## 8. Anything Else The Agent Should Know
 
-Use this space for preferences that do not fit above. Examples: where PDFs are currently stored, whether you use Zotero, papers you want organized first, naming preferences, or anything you do not want the agent to change.
+Use this space for preferences that do not fit above. Examples: where PDFs are currently stored, papers you want organized first, naming preferences, or anything you do not want the agent to change.
 
 ```text
 

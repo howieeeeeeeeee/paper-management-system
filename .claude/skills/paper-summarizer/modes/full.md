@@ -42,7 +42,7 @@ Files created:
    - melitz2003trade.md (AI-generated metadata)
    - ai_summary.md (AI-generated summary)
    - melitz_2003.pdf (original paper)
-Git: Committed "feat(papers): add melitz2003trade"
+Versioned: committed "feat(papers): add melitz2003trade" to backup repo (pushed)
 Model used: <model name>
 Token usage: X prompt + Y completion = Z total
 Tag updates: 2 new (international_trade [field], heterogeneous_firms [topic]); 1 merged (melitz_model -> melitz_framework)
@@ -56,7 +56,7 @@ Summary (3/3 succeeded):
 |-----------------|--------|------------|--------|--------|
 | melitz2003trade | 48,000 | 8,000      | 56,000 | $0.23  |
 ...
-Git: Committed "feat(papers): add 3 papers"
+Versioned: committed "feat(papers): add 3 papers" to backup repo (pushed)
 
 Tag updates this batch:
   - 4 new tags added: international_trade (field), heterogeneous_firms (topic), structural (methodology), econ559 (meta)

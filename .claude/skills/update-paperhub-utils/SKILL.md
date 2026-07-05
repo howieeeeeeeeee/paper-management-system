@@ -31,6 +31,32 @@ but prompt conflicts require semantic merge judgment.
   available ask-user tool (`AskUserQuestion`, `ask_user_input`, or equivalent)
   before applying it.
 
+## 0. Self-update this skill first (before Step 1)
+
+**The very first action is to update this `update-paperhub-utils` skill itself from
+upstream, then re-read it, and only then proceed.** The update logic in these
+instructions changes over time; running the newest version of the updater's own steps
+avoids applying stale or unsafe update behavior.
+
+1. Fetch the upstream template and overwrite only this skill's files:
+
+   ```bash
+   TMP=$(mktemp -d)
+   git clone --depth 1 https://github.com/howieeeeeeeeee/paper-management-system.git "$TMP/upstream" \
+     && cp "$TMP/upstream/.claude/skills/update-paperhub-utils/SKILL.md" \
+           .claude/skills/update-paperhub-utils/SKILL.md \
+     && cp "$TMP/upstream/.agents/skills/update-paperhub-utils/SKILL.md" \
+           .agents/skills/update-paperhub-utils/SKILL.md 2>/dev/null
+   rm -rf "$TMP"
+   ```
+
+   If the clone fails (e.g. offline), note it and continue with the current skill version.
+
+2. **Re-read the refreshed `.claude/skills/update-paperhub-utils/SKILL.md` and follow the
+   newest instructions from the top.** Bootstrap once per run: if the refresh changed the
+   file, adopt the new steps; if it made no change, you are already current. Then continue
+   to the workflow below.
+
 ## Workflow
 
 1. From the repository root, check what is available:

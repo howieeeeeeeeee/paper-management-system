@@ -32,9 +32,6 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
    git clone --depth 1 https://github.com/howieeeeeeeeee/paper-management-system.git PaperHub
    cd PaperHub
    rm -rf .git
-   git init -b main
-   git add -A
-   git commit -m "chore(setup): initialize PaperHub"
    ```
 
 2. Fill [onboarding_questionnaire.md](onboarding_questionnaire.md), then set its frontmatter status to:
@@ -75,7 +72,9 @@ Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for r
 
 ![Obsidian Base / Paperbase screenshot placeholder](quick_start/paperbase-screenshot.png)
 
-## Updating Utilities
+## Updating Utilities and Skills 
+
+PaperHub keeps improving — new skills, engines, and workflow features ship over time. Rather than re-cloning, run the local `update-paperhub-utils` skill to sync the latest skills and utilities into your own project, so new features land on your local copy while your papers and settings stay untouched.
 
 Use the best model available (SOTA GPT w/ xhigh thinking or Opus w/ xhigh thinking) because updates may need semantic prompt merges:
 

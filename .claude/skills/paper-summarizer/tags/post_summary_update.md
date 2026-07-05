@@ -143,16 +143,18 @@ Run all scripts from `paperhub_utils/`:
 
    If nothing changed, report: `Tag updates: all N tags reused from registry, no changes.`
 
-7. **Commit with the paper summary commit.**
+7. **Tags land in the same commit as the papers.** Do not commit here. The single commit for
+   the batch is made by the **`versioning-with-git`** step in `shared/post_ai.md` §4, whose
+   `git add -A` captures `tags/` and `organized/` together in the out-of-iCloud backup repo. Pass
+   the tag-update counts into that commit body if you like:
 
-   ```bash
-   git add tags/ organized/
-   git commit -m "feat(papers): add <labels>
+   ```text
+   feat(papers): add <labels>
 
    Tag updates:
    - new: tag1 (field), tag2 (topic)
    - merged: old_tag -> existing_tag
-   - reused unchanged: N"
+   - reused unchanged: N
    ```
 
 ## Token discipline

@@ -53,10 +53,29 @@ TO_BE_ORGANIZED_DIR = PAPERHUB_ROOT / "to_be_organized"
 DEFAULT_ORGANIZED_DIR = PAPERHUB_ROOT / "organized"
 DEFAULT_TAGS_DIR = PAPERHUB_ROOT / "tags"
 SAMPLE_BOARD_PATH = PAPERHUB_ROOT / "SamplePaperBoard.base"
-USE_GIT = _config_bool(USER_CONFIG, "use_git", True)
+# Git versioning lives in a separate out-of-iCloud "backup" repo; the vault itself
+# holds no .git. Settings live under the "git" block, with a legacy fallback to the
+# old top-level "use_git" key so pre-schema-2 configs keep working.
+_GIT_CONFIG = USER_CONFIG.get("git")
+if not isinstance(_GIT_CONFIG, dict):
+    _GIT_CONFIG = {}
+
+USE_GIT = _config_bool(_GIT_CONFIG, "use_git", _config_bool(USER_CONFIG, "use_git", True))
 _USE_GIT_ENV = os.environ.get("PAPERHUB_USE_GIT")
 if _USE_GIT_ENV is not None:
     USE_GIT = _USE_GIT_ENV.strip().lower() in {"1", "true", "yes", "on"}
+
+# When true, the versioning-with-git skill pulls before and pushes after each commit.
+SYNC_TO_REMOTE_GIT = _config_bool(_GIT_CONFIG, "sync_to_remote", False)
+_SYNC_REMOTE_ENV = os.environ.get("PAPERHUB_SYNC_TO_REMOTE_GIT")
+if _SYNC_REMOTE_ENV is not None:
+    SYNC_TO_REMOTE_GIT = _SYNC_REMOTE_ENV.strip().lower() in {"1", "true", "yes", "on"}
+
+# Absolute path of the out-of-iCloud git backup repo (None when unset).
+_git_backup = os.environ.get("PAPERHUB_GIT_BACKUP") or _GIT_CONFIG.get("backup_abs_path")
+GIT_BACKUP_ABS_PATH = (
+    _git_backup.strip() if isinstance(_git_backup, str) and _git_backup.strip() else None
+)
 
 # API Configuration
 REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh")
@@ -184,16 +203,4 @@ DEFAULT_OUTPUT_DIR = str(DEFAULT_ORGANIZED_DIR)
 # Your Research Interests
 # This will be used by the AI to generate connections between papers and your work.
 # Be specific about your research topics, methodologies, and questions of interest.
-MY_RESEARCH_INTERESTS = """
-## Research Fields
-- **Behavioral Economics**: Biases in decision-making (present bias, zero-sum thinking, correlation neglect), norms of cooperation, experimental methods
-- **Information Economics**: Information asymmetry, belief formation, information acquisition, signaling and labeling, rating systems
-
-
-## Key Topics of Interest
-1. How behavioral biases (correlation neglect, present bias, zero-sum thinking) affect economic decisions and aggregate outcomes
-2. Information frictions in markets: how information asymmetry shapes consumer behavior, firm decisions, and welfare
-3. Political economy: how micro-level beliefs aggregate to political outcomes
-4. The role of institutions and norms in shaping economic behavior (historical persistence, cultural transmission)
-
-"""
+MY_RESEARCH_INTERESTS = ""

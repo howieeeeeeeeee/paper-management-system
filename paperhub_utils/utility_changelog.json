@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.05.4",
+  "latest_version": "2026.07.05.5",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
     "2026.07.05.1": {
@@ -56,6 +56,18 @@
       "changed": [
         "Adds manifest path policy metadata for replaceable utility code, merge-aware prompt defaults, and preserved user config.",
         "Documents the PaperHub utility folder layout so entry scripts, importable utility code, prompts, config, output, and tests have separate roles."
+      ]
+    },
+    "2026.07.05.5": {
+      "date": "2026-07-05",
+      "title": "Onboarding Questionnaire Refresh",
+      "update_kind": "content",
+      "summary": "Updates onboarding instructions for the structured utility folders and current engine names.",
+      "how_to_apply": "Replace onboarding docs and skill instructions. Preserve local config files; no paper-library migration is needed.",
+      "changed": [
+        "Questionnaire now points secrets to paperhub_utils/config/.env and starter tags to paperhub_utils/config/default_tags.yaml.",
+        "User-facing onboarding language now uses the current Agy CLI name.",
+        "Agy settings docs use AGY_CLI_SETTINGS_PATH for custom local settings locations."
       ]
     }
   }

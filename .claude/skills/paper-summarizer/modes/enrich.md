@@ -90,7 +90,7 @@ The interactive stderr prompt fires only when `--force` is omitted; the skill sh
 
 ## Agy CLI
 
-Same handshake pattern as `engines/agy_cli.md` — process **one folder at a time**. The model is resolved from `config.AGY_CLI_MODEL` (configured via `paperhub_utils/config/config.json` key `agy_cli_model`) unless the user requests an allowed `--agy-model`. The prepare step persists the selected model to `~/.gemini/antigravity-cli/settings.json`.
+Same handshake pattern as `engines/agy_cli.md` — process **one folder at a time**. The model is resolved from `config.AGY_CLI_MODEL` (configured via `paperhub_utils/config/config.json` key `agy_cli_model`) unless the user requests an allowed `--agy-model`. The prepare step persists the selected model to the Agy settings path; set `AGY_CLI_SETTINGS_PATH` if the local Agy install uses a custom settings location.
 
 This is the third Agy-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_summarizer`, but it uses the same Agy `--add-dir`, absolute `@PDF`, sentinel, stderr/log, and model-label pattern.
 

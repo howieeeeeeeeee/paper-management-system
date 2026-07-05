@@ -50,7 +50,7 @@ For paper processing, pick **one engine** and **one mode** per batch.
 |-----------|--------|------|
 | "use current coding agent" / "use you" / "no external AI" | `coding-agent` | `engines/coding_agent.md` (full / metadata-only / enrich; full+enrich gated for quota) |
 | "with codex cli" / "use codex cli" / "direct OpenAI CLI" | `codex-cli` | `engines/codex_cli.md` |
-| "with agy cli" / "use antigravity cli" / "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
+| "with agy cli" / "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
 | "use gemini" / "with gemini" (no "cli") | ASK first | `AskUserQuestion`: "Gemini via OpenRouter (script) or Agy CLI (direct Google CLI)?" |
 | anything else (default) | `openrouter` | `engines/openrouter.md` |
 

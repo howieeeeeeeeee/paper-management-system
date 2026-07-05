@@ -51,8 +51,4 @@ paperhub_utils/output/
 paperhub_utils/config/utility_state.json
 paperhub_utils/misc/utility_state.json
 
-# Antigravity CLI local state (machine-specific symlinks)
-.antigravitycli/
-
-
 .env

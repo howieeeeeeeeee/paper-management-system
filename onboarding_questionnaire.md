@@ -9,7 +9,7 @@ Fill this file before asking your coding agent to run onboarding. The goal is to
 
 When you are ready, change `status` in the frontmatter to `ready_for_agent`.
 
-Do not paste API keys into this file or into chat. Store secrets only in `paperhub_utils/.env`. The setup instructions below show how to put the key in that file from Terminal.
+Do not paste API keys into this file or into chat. Store secrets only in `paperhub_utils/config/.env`. The setup instructions below show how to put the key in that file from Terminal.
 
 ## 1. Readiness
 
@@ -51,18 +51,18 @@ Obsidian vault absolute path:
 
 ## 3. Engine And Runtime
 
-PaperHub can summarize papers with different AI engines. OpenRouter is usually the simplest option for full summaries because it only needs an API key. Antigravity CLI and Codex CLI can work if you already have them installed and authenticated. The current coding agent can also run PaperHub directly, including full-summary mode, but full summaries may use a lot of tokens.
+PaperHub can summarize papers with different AI engines. OpenRouter is usually the simplest option for full summaries because it only needs an API key. Agy CLI and Codex CLI can work if you already have them installed and authenticated. The current coding agent can also run PaperHub directly, including full-summary mode, but full summaries may use a lot of tokens.
 
 Preferred AI engine:
 
 - [ ] OpenRouter
-- [ ] Antigravity CLI
+- [ ] Agy CLI
 - [ ] Codex CLI
 - [ ] Current coding agent, full summaries
 - [ ] Current coding agent, metadata-only first
 - [ ] Not sure, ask me only if the agent cannot infer a working option
 
-Choose OpenRouter if you want full AI-written paper summaries and you are comfortable creating an API key. Choose Antigravity CLI only if you already know it is installed on your machine (highly recommended, since Gemini 3.1 Pro is excellent at understanding papers and provides a generous amount of quota). Choose Codex CLI if you already use OpenAI Codex locally and want PaperHub to run through `codex exec`. Choose the current coding agent if you want to run onboarding without setting up a separate AI service. If you choose the current coding agent for full summaries, expect substantially higher token usage, especially for long PDFs or batches of many papers.
+Choose OpenRouter if you want full AI-written paper summaries and you are comfortable creating an API key. Choose Agy CLI only if you already know it is installed on your machine. Choose Codex CLI if you already use OpenAI Codex locally and want PaperHub to run through `codex exec`. Choose the current coding agent if you want to run onboarding without setting up a separate AI service. If you choose the current coding agent for full summaries, expect substantially higher token usage, especially for long PDFs or batches of many papers.
 
 OpenRouter setup:
 
@@ -78,27 +78,27 @@ If you want to use OpenRouter:
 5. Copy the example environment file:
 
 ```bash
-cp paperhub_utils/.env.example paperhub_utils/.env
+cp paperhub_utils/config/.env.example paperhub_utils/config/.env
 ```
 
 6. Open the copied `.env` file and replace `YOUR_OPENROUTER_API_KEY` with your real key:
 
 ```bash
-nano paperhub_utils/.env
+nano paperhub_utils/config/.env
 ```
 
 In nano, save with `Ctrl+O`, press `Enter`, then exit with `Ctrl+X`. After saving, confirm that the file exists:
 
 ```bash
-ls paperhub_utils/.env
+ls paperhub_utils/config/.env
 ```
 
 Do not paste the real API key into this questionnaire or into chat.
 
-Antigravity CLI setup:
+Agy CLI setup:
 
-- [ ] I already installed and authenticated Antigravity CLI on this machine.
-- [ ] I do not know what Antigravity CLI is, so do not assume it is available.
+- [ ] I already installed and authenticated Agy CLI on this machine.
+- [ ] I do not know what Agy CLI is, so do not assume it is available.
 
 Codex CLI setup:
 
@@ -145,7 +145,7 @@ This controls how many pages the agent reads during the metadata-only mode. A sm
 
 ## 4. Research Interests
 
-The agent writes this into `paperhub_utils/config.py` as `MY_RESEARCH_INTERESTS`. The AI uses it to connect each paper to your work when writing summaries and relevance notes.
+The agent writes this into `paperhub_utils/paperhub/config.py` as `MY_RESEARCH_INTERESTS`. The AI uses it to connect each paper to your work when writing summaries and relevance notes.
 
 You can leave this blank if you are not sure yet. A rough description is enough, such as "international trade, firm dynamics, and development economics".
 
@@ -157,7 +157,7 @@ Research interests:
 
 ## 5. Starter Tag Taxonomy
 
-PaperHub comes with the default starter taxonomy below from `paperhub_utils/seeds/default_tags.yaml`. These tags give the agent a conservative economics-PhD vocabulary before it has seen your own paper library.
+PaperHub comes with the default starter taxonomy below from `paperhub_utils/config/default_tags.yaml`. These tags give the agent a conservative economics-PhD vocabulary before it has seen your own paper library.
 
 Please review and modify these lists before onboarding. Delete tags you do not want, add tags you know you will use, and leave any section blank if you do not have a preference yet. Lowercase with underscores is easiest to maintain, such as `international_trade`, `labor`, `field_experiment`, or `reading_list_macro`.
 

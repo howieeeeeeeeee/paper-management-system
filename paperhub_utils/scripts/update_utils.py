@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_SOURCE_URL = "https://github.com/howieeeeeeeeee/paper-management-system"
-DEFAULT_VERSION = "2026.07.05.4"
+DEFAULT_VERSION = "2026.07.05.5"
 STATE_PATH = Path("paperhub_utils/config/utility_state.json")
 CONFIG_PATH = Path("paperhub_utils/config/config.json")
 REPORT_DIR = Path("paperhub_utils/output/update_reports")

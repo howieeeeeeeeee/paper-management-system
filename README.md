@@ -117,11 +117,15 @@ While generating the metadata for a paper PDF, the model is nudged to reuse cano
 - [Obsidian 101](quick_start/obsidian_101.md) explains the core workflow: link papers with their metadata note label, edit properties like `status`, `interest`, and `tags`, and use Bases as the dashboard.
 - To customize AI-generated metadata fields, edit [paperhub_utils/prompt/shared/metadata_template.txt](paperhub_utils/prompt/shared/metadata_template.txt). For summary shape and style, see [paperhub_utils/README.md](paperhub_utils/README.md).
 
+## Creating your own Obsidian Base
+
+[SamplePaperBoard.base](SamplePaperBoard.base) is a starter dashboard with common views (reading queue, by topic, by interest level). Feel free to duplicate it and modify the filters and layouts to match your workflow. Each base file is a JSON snapshot of your Obsidian Base configuration — you can create as many as you like for different perspectives on your library.
+
 ## Important Files
 
-- [quick_start/obsidian_101.md](quick_start/obsidian_101.md): short guide to Obsidian links, paper metadata, and `Papers.base`.
+- [quick_start/obsidian_101.md](quick_start/obsidian_101.md): short guide to Obsidian links, paper metadata, and using Bases.
 - [quick_start/use-cases.md](quick_start/use-cases.md): complete prompt cookbook for common paper workflows.
-- [Papers.base](Papers.base): main Obsidian Bases dashboard for reading queues and topic views.
+- [SamplePaperBoard.base](SamplePaperBoard.base): starter Obsidian Base dashboard — duplicate and customize for your own views.
 - [onboarding_questionnaire.md](onboarding_questionnaire.md): user-facing onboarding intake, deleted after successful onboarding.
 - [paperhub_utils/.env.example](paperhub_utils/.env.example): template for local API keys; copy it to `paperhub_utils/.env`.
 - [paperhub_utils/misc/config.json](paperhub_utils/misc/config.json): runtime preferences.

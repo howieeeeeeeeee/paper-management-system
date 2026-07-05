@@ -46,6 +46,13 @@ env/
 .paperhub_tmp/
 paperhub_utils/raw_outputs/
 
+# Claude Code runtime / user-specific settings
+.claude/settings.local.json
+.claude/scheduled_tasks*
+.agents/settings.json
+
+# User-specific Obsidian Bases (customize SamplePaperBoard.base instead)
+Papers.base
 
 .env
 

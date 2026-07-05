@@ -1,6 +1,6 @@
 ---
 name: versioning-with-git
-description: Version the paper library with git WITHOUT keeping a .git inside the (iCloud-synced) vault. Mirrors the current vault into a separate out-of-iCloud "git backup folder" that IS a git repo, commits ALL changes there, and optionally pulls/pushes a remote. Triggers when the user wants to "version / commit / back up / snapshot my library", "sync to git/GitHub", or after paper-summarizer finishes a batch and needs to commit. NOT for summarizing/organizing papers (paper-summarizer) and NOT for the public-template release (that is /paper-sync-release in notes.md).
+description: Version the paper library with git WITHOUT keeping a .git inside the (iCloud-synced) vault. Copies the whole vault into a separate out-of-iCloud "git backup folder" that IS a git repo, and commits all changes there (optionally pulling/pushing a remote). Triggers when the user wants to "version / commit / back up / snapshot my library", "sync to git/GitHub", or after paper-summarizer finishes a batch and needs to commit. NOT for summarizing/organizing papers (that is paper-summarizer).
 ---
 
 # Versioning with Git (out-of-vault backup)
@@ -8,11 +8,11 @@ description: Version the paper library with git WITHOUT keeping a .git inside th
 The working paper library lives inside an iCloud-synced Obsidian vault. A live `.git`
 directory inside an iCloud folder gets corrupted (iCloud and git fight over `.git/**`), so the
 vault itself holds **no** `.git`. Instead, history lives in a **separate git repo outside
-iCloud** — the "git backup folder". This skill mirrors the current vault into that folder,
+iCloud** — the "git backup folder". This skill copies the whole vault into that folder,
 commits **all** changes there, and (optionally) pulls before / pushes after.
 
 This is the single commit step for the whole system: `paper-summarizer`'s post-AI flow, the tag
-flows, and any manual "commit my library" request all route here.
+flows, and any manual "back up my library" request all route here.
 
 ## Inputs
 
@@ -41,8 +41,8 @@ flows, and any manual "commit my library" request all route here.
   `Google Drive`, `OneDrive`) → **warn** loudly; a git repo there will corrupt. Proceed only if
   the user insists.
 - If the vault contains `.icloud` placeholder files (not-yet-downloaded stubs) → **warn**: the
-  vault must be fully downloaded ("Keep Downloaded") or the mirror will lose real content. Check
-  with `find "$SRC" -name '*.icloud' -not -path '*/.git/*' | head`.
+  vault must be fully downloaded ("Keep Downloaded") or those files back up as empty stubs. Check
+  with `find "$SRC" -name '*.icloud' | head`.
 - If `DST` is missing or has no `.git` → this is first-time setup; see **First-time setup**.
 
 ## Workflow
@@ -64,31 +64,21 @@ DST="<GIT_BACKUP_ABS_PATH>"         # from config
    If the pull is not fast-forward (diverged / conflict), **stop and report** — do not merge,
    rebase, or force. Let the user reconcile.
 
-2. **Mirror the vault into the backup, preserving the backup's `.git`:**
+2. **Copy the whole vault into the backup.** The one required exclusion is the backup's own
+   `.git/` — the vault has none, so without this `--delete` would wipe the backup's history.
+   Everything else is copied:
 
    ```bash
-   rsync -a --delete \
-     --exclude='.git/' --exclude='.venv/' --exclude='.env' \
-     --exclude='.DS_Store' --exclude='*.icloud' --exclude='paperhub_utils/output/' \
-     "$SRC/" "$DST/"
+   rsync -a --delete --exclude='.git/' "$SRC/" "$DST/"
    ```
 
-   `--exclude` protects those paths in `$DST` from `--delete` too (the backup keeps its own
-   `.git`, `.venv`, `.env`, `output/`). Everything else is mirrored exactly. The vault's
-   `.gitignore` is copied along, so `git add -A` in the backup respects the same ignore rules.
+   `git add -A` in the backup still respects the vault's `.gitignore` (copied along), so
+   machine-local files (`.venv/`, `.env`, `paperhub_utils/output/`, `.DS_Store`) land in the
+   working tree but are never committed.
 
-   **macOS filename normalization — this is handled by git, not rsync.** The iCloud vault stores
-   accented filenames decomposed (NFD, e.g. `köbis…` = `k`+`o`+combining-diaeresis) while a git
-   checkout stores them composed (NFC), and folder-name case can differ too. Stock macOS rsync
-   (`openrsync`) has no `--iconv`, so `--delete` will delete-and-recopy those accented/renamed
-   entries on each run. That is wasteful but **safe and produces no git churn**: the backup repo
-   has git's macOS defaults `core.precomposeunicode=true` and `core.ignorecase=true`, so git
-   folds NFD→NFC and case and commits only real content changes. Confirm once after a mirror with
-   `git -C "$DST" status` — you should see only genuinely edited files, never a wall of accented
-   papers.
-
-   Optional optimization: to skip the recopy entirely, install GNU rsync (`brew install rsync`)
-   and add `--iconv=utf-8-mac,utf-8` (the bundled `openrsync` does not support that flag).
+   macOS note: accented filenames may differ in Unicode form (NFD in the vault vs NFC in a git
+   checkout). The backup repo's git defaults (`core.precomposeunicode`, `core.ignorecase`)
+   absorb that, so `git -C "$DST" status` shows only real edits, never a wall of accented papers.
 
 3. **Stage and commit ALL changes** (papers, tags, config edits, prompt edits — whatever the
    workflow touched):
@@ -115,8 +105,7 @@ DST="<GIT_BACKUP_ABS_PATH>"         # from config
 Use when `DST` is empty or not yet a repo:
 
 1. `git --version` (bail with an install hint if git is unavailable).
-2. Create `DST` if missing; mirror the vault in (step 2 above, minus `--delete` on the very
-   first copy is fine either way).
+2. Create `DST` if missing; copy the whole vault in (step 2 above).
 3. Initialize and make the first commit:
 
    ```bash
@@ -137,7 +126,8 @@ Use when `DST` is empty or not yet a repo:
 
 - **Never** create or keep a `.git` inside the vault (iCloud). All history lives in `DST`.
 - The backup folder MUST be a normal local folder **outside** any cloud-synced tree.
-- rsync MUST exclude `.git/` so the backup repo's history survives every mirror.
+- The mirror copies the whole folder; the only exclusion is `.git/`, so the backup repo's own
+  history survives every copy.
 - Do not `git push` / `git pull` unless `SYNC_TO_REMOTE_GIT` is true. Local commits are the
   default.
 - On a non-fast-forward pull or any push rejection, stop and surface it — never force.
@@ -146,5 +136,4 @@ Use when `DST` is empty or not yet a repo:
 ## What this skill does NOT do
 
 - Does NOT summarize, organize, or enrich papers — that is `paper-summarizer`.
-- Does NOT sync to the public template repo — that is `/paper-sync-release` (see `notes.md`).
 - Does NOT keep any git state inside the vault.

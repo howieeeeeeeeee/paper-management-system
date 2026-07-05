@@ -146,6 +146,7 @@ def load_papers(organized: Path) -> list[dict]:
                 },
                 "abstract": abstract,
                 "summary": summary.strip(),
+                "body": body.strip(),
             }
         )
     return papers
@@ -197,7 +198,7 @@ def meta_line(meta: dict) -> str:
     return f"status: {status} | interest: {interest} | importance: {importance}"
 
 
-def print_card(rank: int, score: float, paper: dict) -> None:
+def print_card(rank: int, score: float, paper: dict, full: bool = False) -> None:
     meta = paper["meta"]
     year = as_text(meta.get("year"))
     journal = as_text(meta.get("journal"))
@@ -210,10 +211,18 @@ def print_card(rank: int, score: float, paper: dict) -> None:
     print(f"authors:  {byline}")
     print(meta_line(meta))
     print(f"tags:     {as_text(meta.get('tags')) or '-'}")
-    abstract = first_words(paper["abstract"], ABSTRACT_WORDS)
-    summary = first_words(paper["summary"], SUMMARY_WORDS)
-    print(f"abstract: {abstract or '(none)'}")
-    print(f"summary:  {summary or '(no ai_summary.md)'}")
+    if full:
+        # Detailed mode: dump the entire metadata note body and full
+        # ai_summary so the agent can write a comprehensive summary.
+        print("--- metadata note (full) ---")
+        print(paper["body"] or "(none)")
+        print("--- ai_summary (full) ---")
+        print(paper["summary"] or "(no ai_summary.md)")
+    else:
+        abstract = first_words(paper["abstract"], ABSTRACT_WORDS)
+        summary = first_words(paper["summary"], SUMMARY_WORDS)
+        print(f"abstract: {abstract or '(none)'}")
+        print(f"summary:  {summary or '(no ai_summary.md)'}")
     print()
 
 
@@ -234,6 +243,14 @@ def main() -> int:
     parser.add_argument("--top", type=int, default=15, help="max results")
     parser.add_argument(
         "--detail", type=int, default=5, help="how many results get full cards"
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help=(
+            "detailed mode: print each detailed-rank paper's full metadata "
+            "note and ai_summary instead of truncated snippets (narrow --detail)"
+        ),
     )
     args = parser.parse_args()
 
@@ -257,6 +274,8 @@ def main() -> int:
     )
     if args.exclude:
         header += f" | excluding: {', '.join(args.exclude)}"
+    if args.full:
+        header += " | detailed mode"
     print(header)
     print()
     if not hits:
@@ -265,7 +284,7 @@ def main() -> int:
 
     for rank, (score, paper) in enumerate(hits[: args.top], start=1):
         if rank <= args.detail:
-            print_card(rank, score, paper)
+            print_card(rank, score, paper, full=args.full)
         else:
             if rank == args.detail + 1:
                 print("--- more candidates ---")

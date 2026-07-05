@@ -7,7 +7,7 @@ description: Locate papers ALREADY IN this library from a vague or partial memor
 
 The project's root folder contains a `.claude` directory. Open `.claude/skills/paper-finder/SKILL.md` (from that root) for the canonical workflow and rules.
 
-In brief: expand the user's vague memory into 5–10 search terms, run **one** call to `paperhub_utils/paper_search.py` (`--terms ... --top 15 --detail 5`), and present the ranked digest — 5 detailed cards with `[[label]]` wikilinks plus a brief tail. When the user wants to steer *away* from a neighboring literature ("but not the survey ones"), add the optional `--exclude "..." "..."` flag — those keywords deduct score (2× the field weights, soft penalty, not a hard filter). Never Read candidate files wholesale; the script's digest is the context. Read-only: this skill never modifies paper folders or tags.
+In brief: expand the user's vague memory into 5–10 search terms, run **one** call to `paperhub_utils/paper_search.py` (`--terms ... --top 15 --detail 5`), and present the ranked digest — 5 detailed cards with `[[label]]` wikilinks plus a brief tail. When the user wants to steer *away* from a neighboring literature ("but not the survey ones"), add the optional `--exclude "..." "..."` flag — those keywords deduct score (2× the field weights, soft penalty, not a hard filter). If the user asks for a **detailed / comprehensive / in-depth** look, add `--full` (and narrow `--detail` to 1–3): the script then returns each detailed paper's full metadata note and full ai_summary so you can write a thorough synthesis instead of the truncated digest. Never Read candidate files wholesale; the script's digest is the context. Read-only: this skill never modifies paper folders or tags.
 
 ## Local uv environment
 

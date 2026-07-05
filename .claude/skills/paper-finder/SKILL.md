@@ -37,6 +37,14 @@ cd paperhub_utils && uv run python paper_search.py \
   --top 15 --detail 5
 ```
 
+- **Detailed mode `--full`** (off by default) — turn it on when the user asks for a "detailed", "comprehensive", "in-depth", or "deep" look. Each detailed-rank card then dumps the paper's *entire* metadata note (all sections: reflections, key takeaways, related-paper links) and *full* ai_summary instead of the truncated snippets. It intentionally blows past the usual token budget, so **narrow `--detail` to 1–3** (and usually a smaller `--top`):
+
+```bash
+cd paperhub_utils && uv run python paper_search.py \
+  --terms "correlation neglect" "belief updating" \
+  --top 5 --detail 2 --full
+```
+
 ### 3. Present the candidates
 
 Show a ranked list in chat:
@@ -44,6 +52,8 @@ Show a ranked list in chat:
 - **Other candidates:** the brief tail as one line each (`[[label]]` — title, year).
 
 Do not pad: if only 2 papers plausibly match, show 2 detailed and say so.
+
+**Detailed mode:** when you ran with `--full`, don't compress to one-liners — write a comprehensive, structured synthesis of each detailed paper (research question, method, key findings, and relevance/links) drawn from the full metadata note and ai_summary the script returned.
 
 ### 4. Iterate if weak
 
@@ -59,7 +69,7 @@ When the user identifies the paper, offer to open its full metadata note (`organ
 
 - **Paths with spaces:** pass literal paths (spaces as-is) to `Read`/`Edit`/`Write`; backslash-escape only inside Bash commands. The project root contains spaces.
 - **uv run location:** always `cd paperhub_utils` before `uv run` (that's where `pyproject.toml` and `.venv` live). If uv is stale/broken: `uv sync`; if that fails, `rm -rf .venv && uv sync`. The script needs only stdlib + pyyaml, so `python3 paper_search.py ...` also works as a fallback.
-- **Token budget:** rely on the script digest; keep each search round's chat output ≤ ~4K tokens. Only Read a paper's full files after the user picks it.
+- **Token budget:** rely on the script digest; keep each search round's chat output ≤ ~4K tokens. Only Read a paper's full files after the user picks it. (Detailed mode `--full` is the deliberate exception — it returns full notes for a narrow `--detail` set so you can synthesize deeply.)
 - **Read-only skill:** never modify paper folders, metadata, or tags here.
 
 ## What this skill does NOT do

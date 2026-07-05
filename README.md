@@ -94,6 +94,12 @@ paper-finder: the correlation-neglect paper, but not the survey-based ones
 
 Phrases like "but not the survey ones" become **exclude keywords** that deduct score (a soft penalty, not a hard filter), pushing unwanted matches down or off the list while genuinely strong matches still surface.
 
+Ask for a **detailed** (or "comprehensive"/"in-depth") look and the skill switches to detailed mode: instead of short snippets, it pulls the full metadata note and complete AI summary for the top candidates and writes a thorough, structured synthesis.
+
+```text
+paper-finder: give me a detailed rundown of what I have on correlation neglect
+```
+
 ## Output Layout
 
 ```text

@@ -1,6 +1,6 @@
 ---
 name: paper-finder
-description: Locate papers ALREADY IN this library from a vague or partial memory. Triggers when the user half-remembers a paper and wants to know which one it is - "which paper was it that...", "I vaguely remember a paper about...", "can't remember the paper that showed...", "do I already have a paper on...", "search/find in my library". Expands the description into search terms, runs one paper_search.py call over organized/, and presents a ranked candidate list with metadata labels and summary snippets. NOT for downloading new papers (paper-downloader) and NOT for summarizing (paper-summarizer).
+description: Locate papers ALREADY IN this library from a vague or partial memory. Triggers when the user half-remembers a paper and wants to know which one it is - "which paper was it that...", "I vaguely remember a paper about...", "can't remember the paper that showed...", "do I already have a paper on...", "search/find in my library", including "but not the X ones" to steer away from a neighboring literature. Expands the description into search terms (and optional exclude keywords that deduct score), runs one paper_search.py call over organized/, and presents a ranked candidate list with metadata labels and summary snippets. NOT for downloading new papers (paper-downloader) and NOT for summarizing (paper-summarizer).
 ---
 
 # Paper Finder (library recall)
@@ -16,6 +16,7 @@ From the user's description, generate **5–10 search terms**: the words they us
 Term quality notes:
 - The scorer rewards **distinct-term coverage** over repetition — a few diverse, specific terms beat many near-duplicates.
 - Avoid ultra-generic terms ("model", "experiment", "economics") — they match half the library and dilute ranking.
+- **Exclude terms:** when the user wants to steer *away* from something ("but not the survey ones", "not the field-experiment stuff"), also generate 1–3 exclude keywords for `--exclude`. These deduct score rather than hard-filter, so a strong match still surfaces if it genuinely fits.
 
 ### 2. One search call
 
@@ -27,6 +28,14 @@ cd paperhub_utils && uv run python paper_search.py \
 
 - `--top 15 --detail 5` is the default presentation: 5 full cards + 10 brief lines (~1.5–2K tokens).
 - Scoring: field-weighted term hits (title 3.0, tags/authors 2.5, abstract 1.5, metadata body 1.0, ai_summary body 0.5), per-field count cap, plus a distinct-term coverage bonus. Cards show label, title, authors/year/journal, status/interest/importance, tags, abstract (~80 words), and ai_summary opening (~100 words).
+- **Optional `--exclude`** (space-separated, quote phrases) penalizes unwanted keywords — hits are *subtracted* at 2× the field weights (same per-field cap). It's a soft deduct, not a hard filter: a paper drops off only when the penalty outweighs its include matches. Use it to separate two close literatures:
+
+```bash
+cd paperhub_utils && uv run python paper_search.py \
+  --terms "correlation neglect" "belief updating" \
+  --exclude "survey" "field experiment" \
+  --top 15 --detail 5
+```
 
 ### 3. Present the candidates
 

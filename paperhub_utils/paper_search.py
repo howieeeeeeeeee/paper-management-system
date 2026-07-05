@@ -40,6 +40,8 @@ FIELD_WEIGHTS = {
 COUNT_CAP = 5
 # Bonus per distinct matched term: coverage beats raw frequency.
 COVERAGE_BONUS = 2.0
+# Exclude-term hits are subtracted at 2x the positive field weights.
+EXCLUDE_PENALTY = 2.0
 
 ABSTRACT_WORDS = 80
 SUMMARY_WORDS = 100
@@ -149,7 +151,19 @@ def load_papers(organized: Path) -> list[dict]:
     return papers
 
 
-def score_paper(paper: dict, patterns: list[re.Pattern]) -> float:
+def compile_terms(terms: list[str]) -> list[re.Pattern]:
+    """Compile each term into a whole-token, case-insensitive regex."""
+    return [
+        re.compile(r"(?<!\w)" + re.escape(t.lower()) + r"(?!\w)")
+        for t in terms
+    ]
+
+
+def score_paper(
+    paper: dict,
+    patterns: list[re.Pattern],
+    exclude_patterns: list[re.Pattern] = (),
+) -> float:
     total = 0.0
     matched_terms = 0
     lowered = {
@@ -166,6 +180,13 @@ def score_paper(paper: dict, patterns: list[re.Pattern]) -> float:
             total += term_score
     if matched_terms:
         total += COVERAGE_BONUS * matched_terms
+    # Exclude terms deduct score (soft penalty): mirror the field-weighted
+    # count, scaled up so an unwanted keyword pushes a paper down or off.
+    for pattern in exclude_patterns:
+        for name, text in lowered.items():
+            count = len(pattern.findall(text))
+            if count:
+                total -= EXCLUDE_PENALTY * min(count, COUNT_CAP) * FIELD_WEIGHTS[name]
     return total
 
 
@@ -204,6 +225,12 @@ def main() -> int:
         required=True,
         help="case-insensitive search terms/phrases (quote multi-word phrases)",
     )
+    parser.add_argument(
+        "--exclude",
+        nargs="*",
+        default=[],
+        help="case-insensitive keywords to penalize / deduct score (quote phrases)",
+    )
     parser.add_argument("--top", type=int, default=15, help="max results")
     parser.add_argument(
         "--detail", type=int, default=5, help="how many results get full cards"
@@ -215,21 +242,22 @@ def main() -> int:
         print(f"error: organized/ not found at {organized}", file=sys.stderr)
         return 1
 
-    patterns = [
-        re.compile(r"(?<!\w)" + re.escape(t.lower()) + r"(?!\w)")
-        for t in args.terms
-    ]
+    patterns = compile_terms(args.terms)
+    exclude_patterns = compile_terms(args.exclude)
     papers = load_papers(organized)
-    scored = [(score_paper(p, patterns), p) for p in papers]
+    scored = [(score_paper(p, patterns, exclude_patterns), p) for p in papers]
     hits = sorted(
         ((s, p) for s, p in scored if s > 0),
         key=lambda sp: (-sp[0], sp[1]["label"]),
     )
 
-    print(
+    header = (
         f"scanned {len(papers)} papers | {len(hits)} matched | "
         f"terms: {', '.join(args.terms)}"
     )
+    if args.exclude:
+        header += f" | excluding: {', '.join(args.exclude)}"
+    print(header)
     print()
     if not hits:
         print("no matches -- try broader or alternative terms")

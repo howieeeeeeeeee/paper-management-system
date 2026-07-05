@@ -57,10 +57,10 @@ paper-summarizer: metadata-only batch for everything in to_be_organized/.
 
 ## Quick launch
 
-Save a terminal snippet (e.g. Alfred *Terminal Command* with keyword, or Raycast). This is what my command looks like:
+Save a terminal snippet (e.g. Alfred *Terminal Command* with keyword, or Raycast). For example:
 
 ```bash
-cd "/Users/howieee/Library/Mobile Documents/iCloud~md~obsidian/Documents/Howie iCloud/EconPhD/PaperHub" && claude --model claude-haiku-4-5-20251001
+cd "/path/to/your/PaperHub" && claude --model claude-haiku-4-5-20251001
 ```
 
 Optional: append `--dangerously-skip-permissions` if permission prompts break long skill runs—only when you fully trust that session.
@@ -85,6 +85,14 @@ paper-finder: which paper was it where dictators avoided knowing the recipient's
 ```
 
 The `paper-finder` skill expands your description into search terms, ranks every organized paper with a fast local script (`paperhub_utils/paper_search.py`, no API calls), and shows the top candidates with their metadata labels, status, interest, and summary snippets. If none fit, it broadens the terms and searches again.
+
+You can also steer it *away* from a neighboring literature that keeps surfacing:
+
+```text
+paper-finder: the correlation-neglect paper, but not the survey-based ones
+```
+
+Phrases like "but not the survey ones" become **exclude keywords** that deduct score (a soft penalty, not a hard filter), pushing unwanted matches down or off the list while genuinely strong matches still surface.
 
 ## Output Layout
 

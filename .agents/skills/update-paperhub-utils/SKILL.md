@@ -14,5 +14,7 @@ In brief: run `cd paperhub_utils && uv run python -m scripts.update_utils --chec
 framework updates, semantically merge any customized prompt files, record the
 installed version, run tests, and report what changed. Never overwrite user
 papers, runtime config, tags, API keys, Obsidian state, or local prompt
-customizations. If a merge or structural migration choice is unclear, ask the
-user before applying it.
+customizations. Treat `paperhub_utils/scripts/**` and
+`paperhub_utils/paperhub/**` as update-managed utility code that can normally be
+replaced from upstream. If a merge or structural migration choice is unclear,
+ask the user before applying it.

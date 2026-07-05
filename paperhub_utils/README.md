@@ -2,11 +2,21 @@
 
 This folder contains the scripts, prompts, and config used by the `paper-summarizer` skill. Most users only need the files below.
 
+## Folder Layout
+
+- `scripts/`: command entrypoints and shell helpers. These are update-managed utility files and can normally be replaced from upstream.
+- `paperhub/`: importable Python utility package used by the scripts. This is also update-managed utility code, even though it is not inside `scripts/`.
+- `prompts/`: default prompt fragments. The updater compares these and asks for merge help when a user customized them.
+- `config/`: local preferences, secrets, onboarding state, and template defaults. Preserve user-owned files here during updates.
+- `output/`: generated reports, backups, and raw model outputs. Do not sync or replace this folder.
+- `tests/`: update-managed checks for the utility code.
+
 ## Update Boundary
 
 PaperHub treats this folder as two kinds of content:
 
-- Update-managed utilities: `scripts/`, `paperhub/`, prompt defaults, tests, `utility_changelog.json`, and `utility_manifest.json`.
+- Update-managed utilities: `scripts/`, `paperhub/`, tests, `utility_changelog.json`, and `utility_manifest.json`.
+- Merge-aware defaults: `prompts/`.
 - User-owned local state: `config/.env`, `config/config.json`, `config/onboarding.json`, `config/utility_state.json`, `output/`, and any prompt customization that the updater flags for merge.
 
 Run `update-paperhub-utils` from the repository root to refresh the update-managed parts. Prompt files are compared before update; customized prompts are merged by the agent instead of overwritten.

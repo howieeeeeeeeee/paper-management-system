@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_SOURCE_URL = "https://github.com/howieeeeeeeeee/paper-management-system"
-DEFAULT_VERSION = "2026.07.05.3"
+DEFAULT_VERSION = "2026.07.05.4"
 STATE_PATH = Path("paperhub_utils/config/utility_state.json")
 CONFIG_PATH = Path("paperhub_utils/config/config.json")
 REPORT_DIR = Path("paperhub_utils/output/update_reports")
@@ -33,6 +33,25 @@ DEFAULT_MANIFEST: dict[str, Any] = {
     "schema_version": 1,
     "version": DEFAULT_VERSION,
     "source_url": DEFAULT_SOURCE_URL,
+    "path_policy": {
+        "replaceable_utility_code": [
+            "paperhub_utils/scripts/**",
+            "paperhub_utils/paperhub/**",
+            "paperhub_utils/tests/**",
+            "paperhub_utils/pyproject.toml",
+            "paperhub_utils/uv.lock",
+        ],
+        "merge_aware_defaults": [
+            "paperhub_utils/prompts/**",
+        ],
+        "preserve_user_config": [
+            "paperhub_utils/config/.env",
+            "paperhub_utils/config/config.json",
+            "paperhub_utils/config/onboarding.json",
+            "paperhub_utils/config/utility_state.json",
+            "paperhub_utils/output/**",
+        ],
+    },
     "managed_paths": [
         ".agents/skills/**",
         ".claude/skills/**",

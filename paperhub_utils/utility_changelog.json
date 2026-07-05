@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.05.3",
+  "latest_version": "2026.07.05.4",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
     "2026.07.05.1": {
@@ -45,6 +45,17 @@
         "Raw model outputs moved under paperhub_utils/output/raw_outputs/.",
         "paper-finder CLI now matches the skill flags for explicit terms, result counts, detailed cards, exclude penalties, and full-detail output.",
         "Enrich prepare supports a coding-agent route without changing Agy or Codex settings."
+      ]
+    },
+    "2026.07.05.4": {
+      "date": "2026-07-05",
+      "title": "Utility Update Boundary Clarification",
+      "update_kind": "structural",
+      "summary": "Clarifies which PaperHub utility folders are replaceable framework code versus user-owned local state.",
+      "how_to_apply": "Keep user config files in config/ and generated files in output/. Treat scripts/ and paperhub/ as update-managed utility code; review only if the updater reports local edits.",
+      "changed": [
+        "Adds manifest path policy metadata for replaceable utility code, merge-aware prompt defaults, and preserved user config.",
+        "Documents the PaperHub utility folder layout so entry scripts, importable utility code, prompts, config, output, and tests have separate roles."
       ]
     }
   }

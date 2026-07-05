@@ -20,6 +20,9 @@ but prompt conflicts require semantic merge judgment.
   `tags/_internal/`, `.env`, Obsidian workspace files, local output folders, or
   runtime/onboarding config.
 - Prompt files are merge targets, not simple overwrite targets.
+- `paperhub_utils/scripts/**` and `paperhub_utils/paperhub/**` are
+  update-managed utility code. In normal updates, let the helper replace them;
+  review only when it reports local edits or a structural conflict.
 - If the helper reports `needs_agent_merge`, read the local prompt and upstream
   prompt, then merge intent manually before recording the update.
 - Preserve prompt headings and response contracts expected by scripts.

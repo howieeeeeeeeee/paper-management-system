@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.05.5",
+  "latest_version": "2026.07.05.3",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
     "2026.07.05.1": {
@@ -45,29 +45,6 @@
         "Raw model outputs moved under paperhub_utils/output/raw_outputs/.",
         "paper-finder CLI now matches the skill flags for explicit terms, result counts, detailed cards, exclude penalties, and full-detail output.",
         "Enrich prepare supports a coding-agent route without changing Agy or Codex settings."
-      ]
-    },
-    "2026.07.05.4": {
-      "date": "2026-07-05",
-      "title": "Utility Update Boundary Clarification",
-      "update_kind": "structural",
-      "summary": "Clarifies which PaperHub utility folders are replaceable framework code versus user-owned local state.",
-      "how_to_apply": "Keep user config files in config/ and generated files in output/. Treat scripts/ and paperhub/ as update-managed utility code; review only if the updater reports local edits.",
-      "changed": [
-        "Adds manifest path policy metadata for replaceable utility code, merge-aware prompt defaults, and preserved user config.",
-        "Documents the PaperHub utility folder layout so entry scripts, importable utility code, prompts, config, output, and tests have separate roles."
-      ]
-    },
-    "2026.07.05.5": {
-      "date": "2026-07-05",
-      "title": "Onboarding Questionnaire Refresh",
-      "update_kind": "content",
-      "summary": "Updates onboarding instructions for the structured utility folders and current engine names.",
-      "how_to_apply": "Replace onboarding docs and skill instructions. Preserve local config files; no paper-library migration is needed.",
-      "changed": [
-        "Questionnaire now points secrets to paperhub_utils/config/.env and starter tags to paperhub_utils/config/default_tags.yaml.",
-        "User-facing onboarding language now uses the current Agy CLI name.",
-        "Agy settings docs use AGY_CLI_SETTINGS_PATH for custom local settings locations."
       ]
     }
   }

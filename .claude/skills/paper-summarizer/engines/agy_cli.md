@@ -1,13 +1,13 @@
 # Workflow: Agy CLI
 
-This document covers the **Agy CLI** paper summarization workflow. Read this file when the user requests "agy cli" or a direct Google CLI workflow.
+This document covers the **Agy CLI** paper summarization workflow. Users may call this "Antigravity CLI"; treat that as the same engine and keep `agy-cli` as the internal route name. Read this file when the user requests "agy cli", "antigravity cli", "antigravity", or a direct Google CLI workflow.
 
 ## Prerequisites
 
 - `agy` CLI installed and authenticated with the user's Google account.
 - The default PaperHub Agy model is configured in `paperhub_utils/config/config.json` as `agy_cli_model`, exported as `config.AGY_CLI_MODEL`.
 - Default model: `Gemini 3.1 Pro (High)`.
-- If the user requests a different Agy model, pass `--agy-model "MODEL LABEL"` to `--prepare-cli-input`. The script validates it against `config.AGY_CLI_MODEL_LIST`, writes it to the Agy settings path, and leaves that setting in place. Set `AGY_CLI_SETTINGS_PATH` if the local Agy install uses a custom settings location.
+- If the user requests a different Agy model, pass `--agy-model "MODEL LABEL"` to `--prepare-cli-input`. The script validates it against `config.AGY_CLI_MODEL_LIST`, writes it to the Agy settings path, and leaves that setting in place. Set `AGY_CLI_SETTINGS_PATH` if the local install uses a custom settings location.
 - Agy does not currently expose a per-run `--model` flag or token stats. Record model as `<model> (Agy CLI)`, `pdf_engine: agy-native`, and token fields as `N/A`.
 
 ## Overview

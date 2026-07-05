@@ -43,7 +43,7 @@ def agy_settings_path() -> Path:
     override = os.environ.get(AGY_CLI_SETTINGS_ENV)
     if override:
         return Path(override).expanduser()
-    return Path.home() / ".agy" / "settings.json"
+    return Path.home() / ".gemini" / "antigravity-cli" / "settings.json"
 
 
 def resolve_agy_cli_model(

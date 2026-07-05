@@ -7,9 +7,9 @@ in every paper's main metadata file. Uses the surgical line-based editor in
 Round 1 merges archived at `tags/round1_merges.json`.
 
 Usage:
-    uv run python -m tag_utils.periodic.apply_renames \\
+    uv run python -m paperhub.tag_utils.periodic.apply_renames \\
         --merges-file PATH --dry-run
-    uv run python -m tag_utils.periodic.apply_renames \\
+    uv run python -m paperhub.tag_utils.periodic.apply_renames \\
         --merges-file PATH --apply
 """
 
@@ -20,7 +20,7 @@ import json
 import sys
 from pathlib import Path
 
-from tag_utils.common import (
+from paperhub.tag_utils.common import (
     DEFAULT_ORGANIZED_DIR,
     find_tags_block,
     iter_main_metadata_files,

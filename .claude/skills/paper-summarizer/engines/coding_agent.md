@@ -32,7 +32,7 @@ For `full` and `enrich` via this engine, refuse more than **3 papers per invocat
 
 | Step | OpenRouter / Agy CLI | Coding agent (this doc) |
 |---|---|---|
-| Build prompt | script reads `prompt/builder.py` | same — call `--prepare-cli-input` |
+| Build prompt | script reads `paperhub/prompt/builder.py` | same — call `--prepare-cli-input` |
 | Read PDF | API plugin / Agy native | `Read` tool reads PDF directly |
 | Generate content | API call | YOU generate it in this turn |
 | Lay down files (full / metadata-only) | script `--from-response` | direct `Bash mkdir / mv` + `Write` |
@@ -51,7 +51,7 @@ No quota gate needed. First-N-pages extraction → you write metadata only.
 
 ```bash
 cd paperhub_utils
-uv run python -c "from config import METADATA_ONLY_PAGE_LIMIT, MY_RESEARCH_INTERESTS; print(METADATA_ONLY_PAGE_LIMIT); print('---'); print(MY_RESEARCH_INTERESTS)"
+uv run python -c "from paperhub.config import METADATA_ONLY_PAGE_LIMIT, MY_RESEARCH_INTERESTS; print(METADATA_ONLY_PAGE_LIMIT); print('---'); print(MY_RESEARCH_INTERESTS)"
 ```
 
 Use the page limit and research interests for the metadata draft. If `MY_RESEARCH_INTERESTS` is empty / placeholder, write `[To be filled]` for `Relevance to My Work`.
@@ -63,7 +63,7 @@ cd paperhub_utils
 uv run python -c "
 from pathlib import Path
 from pypdf import PdfReader
-from config import METADATA_ONLY_PAGE_LIMIT
+from paperhub.config import METADATA_ONLY_PAGE_LIMIT
 
 pdf_path = Path('../to_be_organized/paper.pdf')
 reader = PdfReader(str(pdf_path))
@@ -81,7 +81,7 @@ Read `/tmp/paperhub_agent_pages.txt`. Draft metadata from that text only — nev
 
 ### Step 3 — write files directly
 
-Choose the `paper_label` using the current rule from `paperhub_utils/prompt/shared/paper_label.txt`.
+Choose the `paper_label` using the current rule from `paperhub_utils/prompts/shared/paper_label.txt`.
 
 ```bash
 LABEL="<your paper_label>"
@@ -152,7 +152,7 @@ Run the pre-flight `AskUserQuestion` gate above. If the user picks Proceed:
 
 ```bash
 cd paperhub_utils
-uv run python paper_summarizer.py --prepare-cli-input \
+uv run python -m scripts.paper_summarizer --prepare-cli-input \
   --pdf-path-arg "../to_be_organized/paper.pdf" \
   --summary-mode full \
   [--instruction "..."] \
@@ -250,7 +250,7 @@ Then strip the `# ai_summary` heading line from the body before writing.
 ```bash
 cd paperhub_utils
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agent_input.json'))['cleanup_dir'])")
-uv run python paper_summarizer.py --cleanup-cli-input "${CLEANUP_DIR}"
+uv run python -m scripts.paper_summarizer --cleanup-cli-input "${CLEANUP_DIR}"
 ```
 
 Then `shared/post_ai.md` for validation + tag handoff + commit. The `ai_summary.md` check now applies (full mode requires it).
@@ -267,7 +267,7 @@ Run the pre-flight `AskUserQuestion` gate. Also run the **existing-summary `AskU
 
 ```bash
 cd paperhub_utils
-uv run python enrich.py --prepare-cli-input --folder ACF2015 \
+uv run python -m scripts.enrich --engine coding-agent --prepare-cli-input --folder ACF2015 \
   [--instruction "..."] \
   [--use-past-summary] \
   [--no-summary] \
@@ -318,11 +318,11 @@ RESPONSE_FILE="/tmp/paperhub_agent_response_${LABEL}.txt"
 
 ### Step 4 — apply via script (NOT direct file ops)
 
-The merge logic (only-blank-key patching, abstract section replacement, frontmatter preservation) lives in `enrich.py` and is fragile to reimplement. Hand the response back:
+The merge logic (only-blank-key patching, abstract section replacement, frontmatter preservation) lives in `scripts.enrich` and is fragile to reimplement. Hand the response back:
 
 ```bash
 cd paperhub_utils
-uv run python enrich.py --from-response --folder ACF2015 \
+uv run python -m scripts.enrich --engine coding-agent --from-response --folder ACF2015 \
   --response-file "${RESPONSE_FILE}" \
   --model-label "current-coding-agent" \
   [--no-summary]
@@ -334,7 +334,7 @@ The `current-coding-agent` model label triggers `pdf_engine: coding-agent` in th
 
 ```bash
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['cleanup_dir'])")
-uv run python enrich.py --cleanup-cli-input "${CLEANUP_DIR}"
+uv run python -m scripts.enrich --cleanup-cli-input "${CLEANUP_DIR}"
 ```
 
 Then `shared/post_ai.md` (tag handoff + commit). Commit message: `feat(papers): enrich {folder}` (or `enrich {N} folders`).

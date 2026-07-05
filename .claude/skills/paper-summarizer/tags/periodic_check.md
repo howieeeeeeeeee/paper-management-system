@@ -29,7 +29,7 @@ tags/
 
 ## Scripts
 
-All scripts are under `paperhub_utils/`. Run with `uv run python -m tag_utils.<name>` from that directory.
+All scripts are under `paperhub_utils/`. Run with `uv run python -m paperhub.tag_utils.<name>` from that directory.
 
 **Periodic-only scripts (in `tag_utils.periodic.<name>`):**
 
@@ -54,7 +54,7 @@ This is a heavier flow that surfaces accumulated drift since the last check.
 
    ```bash
    cd paperhub_utils
-   uv run python -m tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
+   uv run python -m paperhub.tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
    ```
 
 2. **Look for drift.** Pull tags with `count == 1` introduced since last check, plus the full top-N of each type. Skim for:
@@ -74,23 +74,23 @@ This is a heavier flow that surfaces accumulated drift since the last check.
    {"old1": "new1", "old2": "new2"}
    EOF
 
-   uv run python -m tag_utils.periodic.apply_renames --dry-run --merges-file /tmp/round_N_merges.json
+   uv run python -m paperhub.tag_utils.periodic.apply_renames --dry-run --merges-file /tmp/round_N_merges.json
    # Review diff
-   uv run python -m tag_utils.periodic.apply_renames --apply  --merges-file /tmp/round_N_merges.json
+   uv run python -m paperhub.tag_utils.periodic.apply_renames --apply  --merges-file /tmp/round_N_merges.json
    ```
 
    If `interest:`/`status:` field drift has crept back in:
 
    ```bash
-   uv run python -m tag_utils.periodic.normalize_fields --dry-run
-   uv run python -m tag_utils.periodic.normalize_fields --apply
+   uv run python -m paperhub.tag_utils.periodic.normalize_fields --dry-run
+   uv run python -m paperhub.tag_utils.periodic.normalize_fields --apply
    ```
 
 5. **Regenerate registry.**
 
    ```bash
-   uv run python -m tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
-   uv run python -m tag_utils.periodic.bootstrap_registry \
+   uv run python -m paperhub.tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
+   uv run python -m paperhub.tag_utils.periodic.bootstrap_registry \
        --scan /tmp/tags_now.json --tags-dir ../tags
    ```
 
@@ -119,6 +119,6 @@ If you want the user to review specific `?`-flagged or low-confidence tags (e.g.
 ## What this skill does NOT do here
 
 - Does not auto-run the periodic check on a schedule. User triggers it explicitly.
-- Does not modify the prompt fragments under `prompt/shared/` and `prompt/aspect/` — that's Phase 2 of the broader plan.
+- Does not modify the prompt fragments under `prompts/shared/` and `prompts/aspect/` — that's Phase 2 of the broader plan.
 - Does not delete tags with count 0 — flag them in the report, leave the row in place.
 - Does not split `tags_summary.md` into per-type files — by design, one consolidated table is the user surface.

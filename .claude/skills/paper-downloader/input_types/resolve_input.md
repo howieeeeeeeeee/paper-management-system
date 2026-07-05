@@ -1,6 +1,6 @@
 # Resolving the input
 
-Classify the user's input, normalize it to a `paper_fetcher.py` source flag, and
+Classify the user's input, normalize it to a `scripts.paper_fetcher` source flag, and
 (for a batch) expand each entry into a query.
 
 ## Single-item classification (regex, first match wins)

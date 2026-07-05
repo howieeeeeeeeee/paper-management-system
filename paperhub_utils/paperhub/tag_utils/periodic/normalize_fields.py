@@ -1,6 +1,6 @@
 """Normalize `interest:` and `status:` frontmatter fields.
 
-Conventions (matching dominant form + prompt/shared/metadata_template.txt):
+Conventions (matching dominant form + prompts/shared/metadata_template.txt):
 - `interest:` is a **scalar**.    Examples: `interest: none`, `interest: high`
 - `status:`   is a **list**.      Example:  `status:\n  - done`
 
@@ -13,8 +13,8 @@ Rewrites:
 Surgical line edits — does not touch other fields. Idempotent.
 
 Usage:
-    uv run python -m tag_utils.normalize_fields --dry-run
-    uv run python -m tag_utils.normalize_fields --apply
+    uv run python -m paperhub.tag_utils.normalize_fields --dry-run
+    uv run python -m paperhub.tag_utils.normalize_fields --apply
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ import re
 import sys
 from pathlib import Path
 
-from tag_utils.common import DEFAULT_ORGANIZED_DIR, iter_main_metadata_files
+from paperhub.tag_utils.common import DEFAULT_ORGANIZED_DIR, iter_main_metadata_files
 
 
 SCALAR_FIELD_RE = re.compile(r"^(?P<key>interest|status)\s*:\s*(?P<val>.+?)\s*$")

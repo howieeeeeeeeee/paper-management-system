@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from config import PAPERHUB_ROOT
+from paperhub.config import PAPERHUB_ROOT
 
 REPO_ROOT = PAPERHUB_ROOT
 CLI_WORK_DIR = REPO_ROOT / ".paperhub_tmp"
@@ -62,13 +62,8 @@ def create_first_pages_pdf(
 
 
 def repo_relative_path(path: Path) -> str:
-    """Return a POSIX repo-relative path for Gemini CLI @ references."""
+    """Return a POSIX repo-relative path for external CLI references."""
     return path.resolve().relative_to(REPO_ROOT).as_posix()
-
-
-def gemini_at_path(path: Path) -> str:
-    """Return repo-relative path text safe for Gemini CLI @ prompts."""
-    return repo_relative_path(path).replace(" ", r"\ ")
 
 
 def ensure_safe_cli_cleanup_path(path: Path) -> Path:

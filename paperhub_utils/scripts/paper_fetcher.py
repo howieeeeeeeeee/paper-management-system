@@ -2,8 +2,8 @@
 """
 Paper Fetcher - Search, resolve, and download research papers.
 
-The front-end to paper_summarizer.py: given a paper's title/author, DOI, arXiv
-ID, or URL, this resolves bibliographic metadata via free APIs (OpenAlex,
+The front-end to scripts.paper_summarizer: given a paper's title/author, DOI,
+arXiv ID, or URL, this resolves bibliographic metadata via free APIs (OpenAlex,
 Crossref, arXiv, Unpaywall), downloads an available PDF into to_be_organized/,
 and writes a `{stem}.citation.md` sidecar holding the citation. The summarizer
 later auto-detects that sidecar and uses it as authoritative context.
@@ -18,10 +18,10 @@ local gstack browser over the user's VPN and calls back here with
 `--url <pdf_url> --cookies <jar>` to download the bytes.
 
 Usage:
-    python paper_fetcher.py --arxiv 2504.09343 [--mode auto]
-    python paper_fetcher.py --doi 10.1257/aer.20181169 --citation-only
-    python paper_fetcher.py --title "Behavioral Attenuation" --author Enke
-    python paper_fetcher.py --url "https://.../paper.pdf" --cookies jar.json --stem enke2025
+    python -m scripts.paper_fetcher --arxiv 2504.09343 [--mode auto]
+    python -m scripts.paper_fetcher --doi 10.1257/aer.20181169 --citation-only
+    python -m scripts.paper_fetcher --title "Behavioral Attenuation" --author Enke
+    python -m scripts.paper_fetcher --url "https://.../paper.pdf" --cookies jar.json --stem enke2025
 
 Always prints a single JSON object to stdout; logs go to stderr.
 """
@@ -42,8 +42,10 @@ from dataclasses import asdict, dataclass, field
 from datetime import date
 from pathlib import Path
 
-# Make `from config import ...` work regardless of the caller's cwd.
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Make `from paperhub.config import ...` work regardless of the caller's cwd.
+UTILS_ROOT = Path(__file__).resolve().parents[1]
+if str(UTILS_ROOT) not in sys.path:
+    sys.path.insert(0, str(UTILS_ROOT))
 
 try:
     import requests
@@ -64,9 +66,9 @@ except ImportError:
     yaml = None
 
 try:
-    from config import TO_BE_ORGANIZED_DIR
+    from paperhub.config import TO_BE_ORGANIZED_DIR
 except Exception:  # pragma: no cover - config should always import
-    TO_BE_ORGANIZED_DIR = Path(__file__).resolve().parents[1] / "to_be_organized"
+    TO_BE_ORGANIZED_DIR = UTILS_ROOT.parent / "to_be_organized"
 
 logger = logging.getLogger("paper_fetcher")
 

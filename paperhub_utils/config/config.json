@@ -4,15 +4,19 @@
   "metadata_only_page_limit": 2,
   "agy_cli_model": "Gemini 3.1 Pro (High)",
   "codex_cli_model": "gpt-5.5",
-  "codex_cli_reasoning_effort": "high",
+  "codex_cli_reasoning_effort": "xhigh",
   "codex_cli_yolo": true,
-  "gemini_cli_model": "gemini-3.1-pro-preview",
   "tag_prompt": {
     "include_context": true,
     "top_field": 20,
     "top_topic": 200,
     "top_methodology": 10,
     "top_meta": 0
+  },
+  "paperhub_utils": {
+    "installed_version": "2026.07.05.3",
+    "last_update_check": null,
+    "pending_version": null
   },
   "obsidian": {
     "vault_abs_path": null,

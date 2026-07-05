@@ -7,12 +7,12 @@ import json
 import sys
 from pathlib import Path
 
-from tag_utils.common import (
+from paperhub.tag_utils.common import (
     DEFAULT_ORGANIZED_DIR,
     DEFAULT_TAGS_DIR,
     parse_frontmatter,
 )
-from tag_utils.registry import (
+from paperhub.tag_utils.registry import (
     RegistryError,
     load_registry,
     registry_tag_count,

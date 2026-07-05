@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from cli_workflow.codex import (
+from paperhub.cli_workflow.codex import (
     CODEX_RESPONSE_BEGIN,
     CODEX_RESPONSE_END,
     codex_model_label,
@@ -13,19 +13,20 @@ from cli_workflow.codex import (
     resolve_codex_cli_settings,
     validate_codex_cli_run,
 )
-from cli_workflow.pdf import CLI_WORK_DIR
-from config import (
+from paperhub.cli_workflow.pdf import CLI_WORK_DIR
+from paperhub.config import (
     CODEX_CLI_MODEL,
     CODEX_CLI_MODEL_LIST,
     CODEX_CLI_MODEL_REASONING_PAIRS,
     CODEX_CLI_REASONING_EFFORT,
+    CODEX_CLI_REASONING_EFFORT_LIST,
     CODEX_CLI_YOLO,
 )
-from enrich import (
+from scripts.enrich import (
     find_artifacts,
     prepare_cli_input as prepare_enrich_cli_input,
 )
-from paper_summarizer import (
+from scripts.paper_summarizer import (
     SUMMARY_MODE_FULL,
     SUMMARY_MODE_METADATA_ONLY,
     cleanup_cli_input,
@@ -50,7 +51,7 @@ class CodexWorkflowTests(unittest.TestCase):
 
     def test_default_model_comes_from_paperhub_config(self) -> None:
         self.assertEqual(CODEX_CLI_MODEL, "gpt-5.5")
-        self.assertEqual(CODEX_CLI_REASONING_EFFORT, "high")
+        self.assertIn(CODEX_CLI_REASONING_EFFORT, CODEX_CLI_REASONING_EFFORT_LIST)
         self.assertTrue(CODEX_CLI_YOLO)
         self.assertEqual(CODEX_CLI_MODEL_LIST, ("gpt-5.5",))
         self.assertIn(CODEX_CLI_MODEL, CODEX_CLI_MODEL_LIST)
@@ -132,13 +133,16 @@ class CodexWorkflowTests(unittest.TestCase):
             self.assertEqual(result["external_cli_engine"], "codex-cli")
             self.assertEqual(result["summary_mode"], SUMMARY_MODE_FULL)
             self.assertEqual(result["pdf_for_ai_codex_path"], str(pdf_path.resolve()))
-            self.assertEqual(result["codex_cli_model"], "gpt-5.5")
-            self.assertEqual(result["codex_cli_reasoning_effort"], "high")
+            self.assertEqual(result["codex_cli_model"], CODEX_CLI_MODEL)
+            self.assertEqual(
+                result["codex_cli_reasoning_effort"],
+                CODEX_CLI_REASONING_EFFORT,
+            )
             self.assertTrue(result["codex_cli_yolo"])
             self.assertEqual(result["codex_cli_web_search"], "disabled")
             self.assertEqual(
                 result["codex_model_label"],
-                "gpt-5.5 (high reasoning) (Codex CLI)",
+                codex_model_label(CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT),
             )
             self.assertEqual(result["response_begin"], CODEX_RESPONSE_BEGIN)
             self.assertEqual(result["response_end"], CODEX_RESPONSE_END)
@@ -195,12 +199,15 @@ class CodexWorkflowTests(unittest.TestCase):
             self.assertEqual(result["external_cli_engine"], "codex-cli")
             self.assertEqual(result["mode"], "enrich")
             self.assertEqual(result["pdf_for_ai_codex_path"], str(pdf_path.resolve()))
-            self.assertEqual(result["codex_cli_model"], "gpt-5.5")
-            self.assertEqual(result["codex_cli_reasoning_effort"], "high")
+            self.assertEqual(result["codex_cli_model"], CODEX_CLI_MODEL)
+            self.assertEqual(
+                result["codex_cli_reasoning_effort"],
+                CODEX_CLI_REASONING_EFFORT,
+            )
             self.assertTrue(result["codex_cli_yolo"])
             self.assertEqual(
                 result["codex_model_label"],
-                "gpt-5.5 (high reasoning) (Codex CLI)",
+                codex_model_label(CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT),
             )
             self.assertFalse(result["past_summary_used"])
             self.assertTrue(cleanup_cli_input(Path(result["cleanup_dir"])))

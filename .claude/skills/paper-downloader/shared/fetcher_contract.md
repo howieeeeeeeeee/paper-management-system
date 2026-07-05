@@ -1,4 +1,4 @@
-# Fetcher contract — `paper_fetcher.py`
+# Fetcher contract — `scripts.paper_fetcher`
 
 The deterministic helper. It resolves metadata via free APIs, downloads an
 available PDF, and writes a `{stem}.citation.md` sidecar. It does **no** browser
@@ -10,7 +10,7 @@ automation — for paywalled journals it sets `needs_browser_fallback` and a
 Always from `paperhub_utils/` (so `uv` finds `.venv`):
 
 ```bash
-cd paperhub_utils && uv run python paper_fetcher.py <one source> [options]
+cd paperhub_utils && uv run python -m scripts.paper_fetcher <one source> [options]
 ```
 
 **Source (exactly one, required):**

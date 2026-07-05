@@ -7,7 +7,7 @@ description: Download and cite NEW research papers from the web, then hand off t
 
 The project's root folder contains a `.claude` directory. Open `.claude/skills/paper-downloader/SKILL.md` (from that root) for the canonical workflow and rules.
 
-Routes the request to one mode (`auto` / `open-access` / `browser` / `citation-only`) and one input type (title / DOI / arXiv / URL / batch), then delegates to the per-doc playbook under `.claude/skills/paper-downloader/`. **Read only the doc(s) you need.** Every mode calls `paperhub_utils/paper_fetcher.py` and writes a `{stem}.citation.md` sidecar next to the downloaded PDF in `to_be_organized/`, then offers to hand off to `paper-summarizer`. Legitimate access only — never circumvent paywalls.
+Routes the request to one mode (`auto` / `open-access` / `browser` / `citation-only`) and one input type (title / DOI / arXiv / URL / batch), then delegates to the per-doc playbook under `.claude/skills/paper-downloader/`. **Read only the doc(s) you need.** Every mode calls `cd paperhub_utils && uv run python -m scripts.paper_fetcher` and writes a `{stem}.citation.md` sidecar next to the downloaded PDF in `to_be_organized/`, then offers to hand off to `paper-summarizer`. Legitimate access only — never circumvent paywalls.
 
 ## Local uv environment
 

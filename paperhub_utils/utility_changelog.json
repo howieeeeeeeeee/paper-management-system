@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "latest_version": "2026.07.05.3",
+  "version_format": "YYYY.MM.DD.N",
+  "entries": {
+    "2026.07.05.1": {
+      "date": "2026-07-05",
+      "title": "CLI Routes and Paper Finder",
+      "update_kind": "content",
+      "summary": "Adds mature external CLI routes and local paper retrieval workflows.",
+      "how_to_apply": "Safe skill and script updates can be applied directly. Review local prompt customizations before replacing prompt files.",
+      "added": [
+        "Codex CLI support for paper summarization and enrich workflows.",
+        "Agy CLI support for Gemini-family direct CLI workflows.",
+        "paper-finder skill for retrieving existing papers from keywords, vague descriptions, authors, tags, and snippets.",
+        "Detailed paper-finder mode and no-keyword search flow."
+      ]
+    },
+    "2026.07.05.2": {
+      "date": "2026-07-05",
+      "title": "PaperHub Utility Updater",
+      "update_kind": "structural",
+      "summary": "Adds versioned update metadata and an updater skill for syncing PaperHub skills and utilities while preserving local configuration and prompt customizations.",
+      "how_to_apply": "Use update-paperhub-utils. Let the updater replace safe skill and script files, preserve config and paper-library files, and ask before ambiguous prompt or structural merges.",
+      "added": [
+        "update-paperhub-utils skill for adopted PaperHub copies.",
+        "utility_manifest.json for update-managed and protected path boundaries.",
+        "utility_changelog.json for version-range release notes."
+      ],
+      "changed": [
+        "PaperHub utilities are grouped into update-managed files and user-owned local state."
+      ]
+    },
+    "2026.07.05.3": {
+      "date": "2026-07-05",
+      "title": "Structured Utility Folders",
+      "update_kind": "structural",
+      "summary": "Physically separates PaperHub utility entry scripts, importable Python modules, prompt fragments, local config, and generated outputs.",
+      "how_to_apply": "Update local commands and custom docs to use scripts/, paperhub/, prompts/, config/, and output/raw_outputs/. Preserve local config/config.json and config/.env; if an old misc/config.json exists, compare before migrating.",
+      "changed": [
+        "Executable utilities moved to paperhub_utils/scripts/.",
+        "Importable Python modules moved to paperhub_utils/paperhub/.",
+        "Prompt text moved to paperhub_utils/prompts/.",
+        "User config and defaults moved to paperhub_utils/config/.",
+        "Raw model outputs moved under paperhub_utils/output/raw_outputs/.",
+        "paper-finder CLI now matches the skill flags for explicit terms, result counts, detailed cards, exclude penalties, and full-detail output.",
+        "Enrich prepare supports a coding-agent route without changing Agy or Codex settings."
+      ]
+    }
+  }
+}

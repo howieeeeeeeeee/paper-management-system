@@ -43,7 +43,7 @@ Run all scripts from `paperhub_utils/`:
 
    ```bash
    cd paperhub_utils
-   uv run python -m tag_utils.classify_batch_tags --pretty "$LABEL_1" "$LABEL_2" ...
+   uv run python -m paperhub.tag_utils.classify_batch_tags --pretty "$LABEL_1" "$LABEL_2" ...
    ```
 
    The output includes:
@@ -60,8 +60,8 @@ Run all scripts from `paperhub_utils/`:
 
    ```bash
    cd paperhub_utils
-   uv run python -m tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
-   uv run python -m tag_utils.periodic.bootstrap_registry \
+   uv run python -m paperhub.tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
+   uv run python -m paperhub.tag_utils.periodic.bootstrap_registry \
        --scan /tmp/tags_now.json \
        --tags-dir ../tags
    ```
@@ -83,7 +83,7 @@ Run all scripts from `paperhub_utils/`:
    **b. Ask the script for similar existing tags.** Do not read any names file yourself.
 
    ```bash
-   uv run python -m tag_utils.register_tag --suggest-merge NEW_TAG --type TYPE
+   uv run python -m paperhub.tag_utils.register_tag --suggest-merge NEW_TAG --type TYPE
    ```
 
    The script prints small JSON to stdout, e.g.:
@@ -100,7 +100,7 @@ Run all scripts from `paperhub_utils/`:
    - **`similar` is empty:** add the new tag.
 
      ```bash
-     uv run python -m tag_utils.register_tag \
+     uv run python -m paperhub.tag_utils.register_tag \
          --add NEW_TAG --type TYPE --from-paper LABEL
      ```
 
@@ -113,22 +113,22 @@ Run all scripts from `paperhub_utils/`:
      - **Replace:**
 
        ```bash
-       uv run python -m tag_utils.register_tag \
+       uv run python -m paperhub.tag_utils.register_tag \
            --rename NEW_TAG EXISTING_TAG --paper LABEL
        ```
 
      - **Keep as new:**
 
        ```bash
-       uv run python -m tag_utils.register_tag \
+       uv run python -m paperhub.tag_utils.register_tag \
            --add NEW_TAG --type TYPE --from-paper LABEL
        ```
 
 5. **Refresh registry counts** after add/rename decisions:
 
    ```bash
-   uv run python -m tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
-   uv run python -m tag_utils.periodic.bootstrap_registry \
+   uv run python -m paperhub.tag_utils.periodic.scan_tags --pretty --out /tmp/tags_now.json
+   uv run python -m paperhub.tag_utils.periodic.bootstrap_registry \
        --scan /tmp/tags_now.json \
        --tags-dir ../tags
    ```

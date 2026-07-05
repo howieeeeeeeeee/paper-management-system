@@ -7,7 +7,7 @@ structured metadata and summaries, then organizes them into a standardized
 folder structure.
 
 Usage:
-    python paper_summarizer.py <pdf_path> [<pdf_path> ...] [options]
+    python -m scripts.paper_summarizer <pdf_path> [<pdf_path> ...] [options]
 
 Options:
     --model         OpenRouter model ID
@@ -33,6 +33,10 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
+UTILS_ROOT = Path(__file__).resolve().parents[1]
+if str(UTILS_ROOT) not in sys.path:
+    sys.path.insert(0, str(UTILS_ROOT))
+
 try:
     import requests
 except ImportError:
@@ -42,14 +46,15 @@ except ImportError:
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).resolve().parent / ".env")
+    load_dotenv(UTILS_ROOT / "config" / ".env")
+    load_dotenv(UTILS_ROOT / ".env")
     load_dotenv()
 except ImportError:
     # dotenv is optional, will use environment variables directly
     pass
 
-# Configuration - import from config.py
-from config import (
+# Configuration - import from paperhub/config.py
+from paperhub.config import (
     AGY_CLI_MODEL,
     AGY_CLI_MODEL_LIST,
     CODEX_CLI_MODEL,
@@ -66,8 +71,8 @@ from config import (
     MY_RESEARCH_INTERESTS,
     PAPERHUB_ROOT,
 )
-from prompt.builder import build_prompt
-from cli_workflow.agy import (
+from paperhub.prompt.builder import build_prompt
+from paperhub.cli_workflow.agy import (
     AGY_RESPONSE_BEGIN,
     AGY_RESPONSE_END,
     agy_model_label,
@@ -77,7 +82,7 @@ from cli_workflow.agy import (
     resolve_agy_cli_model,
     validate_agy_cli_run,
 )
-from cli_workflow.codex import (
+from paperhub.cli_workflow.codex import (
     CODEX_RESPONSE_BEGIN,
     CODEX_RESPONSE_END,
     codex_model_label,
@@ -85,15 +90,13 @@ from cli_workflow.codex import (
     resolve_codex_cli_settings,
     validate_codex_cli_run,
 )
-from cli_workflow.gemini import validate_gemini_cli_run
-from cli_workflow.pdf import (
+from paperhub.cli_workflow.pdf import (
     CLI_WORK_DIR,
     create_first_pages_pdf,
     ensure_safe_cli_cleanup_path,
-    gemini_at_path,
     repo_relative_path,
 )
-from cli_workflow.utils import (
+from paperhub.cli_workflow.utils import (
     parse_metadata_first_markdown,
     parse_metadata_only_markdown,
 )
@@ -175,7 +178,7 @@ def get_api_key() -> str:
 
     if not api_key:
         logger.error(
-            "OPENROUTER_API_KEY not found in environment, paperhub_utils/.env, or ~/.env"
+            "OPENROUTER_API_KEY not found in environment, paperhub_utils/config/.env, paperhub_utils/config/.env, or ~/.env"
         )
         sys.exit(1)
 
@@ -1402,7 +1405,7 @@ def write_file(path: Path, content: str) -> None:
     logger.info(f"Created file: {path}")
 
 
-RAW_OUTPUTS_DIR = Path(__file__).parent / "raw_outputs"
+RAW_OUTPUTS_DIR = UTILS_ROOT / "output" / "raw_outputs"
 
 
 def format_yaml_model_value(model_id: str) -> str:
@@ -1874,7 +1877,7 @@ def prepare_cli_input(
     pdf_path: Path,
     summary_mode: str,
     additional_instruction: str = "",
-    external_cli_engine: str = "gemini-cli",
+    external_cli_engine: str = "agy-cli",
     agy_model: str | None = None,
     codex_model: str | None = None,
     codex_reasoning_effort: str | None = None,
@@ -1890,7 +1893,7 @@ def prepare_cli_input(
             "error": f"Unknown summary mode: {summary_mode}",
             "error_type": "ValueError",
         }
-    if external_cli_engine not in {"gemini-cli", "agy-cli", "codex-cli"}:
+    if external_cli_engine not in {"agy-cli", "codex-cli"}:
         return {
             "success": False,
             "pdf_path": str(pdf_path),
@@ -1951,7 +1954,6 @@ def prepare_cli_input(
         "prompt_path": str(prompt_path),
         "pdf_for_ai_path": str(pdf_for_ai),
         "pdf_for_ai_repo_relative": pdf_for_ai_repo_relative,
-        "pdf_for_ai_gemini_path": gemini_at_path(pdf_for_ai),
         "pdf_for_ai_agy_path": str(pdf_for_ai.resolve()),
         "pdf_for_ai_codex_path": str(pdf_for_ai.resolve()),
         "original_pdf_path": str(pdf_path),
@@ -2039,7 +2041,7 @@ def main():
     )
     parser.add_argument(
         "--external-cli-engine",
-        choices=("gemini-cli", "agy-cli", "codex-cli", "coding-agent"),
+        choices=("agy-cli", "codex-cli", "coding-agent"),
         default=None,
         help="External engine used with --prepare-cli-input/--from-response",
     )
@@ -2120,16 +2122,6 @@ def main():
         help="Total token count (used with --from-response)",
     )
     parser.add_argument(
-        "--gemini-stderr-file",
-        metavar="PATH",
-        help="Gemini CLI stderr file to inspect before organizing --from-response output",
-    )
-    parser.add_argument(
-        "--gemini-output-json",
-        metavar="PATH",
-        help="Gemini CLI JSON output file to inspect before organizing --from-response output",
-    )
-    parser.add_argument(
         "--agy-stderr-file",
         metavar="PATH",
         help="Agy CLI stderr file to inspect before organizing --from-response output",
@@ -2187,7 +2179,7 @@ def main():
                 pdf_path=Path(pdf_path_str).resolve(),
                 summary_mode=args.summary_mode,
                 additional_instruction=args.instruction,
-                external_cli_engine=args.external_cli_engine or "gemini-cli",
+                external_cli_engine=args.external_cli_engine or "agy-cli",
                 agy_model=args.agy_model,
                 codex_model=args.codex_model,
                 codex_reasoning_effort=args.codex_reasoning_effort,
@@ -2246,24 +2238,13 @@ def main():
             ):
                 external_cli_engine = "codex-cli"
             else:
-                external_cli_engine = "gemini-cli"
+                external_cli_engine = "agy-cli"
 
         content = raw_content
         cli_problems: list[str] = []
         cli_error = "External CLI did not reliably read the PDF"
         cli_error_type = "ExternalCliPdfReadError"
-        if external_cli_engine == "gemini-cli":
-            cli_problems = validate_gemini_cli_run(
-                stderr_path=Path(args.gemini_stderr_file).resolve()
-                if args.gemini_stderr_file
-                else None,
-                output_json_path=Path(args.gemini_output_json).resolve()
-                if args.gemini_output_json
-                else None,
-            )
-            cli_error = "Gemini CLI did not reliably read the PDF"
-            cli_error_type = "GeminiCliPdfReadError"
-        elif external_cli_engine == "agy-cli":
+        if external_cli_engine == "agy-cli":
             cli_problems = validate_agy_cli_run(
                 stdout_text=raw_content,
                 stderr_path=Path(args.agy_stderr_file).resolve()
@@ -2332,7 +2313,7 @@ def main():
             "agy-cli": "agy-native",
             "codex-cli": "codex-cli",
             "coding-agent": "coding-agent",
-        }.get(external_cli_engine, "gemini-native")
+        }.get(external_cli_engine, "external-cli")
 
         usage = {}
         if args.tokens_prompt is not None:

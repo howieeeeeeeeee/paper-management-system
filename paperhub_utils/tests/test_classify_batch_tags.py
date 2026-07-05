@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tag_utils.classify_batch_tags import classify_batch_tags
+from paperhub.tag_utils.classify_batch_tags import classify_batch_tags
 
 
 SUMMARY = """# Tags Summary

@@ -13,7 +13,7 @@ Routes the user's request to the right `engine × mode`, then delegates to a per
 SKILL.md                  ← you are here (router only)
 onboard.md                ← questionnaire-first setup inside an Obsidian vault
 engines/
-  openrouter.md           ← default; uses paper_summarizer.py via OpenRouter API
+  openrouter.md           ← default; uses `scripts.paper_summarizer` via OpenRouter API
   agy_cli.md              ← active direct-Google CLI workflow via `agy`
   codex_cli.md            ← OpenAI Codex CLI workflow via `codex exec`
   coding_agent.md         ← in-process; full / metadata-only / enrich (high quota for full+enrich)
@@ -51,7 +51,6 @@ For paper processing, pick **one engine** and **one mode** per batch.
 | "use current coding agent" / "use you" / "no external AI" | `coding-agent` | `engines/coding_agent.md` (full / metadata-only / enrich; full+enrich gated for quota) |
 | "with codex cli" / "use codex cli" / "direct OpenAI CLI" | `codex-cli` | `engines/codex_cli.md` |
 | "with agy cli" / "use antigravity cli" / "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
-| "with gemini cli" / "use gemini cli" / "via gemini cli" | `agy-cli` | `engines/agy_cli.md` — Gemini CLI has been replaced by Agy CLI (Google Antigravity) |
 | "use gemini" / "with gemini" (no "cli") | ASK first | `AskUserQuestion`: "Gemini via OpenRouter (script) or Agy CLI (direct Google CLI)?" |
 | anything else (default) | `openrouter` | `engines/openrouter.md` |
 
@@ -59,7 +58,7 @@ For paper processing, pick **one engine** and **one mode** per batch.
 
 | User says | Mode | Read |
 |-----------|------|------|
-| "enrich `<folder>`" / "summarize the existing folder `<folder>`" / "add a summary to `<folder>`" / "fill in `<folder>`" / "complete metadata for `<folder>`" | `enrich` | `modes/enrich.md` (uses `enrich.py`, NOT `paper_summarizer.py`) |
+| "enrich `<folder>`" / "summarize the existing folder `<folder>`" / "add a summary to `<folder>`" / "fill in `<folder>`" / "complete metadata for `<folder>`" | `enrich` | `modes/enrich.md` (uses `scripts.enrich`, NOT `scripts.paper_summarizer`) |
 | "with summary" / "full summary" / "AI summary" | `full` | `modes/full.md` |
 | "metadata only" / "no summary" / "without summary" | `metadata-only` | `modes/metadata_only.md` |
 | no mode mention, brand-new PDF | ASK | `AskUserQuestion`: "Full summary or metadata only?" |
@@ -76,13 +75,13 @@ For paper processing, pick **one engine** and **one mode** per batch.
 ## Critical rules (apply always)
 
 - **Paths with spaces:** Pass literal paths (spaces as-is) to `Read`, `Edit`, and `Write` tools — do NOT backslash-escape spaces. Backslash escaping is only for Bash tool commands. If the project root contains spaces, escaping will cause "file not found" errors even when the file exists.
-- **uv run location:** Always `cd paperhub_utils` before running `uv run` commands, since `pyproject.toml` and `.venv` are stored there. Example: `cd paperhub_utils && uv run python paper_summarizer.py ... && cd ..`
+- **uv run location:** Always `cd paperhub_utils` before running `uv run` commands, since `pyproject.toml` and `.venv` are stored there. Example: `cd paperhub_utils && uv run python -m scripts.paper_summarizer ... && cd ..`
 - **Batch processing paths:** Always cd into `paperhub_utils` first. Use `PAPERHUB_ROOT=$(cd .. && pwd)` to get the PaperHub root (works on any machine). For Agy: use `agy --add-dir "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON. For Codex: use `codex exec --cd "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON; PaperHub's default Codex path uses local yolo/full-access mode with web search disabled.
 - Treat `.venv` as disposable local state. In iCloud-synced vaults, never preserve or share `.venv` across machines. If a `uv` command fails because the environment is stale or broken, run `uv sync` from `paperhub_utils/`; if it still fails, run `rm -rf .venv` and then `uv sync`.
 - **NEVER read the PDF directly** — except `engines/coding_agent.md`. In `metadata-only` mode it extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
 - For `openrouter`, `agy-cli`, and `codex-cli`, ALWAYS delegate PDF processing to the script or external CLI. Only validate and fix the output.
 - **Handle partial failures via `AskUserQuestion`** — never decide unilaterally, never auto-switch models.
-- **ONLY use models from `config.py`'s `MODEL_LIST`** for `openrouter`. For `agy-cli`, use `AGY_CLI_MODEL_LIST`; the selected model is persisted to Agy settings by `--prepare-cli-input`. For `codex-cli`, use `CODEX_CLI_MODEL_REASONING_PAIRS`; the selected model is passed per run with `codex exec --model`, and the thinking level is passed per run with `-c model_reasoning_effort=...`.
+- **ONLY use models from `paperhub.config`'s `MODEL_LIST`** for `openrouter`. For `agy-cli`, use `AGY_CLI_MODEL_LIST`; the selected model is persisted to Agy settings by `--prepare-cli-input`. For `codex-cli`, use `CODEX_CLI_MODEL_REASONING_PAIRS`; the selected model is passed per run with `codex exec --model`, and the thinking level is passed per run with `-c model_reasoning_effort=...`.
 - Metadata files MUST always include `contributions:` (empty YAML field) and `## Abstract` (verbatim from PDF when present).
 
 ## Post-AI flow
@@ -92,7 +91,7 @@ After the selected engine finishes and the paper files are written, read `shared
 1. Validate the output folder, moved PDF, metadata file, and mode-specific summary requirements.
 2. Auto-fix small output issues: AI markup artifacts, tag spaces, missing required YAML fields, and missing `## Abstract`.
 3. Run the batch tag handoff in `tags/post_summary_update.md` so new tags are added or merged against the registry.
-4. Commit the organized files unless the user asked not to commit, `USE_GIT = False` (loaded from `paperhub_utils/misc/config.json`), or the output is outside the paper-library Git repo.
+4. Commit the organized files unless the user asked not to commit, `USE_GIT = False` (loaded from `paperhub_utils/config/config.json`), or the output is outside the paper-library Git repo.
 5. Report the result with token usage when available, tag updates, auto-fixes, and any failed papers.
 
 For partial batch failures, ask the user whether to abandon, retry, or choose another allowed model for the active engine. Never switch models automatically.
@@ -103,7 +102,6 @@ For partial batch failures, ask the user whether to abandon, retry, or choose an
 "Summarize this paper"                              → openrouter × ask-mode
 "Summarize these papers with agy cli"               → agy-cli × ask-mode
 "Summarize these papers with codex cli"             → codex-cli × ask-mode
-"Summarize these papers with gemini cli"            → agy-cli × ask-mode (Gemini CLI replaced by Agy CLI)
 "Summarize this paper. Focus on identification."    → openrouter × ask-mode + --instruction
 "Enrich ACF2015"                                    → openrouter × enrich
 "Add a summary to melitz2003trade with agy cli"     → agy-cli × enrich
@@ -129,7 +127,7 @@ PAPERHUB_ROOT=$(cd .. && pwd)
 
 # 1. Prepare all papers
 for paper in "$PAPERHUB_ROOT"/to_be_organized/*.pdf; do
-  uv run python paper_summarizer.py --prepare-cli-input \
+  uv run python -m scripts.paper_summarizer --prepare-cli-input \
     --external-cli-engine agy-cli \
     --pdf-path-arg "$paper" \
     --summary-mode full > "/tmp/prepare_$(basename "$paper").json"
@@ -144,7 +142,7 @@ wait
 
 # 3. Process responses sequentially
 for i in {1..4}; do
-  uv run python paper_summarizer.py --from-response \
+  uv run python -m scripts.paper_summarizer --from-response \
     --external-cli-engine agy-cli \
     --response-file "/tmp/agy_output_$i.txt" ...
 done
@@ -164,11 +162,12 @@ done
 | Project root | current paper-library root (`PAPERHUB_ROOT` overrides auto-detection) |
 | Output dir | `organized/` |
 | Git repo | project root |
-| Scripts | `paperhub_utils/` (`paper_summarizer.py`, `enrich.py`, `config.py`) |
-| User config | `paperhub_utils/misc/config.json` (`config.py` loads and exports it) |
+| Entry scripts | `paperhub_utils/scripts/` (`scripts.paper_summarizer`, `scripts.enrich`, `scripts.paper_search`, `scripts.update_utils`) |
+| Python package | `paperhub_utils/paperhub/` (`config.py`, `cli_workflow/`, `tag_utils/`, `prompt/builder.py`) |
+| User config | `paperhub_utils/config/config.json` (`paperhub.config` loads and exports it) |
 | Onboarding questionnaire | `onboarding_questionnaire.md` at project root (deleted after successful onboarding) |
-| Prompts | `paperhub_utils/prompt/{shared,aspect}/*.txt` + `prompt/builder.py` (all modes compose from fragments) |
-| Tag registry | `tags/_internal/`; initial taxonomy comes from `onboarding_questionnaire.md` when present, otherwise `paperhub_utils/seeds/default_tags.yaml` |
+| Prompts | `paperhub_utils/prompts/{shared,aspect}/*.txt` + `paperhub/prompt/builder.py` (all modes compose from fragments) |
+| Tag registry | `tags/_internal/`; initial taxonomy comes from `onboarding_questionnaire.md` when present, otherwise `paperhub_utils/config/default_tags.yaml` |
 
 ## What this skill does NOT do
 

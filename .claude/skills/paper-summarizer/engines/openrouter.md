@@ -1,11 +1,11 @@
 # Workflow: OpenRouter Script
 
-This document covers the **default** paper summarization workflow using `paper_summarizer.py` via the OpenRouter API. Read this file when the user does not request Agy CLI or the current coding agent.
+This document covers the **default** paper summarization workflow using `scripts.paper_summarizer` via the OpenRouter API. Read this file when the user does not request Agy CLI or the current coding agent.
 
 ## Script Location
 
 ```
-paperhub_utils/paper_summarizer.py
+paperhub_utils/scripts/paper_summarizer.py
 ```
 
 **Working directory:** `paperhub_utils/` (has uv environment)
@@ -13,7 +13,7 @@ paperhub_utils/paper_summarizer.py
 ## How the Script Works
 
 1. **PDF Preparation**: PDF is read and either encoded to base64 for file-parser models or converted locally to Markdown/text for text-extraction models.
-2. **Prompt Construction**: Composes the prompt from `prompt/shared/` and `prompt/aspect/` fragments via `prompt/builder.py` and fills in dynamic values (date, research interests, user instructions)
+2. **Prompt Construction**: Composes the prompt from `prompts/shared/` and `prompts/aspect/` fragments via `paperhub/prompt/builder.py` and fills in dynamic values (date, research interests, user instructions)
 3. **PDF Input Strategy**: Reads the selected model's `pdf_input` config. Models can either send PDF (base64) + prompt to OpenRouter with `file-parser`, or convert the PDF locally to Markdown/text first.
 4. **API Call**: Calls OpenRouter with either the PDF file block or the extracted PDF text context.
 5. **Response Parsing**: Parses markdown sections (`# paper_label`, `# metadata`, plus `# ai_summary` in `full` mode), falls back to JSON
@@ -28,19 +28,19 @@ In `metadata-only` mode, the script creates a temporary first-`METADATA_ONLY_PAG
 
 ```bash
 cd paperhub_utils
-uv run python paper_summarizer.py "../to_be_organized/paper.pdf"
+uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf"
 ```
 
 **Single PDF, metadata only:**
 
 ```bash
-uv run python paper_summarizer.py "../to_be_organized/paper.pdf" --summary-mode metadata-only
+uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --summary-mode metadata-only
 ```
 
 **Multiple PDFs (script processes in parallel, max 4 workers):**
 
 ```bash
-uv run python paper_summarizer.py "../to_be_organized/paper1.pdf" "../to_be_organized/paper2.pdf" "../to_be_organized/paper3.pdf"
+uv run python -m scripts.paper_summarizer "../to_be_organized/paper1.pdf" "../to_be_organized/paper2.pdf" "../to_be_organized/paper3.pdf"
 ```
 
 Pass the same `--summary-mode` once for the whole batch.
@@ -48,25 +48,25 @@ Pass the same `--summary-mode` once for the whole batch.
 **With custom model:**
 
 ```bash
-uv run python paper_summarizer.py "../to_be_organized/paper.pdf" --model "anthropic/claude-sonnet-4"
+uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --model "anthropic/claude-sonnet-4"
 ```
 
 **With additional instructions (user-provided context):**
 
 ```bash
-uv run python paper_summarizer.py "../to_be_organized/paper.pdf" --instruction "Focus on the identification strategy and data sources"
+uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --instruction "Focus on the identification strategy and data sources"
 ```
 
 **With explicit full-summary mode:**
 
 ```bash
-uv run python paper_summarizer.py "../to_be_organized/paper.pdf" --summary-mode full
+uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --summary-mode full
 ```
 
 **With verbose logging:**
 
 ```bash
-uv run python paper_summarizer.py "../to_be_organized/paper.pdf" --verbose
+uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --verbose
 ```
 
 **Note on `--instruction`:** If the user provides any additional context, notes, or specific requests in their message (e.g., "this paper is about X", "pay attention to the welfare analysis"), pass it via the `--instruction` flag. Omit the flag if the user provides no extra info.
@@ -129,7 +129,7 @@ The default model is configured in `config.py` as `DEFAULT_MODEL`. The full list
 To check current defaults:
 
 ```
-paperhub_utils/config.py
+paperhub_utils/paperhub/config.py
 ```
 
 Override with `--model` flag (e.g., `--model "xxx"`). The script looks up the provider order from `MODEL_LIST` automatically.
@@ -191,9 +191,9 @@ DeepSeek V3.2 sometimes returns `response_length: 0` with all tokens consumed as
 
 ### Parse Failure with Raw Content Fallback
 
-When API succeeds but parsing fails, the script saves raw content to `raw_outputs/`.
+When API succeeds but parsing fails, the script saves raw content to `output/raw_outputs/`.
 
-**Result JSON includes:** `error_type: "ParseError"` and `raw_content_file: "paperhub_utils/raw_outputs/filename.md"`
+**Result JSON includes:** `error_type: "ParseError"` and `raw_content_file: "paperhub_utils/output/raw_outputs/filename.md"`
 
 **Fallback workflow:**
 
@@ -201,7 +201,7 @@ When API succeeds but parsing fails, the script saves raw content to `raw_output
 2. Read the raw file (has YAML frontmatter with `pdf_path`, token usage)
 3. Extract sections according to the selected mode: `full` expects metadata plus `# ai_summary`; `metadata-only` expects metadata only
 4. Create folder under organized/, write `{label}.md`, write `ai_summary.md` only in `full` mode, move PDF
-5. Clean up: `uv run python paper_summarizer.py --delete-raw "raw_outputs/raw_file.md"`
+5. Clean up: `uv run python -m scripts.paper_summarizer --delete-raw "output/raw_outputs/raw_file.md"`
 6. Commit and report as usual
 
 ## Batch Processing Logic

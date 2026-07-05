@@ -26,17 +26,17 @@ itself.
 
 Examples:
     # 1. Skill: I think 'info_asym' is type 'topic'. Are there similar tags?
-    uv run python -m tag_utils.register_tag \\
+    uv run python -m paperhub.tag_utils.register_tag \\
         --suggest-merge info_asym --type topic
     # -> {"new_tag": "info_asym", "type": "topic", "similar": [
     #      {"tag": "information_asymmetry", "score": 0.9}]}
 
     # 2a. User said "yes merge" -> rewrite the paper's YAML
-    uv run python -m tag_utils.register_tag \\
+    uv run python -m paperhub.tag_utils.register_tag \\
         --rename info_asym information_asymmetry --paper alsobay2025
 
     # 2b. User said "no, keep new" -> register as fresh tag
-    uv run python -m tag_utils.register_tag \\
+    uv run python -m paperhub.tag_utils.register_tag \\
         --add info_asym --type topic --from-paper alsobay2025
 """
 
@@ -49,12 +49,12 @@ import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from tag_utils.common import (
+from paperhub.tag_utils.common import (
     DEFAULT_ORGANIZED_DIR,
     DEFAULT_TAGS_DIR,
     rewrite_tags,
 )
-from tag_utils.registry import INTERNAL_SUBDIR, VALID_TYPES, load_registry
+from paperhub.tag_utils.registry import INTERNAL_SUBDIR, VALID_TYPES, load_registry
 
 
 def _similarity(a: str, b: str) -> float:

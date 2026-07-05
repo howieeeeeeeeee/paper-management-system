@@ -21,7 +21,7 @@ modes/
   browser.md                   ← gstack/VPN download of a paywalled real paper
   citation_only.md             ← metadata + sidecar only, no PDF
 shared/
-  fetcher_contract.md          ← the exact `paper_fetcher.py` CLI + JSON contract
+  fetcher_contract.md          ← the exact `scripts.paper_fetcher` CLI + JSON contract
   browser_download.md          ← gstack recipe, cookie-bridge, handoff/resume, ETHICS boundary
   handoff_to_summarizer.md     ← end-of-flow "summarize now?" + how to invoke paper-summarizer
 ```
@@ -29,7 +29,7 @@ shared/
 ## Core flow
 
 1. **Classify the input and pick the mode.** If either is ambiguous, run the *Ask gate* below. Read `input_types/resolve_input.md` when the input form is unclear or it's a batch.
-2. **Read the one mode doc** that matches and execute it. Every mode calls `paper_fetcher.py` (see `shared/fetcher_contract.md`) and writes a sidecar.
+2. **Read the one mode doc** that matches and execute it. Every mode calls `scripts.paper_fetcher` (see `shared/fetcher_contract.md`) and writes a sidecar.
 3. **Handoff.** After files land in `to_be_organized/`, read `shared/handoff_to_summarizer.md` and ask whether to summarize now.
 
 ## Routing — modes
@@ -64,7 +64,7 @@ Skip a question whenever it's already determined. If the user pasted a DOI and s
 
 ## Critical rules (apply always)
 
-- **uv run location:** always `cd paperhub_utils` before `uv run`, since `pyproject.toml` and `.venv` live there. Example: `cd paperhub_utils && uv run python paper_fetcher.py --arxiv 2504.09343`.
+- **uv run location:** always `cd paperhub_utils` before `uv run`, since `pyproject.toml` and `.venv` live there. Example: `cd paperhub_utils && uv run python -m scripts.paper_fetcher --arxiv 2504.09343`.
 - **Paths with spaces:** pass literal paths (spaces as-is) to `Read`/`Edit`/`Write`; only backslash-escape inside Bash. The project root contains spaces.
 - **The fetcher prints JSON to stdout, logs to stderr.** Parse stdout as JSON; never assume a field — read `shared/fetcher_contract.md` for the schema.
 - **Real published version first.** The working-paper copy (NBER/SSRN/RePEc/author site) is a *fallback*; the sidecar always carries the latest published citation regardless of which PDF was obtained.

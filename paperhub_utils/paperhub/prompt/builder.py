@@ -1,7 +1,7 @@
 """Prompt composition for paper-summarizer modes.
 
 All three modes (`full`, `metadata-only`, `enrich`) compose their prompt from
-the same fragments under `prompt/shared/` and `prompt/aspect/`. Dynamic
+the same fragments under `prompts/shared/` and `prompts/aspect/`. Dynamic
 context (today's date, research interests, user instructions, tag registry
 summary) is injected at composition time.
 
@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from config import (
+from paperhub.config import (
     DEFAULT_TAGS_DIR,
     INCLUDE_TAG_CONTEXT_IN_PROMPT,
     TAG_PROMPT_TOP_FIELD,
@@ -38,7 +38,7 @@ from config import (
     TAG_PROMPT_TOP_METHODOLOGY,
     TAG_PROMPT_TOP_TOPIC,
 )
-from tag_utils.registry import RegistryError, load_registry
+from paperhub.tag_utils.registry import RegistryError, load_registry
 
 MODE_FULL = "full"
 MODE_METADATA_ONLY = "metadata-only"
@@ -46,8 +46,9 @@ MODE_ENRICH = "enrich"
 MODES = (MODE_FULL, MODE_METADATA_ONLY, MODE_ENRICH)
 
 _PROMPT_DIR = Path(__file__).resolve().parent
-_SHARED_DIR = _PROMPT_DIR / "shared"
-_ASPECT_DIR = _PROMPT_DIR / "aspect"
+_FRAGMENT_DIR = Path(__file__).resolve().parents[2] / "prompts"
+_SHARED_DIR = _FRAGMENT_DIR / "shared"
+_ASPECT_DIR = _FRAGMENT_DIR / "aspect"
 
 
 def _read(path: Path) -> str:

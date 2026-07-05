@@ -46,11 +46,11 @@ After auto-fix, ALWAYS run the post-summary tag flow once for the batch (see `ta
 
 ## 4. Git commit
 
-Before committing, check `USE_GIT` from the Python config. It is loaded from `paperhub_utils/misc/config.json` unless `PAPERHUB_USE_GIT` overrides it:
+Before committing, check `USE_GIT` from the Python config. It is loaded from `paperhub_utils/config/config.json` unless `PAPERHUB_USE_GIT` overrides it:
 
 ```bash
 cd paperhub_utils
-uv run python -c "from config import USE_GIT; print(USE_GIT)"
+uv run python -c "from paperhub.config import USE_GIT; print(USE_GIT)"
 ```
 
 Single paper:

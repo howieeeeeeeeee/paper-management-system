@@ -7,7 +7,7 @@ description: Automated research paper organization using AI. Triggers when users
 
 The project’s root folder contains a `.claude` directory. Open `.claude/skills/paper-summarizer/SKILL.md` (from that root) for the canonical workflow and rules.
 
-Routes the user's request to the right `engine × mode`, then delegates to a per-doc playbook. **Read only the doc(s) you need** — don't load unrelated ones. For routine runs, **do not read** `paperhub_utils/*.py`; execute what the canonical skill and linked engine/mode docs specify. **Always provide an end-of-batch summary** per canonical `shared/post_ai.md` step 5 Report (and `modes/{mode}.md` templates) — see canonical `SKILL.md` Critical rules and Post-AI flow.
+Routes the user's request to the right `engine x mode`, then delegates to a per-doc playbook. **Read only the doc(s) you need**; don't load unrelated ones. For routine runs, **do not read** `paperhub_utils/scripts/*.py` or `paperhub_utils/paperhub/**/*.py`; execute what the canonical skill and linked engine/mode docs specify. **Always provide an end-of-batch summary** per canonical `shared/post_ai.md` step 5 Report (and `modes/{mode}.md` templates) - see canonical `SKILL.md` Critical rules and Post-AI flow.
 
 ## Local uv environment
 

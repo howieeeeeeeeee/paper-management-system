@@ -1,10 +1,10 @@
 """Scan the `organized/` tree, count tag usage, and emit JSON.
 
 Usage:
-    uv run python -m tag_utils.scan_tags                   # JSON to stdout
-    uv run python -m tag_utils.scan_tags --pretty          # human-readable
-    uv run python -m tag_utils.scan_tags --out FILE.json   # write to file
-    uv run python -m tag_utils.scan_tags --organized DIR   # override scan root
+    uv run python -m paperhub.tag_utils.scan_tags                   # JSON to stdout
+    uv run python -m paperhub.tag_utils.scan_tags --pretty          # human-readable
+    uv run python -m paperhub.tag_utils.scan_tags --out FILE.json   # write to file
+    uv run python -m paperhub.tag_utils.scan_tags --organized DIR   # override scan root
 
 Output schema:
     {
@@ -31,7 +31,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from tag_utils.common import (
+from paperhub.tag_utils.common import (
     DEFAULT_ORGANIZED_DIR,
     iter_main_metadata_files,
     parse_frontmatter,

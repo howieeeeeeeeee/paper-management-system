@@ -78,5 +78,5 @@ When setup succeeds, verify the environment from `paperhub_utils/`:
 
 ```bash
 uv run python --version
-uv run python -m py_compile config.py prompt/builder.py paper_summarizer.py enrich.py
+uv run python -m py_compile paperhub/config.py paperhub/prompt/builder.py scripts/paper_summarizer.py scripts/enrich.py
 ```

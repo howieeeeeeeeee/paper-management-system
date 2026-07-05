@@ -6,7 +6,7 @@ Read this during onboarding when `onboard.md` reaches the tag step, or any time 
 
 ## Inputs
 
-- `paperhub_utils/seeds/default_tags.yaml` — curated seed pack (ships with the repo)
+- `paperhub_utils/config/default_tags.yaml` — curated seed pack (ships with the repo)
 - Starter tag taxonomy from root `onboarding_questionnaire.md`, if present
 - Starter tag notes from the user's onboarding request, if any
 - `tags/tag_initialization.md` — optional later additions file; it may not exist
@@ -26,7 +26,7 @@ Read this during onboarding when `onboard.md` reaches the tag step, or any time 
    - Prefer the questionnaire's "Starter Tag Taxonomy" text blocks when `onboarding_questionnaire.md` exists and the section is parseable.
    - Treat those questionnaire lists as authoritative for first-run onboarding. If the user deleted a default tag from the questionnaire, do not re-add it from the default seed.
    - Include explicit starter tags from the current user message when they clearly belong to `field`, `methodology`, `topic`, or `meta`.
-   - If no questionnaire starter taxonomy or explicit starter tags are available, read `paperhub_utils/seeds/default_tags.yaml`.
+   - If no questionnaire starter taxonomy or explicit starter tags are available, read `paperhub_utils/config/default_tags.yaml`.
 2. Parse the four type lists (`field`, `methodology`, `topic`, `meta`).
 3. Normalize each tag: trim whitespace, lowercase, replace spaces with underscores, dedupe within type. Preserve established acronyms only when intentional (e.g., keep `IO` capitalized if it appears that way in the starter taxonomy).
 4. Write the canonical artifacts:
@@ -160,7 +160,7 @@ When `tags/_internal/registry.json` already exists:
    - counts by type
    - starter taxonomy source used in §1, when seeding happened
    - any additions processed in §3 (or "none — left at status: not_ready" / "skipped — file does not exist")
-4. Update the `initialize_tag_system` step in `paperhub_utils/misc/onboarding.json` to `done`.
+4. Update the `initialize_tag_system` step in `paperhub_utils/config/onboarding.json` to `done`.
 5. Return to `onboard.md`.
 
 ## Notes

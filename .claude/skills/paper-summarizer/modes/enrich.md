@@ -2,7 +2,7 @@
 
 Use this mode when the user wants to add an `ai_summary.md` to a paper that is **already in `organized/`** (typically because the paper was first added in `metadata-only` mode, or the user wants to re-do / polish an existing summary). The PRIMARY job is generating the summary; patching any blank metadata fields is a secondary side effect of the same AI call.
 
-This mode works with **OpenRouter** (default), **Agy CLI**, **Codex CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `enrich.py --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
+This mode works with **OpenRouter** (default), **Agy CLI**, **Codex CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `uv run python -m scripts.enrich --engine coding-agent --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
 
 ## Trigger phrases
 
@@ -27,7 +27,7 @@ If the user mentions multiple folders, batch them in a single call (OpenRouter) 
 
 ## Existing-summary handling (AskUserQuestion flow)
 
-For each folder where `{folder}/ai_summary.md` already exists, ask via `AskUserQuestion` BEFORE running `enrich.py`. If the user has already specified intent in their original message (e.g., "redo summary for ACF2015 using the previous one as a reference, emphasize identification"), skip the picker and use what they said.
+For each folder where `{folder}/ai_summary.md` already exists, ask via `AskUserQuestion` BEFORE running `scripts.enrich`. If the user has already specified intent in their original message (e.g., "redo summary for ACF2015 using the previous one as a reference, emphasize identification"), skip the picker and use what they said.
 
 **Q1 — Existing-summary action** (header: `Existing summary`):
 
@@ -54,16 +54,16 @@ Batching multiple folders:
 - If several folders need the question, ask them in **one** `AskUserQuestion` call (one question per folder, up to 4 questions per call), then chain a single Q2 if any of them picked "Polish past summary".
 - If more than 4 folders need decisions, ask in waves of up to 4. Do not auto-decide on behalf of the user.
 
-After collecting answers, partition the folders into groups and call `enrich.py` accordingly:
+After collecting answers, partition the folders into groups and call `scripts.enrich` accordingly:
 
-| User picked            | enrich.py flags                                               |
+| User picked            | scripts.enrich flags                                               |
 | ---------------------- | ------------------------------------------------------------- |
 | Polish past summary    | `--force --use-past-summary` (+ `--instruction "..."` if any) |
 | Overwrite from scratch | `--force`                                                     |
 | Meta-fill only         | `--force --no-summary`                                        |
 | Skip                   | omit the folder from `--folder` entirely                      |
 
-`--force` is always passed because the skill has already gathered intent — the script's interactive O/E/S prompt is bypassed. Folders with different actions can be combined into separate `enrich.py` invocations or one invocation per group.
+`--force` is always passed because the skill has already gathered intent — the script's interactive O/E/S prompt is bypassed. Folders with different actions can be combined into separate `scripts.enrich` invocations or one invocation per group.
 
 If a folder does NOT have an existing `ai_summary.md`, no question is needed — just run normally (no `--use-past-summary`, no `--force` needed).
 
@@ -73,7 +73,7 @@ Single command, processes all folders sequentially in-process:
 
 ```bash
 cd paperhub_utils
-uv run python enrich.py \
+uv run python -m scripts.enrich \
   --folder ACF2015 [--folder OTHER ...] \
   [--instruction "Focus on identification."] \
   [--use-past-summary]   # embed each folder's existing ai_summary.md as a polish reference
@@ -90,14 +90,14 @@ The interactive stderr prompt fires only when `--force` is omitted; the skill sh
 
 ## Agy CLI
 
-Same handshake pattern as `engines/agy_cli.md` — process **one folder at a time**. The model is resolved from `config.AGY_CLI_MODEL` (configured via `paperhub_utils/misc/config.json` key `agy_cli_model`) unless the user requests an allowed `--agy-model`. The prepare step persists the selected model to `~/.gemini/antigravity-cli/settings.json`.
+Same handshake pattern as `engines/agy_cli.md` — process **one folder at a time**. The model is resolved from `config.AGY_CLI_MODEL` (configured via `paperhub_utils/config/config.json` key `agy_cli_model`) unless the user requests an allowed `--agy-model`. The prepare step persists the selected model to `~/.gemini/antigravity-cli/settings.json`.
 
-This is the third Agy-supported mode: unlike `full` and `metadata-only`, it uses `enrich.py` instead of `paper_summarizer.py`, but it uses the same Agy `--add-dir`, absolute `@PDF`, sentinel, stderr/log, and model-label pattern.
+This is the third Agy-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_summarizer`, but it uses the same Agy `--add-dir`, absolute `@PDF`, sentinel, stderr/log, and model-label pattern.
 
 ```bash
 # 1. Prepare prompt + PDF path and persist the Agy model.
 cd paperhub_utils
-uv run python enrich.py --engine agy-cli --prepare-cli-input --folder ACF2015 \
+uv run python -m scripts.enrich --engine agy-cli --prepare-cli-input --folder ACF2015 \
   [--instruction "..."] \
   [--use-past-summary] \
   [--no-summary] \
@@ -130,7 +130,7 @@ ${PROMPT}" \
 
 # 3. Apply raw Agy output. The script extracts the sentinel block.
 cd paperhub_utils
-uv run python enrich.py --engine agy-cli --from-response --folder ACF2015 \
+uv run python -m scripts.enrich --engine agy-cli --from-response --folder ACF2015 \
   --response-file "${AGY_OUTPUT}" \
   --model-label "${MODEL_LABEL}" \
   --agy-stderr-file "${AGY_STDERR}" \
@@ -138,7 +138,7 @@ uv run python enrich.py --engine agy-cli --from-response --folder ACF2015 \
 
 # 4. Cleanup
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['cleanup_dir'])")
-uv run python enrich.py --cleanup-cli-input "${CLEANUP_DIR}"
+uv run python -m scripts.enrich --cleanup-cli-input "${CLEANUP_DIR}"
 ```
 
 The past-summary text (when `--use-past-summary` is passed) is baked into the prepared prompt during step 1, so step 3 (`--from-response`) does not need any extra flag.
@@ -147,15 +147,15 @@ The prepared JSON includes `"past_summary_used": true|false` so the skill can co
 
 ## Codex CLI
 
-Same handshake pattern as `engines/codex_cli.md` — process **one folder at a time**. The model/reasoning pair is resolved from `config.CODEX_CLI_MODEL` and `config.CODEX_CLI_REASONING_EFFORT` (configured via `paperhub_utils/misc/config.json` keys `codex_cli_model` and `codex_cli_reasoning_effort`) unless the user requests an allowed `--codex-model` and/or `--codex-reasoning-effort`.
+Same handshake pattern as `engines/codex_cli.md` — process **one folder at a time**. The model/reasoning pair is resolved from `config.CODEX_CLI_MODEL` and `config.CODEX_CLI_REASONING_EFFORT` (configured via `paperhub_utils/config/config.json` keys `codex_cli_model` and `codex_cli_reasoning_effort`) unless the user requests an allowed `--codex-model` and/or `--codex-reasoning-effort`.
 
-This is the third Codex-supported mode: unlike `full` and `metadata-only`, it uses `enrich.py` instead of `paper_summarizer.py`, but it uses the same `codex exec`, sentinel, stderr, and model-label pattern.
+This is the third Codex-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_summarizer`, but it uses the same `codex exec`, sentinel, stderr, and model-label pattern.
 
 ```bash
 # 1. Prepare prompt + PDF path and resolve the Codex model/reasoning pair.
 cd paperhub_utils
 PAPERHUB_ROOT=$(cd .. && pwd)
-uv run python enrich.py --engine codex-cli --prepare-cli-input --folder ACF2015 \
+uv run python -m scripts.enrich --engine codex-cli --prepare-cli-input --folder ACF2015 \
   [--instruction "..."] \
   [--use-past-summary] \
   [--no-summary] \
@@ -193,14 +193,14 @@ ${PROMPT}" \
   2>"${CODEX_STDERR}" > "${CODEX_OUTPUT}"
 
 # 3. Apply raw Codex output. The script extracts the sentinel block.
-uv run python enrich.py --engine codex-cli --from-response --folder ACF2015 \
+uv run python -m scripts.enrich --engine codex-cli --from-response --folder ACF2015 \
   --response-file "${CODEX_OUTPUT}" \
   --model-label "${MODEL_LABEL}" \
   --codex-stderr-file "${CODEX_STDERR}"
 
 # 4. Cleanup
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['cleanup_dir'])")
-uv run python enrich.py --cleanup-cli-input "${CLEANUP_DIR}"
+uv run python -m scripts.enrich --cleanup-cli-input "${CLEANUP_DIR}"
 ```
 
 The past-summary text (when `--use-past-summary` is passed) is baked into the prepared prompt during step 1, so step 3 (`--from-response`) does not need any extra flag.
@@ -230,8 +230,8 @@ The past-summary text (when `--use-past-summary` is passed) is baked into the pr
 
 `summary` is one of: `generated`, `overwritten`, `skipped`, `missing-from-response`. `past_summary_used` is only present when the past summary was embedded.
 
-If the OpenRouter/Agy call succeeds but parsing still fails, `enrich.py` saves
-the raw model text under `paperhub_utils/raw_outputs/` and returns
+If the OpenRouter/Agy call succeeds but parsing still fails, `scripts.enrich` saves
+the raw model text under `paperhub_utils/output/raw_outputs/` and returns
 `raw_content_file` in the failed result so the response can be repaired with
 `--from-response` instead of spending another API call.
 

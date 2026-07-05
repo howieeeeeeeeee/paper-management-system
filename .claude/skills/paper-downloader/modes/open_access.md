@@ -10,7 +10,7 @@ repository locations).
 1. Run the fetcher:
 
    ```bash
-   cd paperhub_utils && uv run python paper_fetcher.py <source> --mode open-access
+   cd paperhub_utils && uv run python -m scripts.paper_fetcher <source> --mode open-access
    ```
 
 2. Parse the JSON:
@@ -33,7 +33,7 @@ with `%PDF`), then download it to `to_be_organized/<stem>.pdf` (reuse the sideca
 stem) via:
 
 ```bash
-cd paperhub_utils && uv run python paper_fetcher.py --url "<pdf_url>" --mode open-access --stem <stem>
+cd paperhub_utils && uv run python -m scripts.paper_fetcher --url "<pdf_url>" --mode open-access --stem <stem>
 ```
 
 Never use Sci-Hub/LibGen. If nothing legitimate turns up, stop at the sidecar.

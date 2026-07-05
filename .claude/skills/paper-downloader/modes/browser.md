@@ -10,7 +10,7 @@ paywalled, or that they have school access.
 1. **Get metadata + the landing URL first** (also writes the sidecar):
 
    ```bash
-   cd paperhub_utils && uv run python paper_fetcher.py <source> --citation-only
+   cd paperhub_utils && uv run python -m scripts.paper_fetcher <source> --citation-only
    ```
 
    From the JSON, note `sidecar_path` (→ derive `stem`), `metadata.doi`,
@@ -26,7 +26,7 @@ paywalled, or that they have school access.
    offer the free working-paper fallback:
 
    ```bash
-   cd paperhub_utils && uv run python paper_fetcher.py <source> --mode open-access --stem <stem>
+   cd paperhub_utils && uv run python -m scripts.paper_fetcher <source> --mode open-access --stem <stem>
    ```
 
    If that also yields nothing, stop at the sidecar and report clearly.

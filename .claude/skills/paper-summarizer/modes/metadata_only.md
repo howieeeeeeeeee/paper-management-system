@@ -4,7 +4,7 @@ First N pages of PDF → AI generates `{paper_label}.md` only. No `ai_summary.md
 
 Triggered by: "metadata only" / "no summary" / "without summary", or as the user's choice when asked. CLI flag: `--summary-mode metadata-only`.
 
-The page limit is `metadata_only_page_limit` in `paperhub_utils/misc/config.json`, exported to scripts as `METADATA_ONLY_PAGE_LIMIT` in `paperhub_utils/config.py`.
+The page limit is `metadata_only_page_limit` in `paperhub_utils/config/config.json`, exported to scripts as `METADATA_ONLY_PAGE_LIMIT` in `paperhub_utils/paperhub/config.py`.
 
 Engines that support `metadata-only`: **OpenRouter** (`engines/openrouter.md`), **Agy CLI** (`engines/agy_cli.md`), **Codex CLI** (`engines/codex_cli.md`), **Coding Agent** (`engines/coding_agent.md` — cheapest mode for this engine; reads only the first `METADATA_ONLY_PAGE_LIMIT` pages, no quota gate).
 

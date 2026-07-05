@@ -79,7 +79,7 @@ $B links | rg -i '\.pdf|/pdf|pdfft|download'
 
 # 5. Export the authenticated cookies and download via the fetcher (validates %PDF):
 $B cookies > /tmp/ph_cookies.json
-cd paperhub_utils && uv run python paper_fetcher.py \
+cd paperhub_utils && uv run python -m scripts.paper_fetcher \
   --url "<PDF_URL>" --cookies /tmp/ph_cookies.json --stem "<stem>" --mode open-access
 ```
 

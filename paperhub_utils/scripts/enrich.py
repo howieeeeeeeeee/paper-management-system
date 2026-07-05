@@ -4,15 +4,15 @@
 Usage:
 
     # OpenRouter engine (single command, uses API):
-    uv run python enrich.py --folder ACF2015 [--folder OTHER] \\
+    uv run python -m scripts.enrich --folder ACF2015 [--folder OTHER] \\
         --engine openrouter [--no-summary] [--force] \\
         [--instruction "..."] [--use-past-summary] [--model MODEL_ID]
 
     # External CLI engine — two-step handshake (mirrors paper_summarizer.py):
-    uv run python enrich.py --engine agy-cli --prepare-cli-input --folder ACF2015 \\
+    uv run python -m scripts.enrich --engine agy-cli --prepare-cli-input --folder ACF2015 \\
         [--no-summary] [--use-past-summary] [--instruction "..."]
     # ... orchestrator runs agy/codex on the printed prompt + pdf path ...
-    uv run python enrich.py --engine agy-cli --from-response --folder ACF2015 \\
+    uv run python -m scripts.enrich --engine agy-cli --from-response --folder ACF2015 \\
         --response-file /tmp/resp.txt [--agy-stderr-file ...] [--no-summary]
 
 The PRIMARY task is generating `ai_summary.md`. Patching missing metadata fields
@@ -42,9 +42,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
+UTILS_ROOT = Path(__file__).resolve().parents[1]
+if str(UTILS_ROOT) not in sys.path:
+    sys.path.insert(0, str(UTILS_ROOT))
+
 import yaml
 
-from config import (
+from paperhub.config import (
     AGY_CLI_MODEL,
     AGY_CLI_MODEL_LIST,
     CODEX_CLI_MODEL,
@@ -59,8 +63,8 @@ from config import (
     MY_RESEARCH_INTERESTS,
     PAPERHUB_ROOT,
 )
-from prompt.builder import MODE_ENRICH, build_prompt
-from cli_workflow.agy import (
+from paperhub.prompt.builder import MODE_ENRICH, build_prompt
+from paperhub.cli_workflow.agy import (
     AGY_RESPONSE_BEGIN,
     AGY_RESPONSE_END,
     agy_model_label,
@@ -70,7 +74,7 @@ from cli_workflow.agy import (
     resolve_agy_cli_model,
     validate_agy_cli_run,
 )
-from cli_workflow.codex import (
+from paperhub.cli_workflow.codex import (
     CODEX_RESPONSE_BEGIN,
     CODEX_RESPONSE_END,
     codex_model_label,
@@ -78,14 +82,12 @@ from cli_workflow.codex import (
     resolve_codex_cli_settings,
     validate_codex_cli_run,
 )
-from cli_workflow.gemini import validate_gemini_cli_run
-from cli_workflow.pdf import (
+from paperhub.cli_workflow.pdf import (
     CLI_WORK_DIR,
     ensure_safe_cli_cleanup_path,
-    gemini_at_path,
     repo_relative_path,
 )
-from paper_summarizer import (
+from scripts.paper_summarizer import (
     call_openrouter_api,
     call_openrouter_text_api,
     encode_pdf_to_base64,
@@ -561,13 +563,13 @@ def prepare_cli_input(
     include_summary: bool,
     additional_instruction: str,
     past_summary_text: str = "",
-    external_cli_engine: str = "gemini-cli",
+    external_cli_engine: str = "agy-cli",
     agy_model: str | None = None,
     codex_model: str | None = None,
     codex_reasoning_effort: str | None = None,
 ) -> dict:
-    """Mirror paper_summarizer.prepare_cli_input for enrich mode."""
-    if external_cli_engine not in {"gemini-cli", "agy-cli", "codex-cli"}:
+    """Prepare prompt/PDF paths for an external CLI or current-agent run."""
+    if external_cli_engine not in {"agy-cli", "codex-cli", "coding-agent"}:
         raise ValueError(f"Unknown external CLI engine: {external_cli_engine}")
 
     resolved_agy_model = None
@@ -592,7 +594,7 @@ def prepare_cli_input(
         )
 
     run_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
-    engine_slug = external_cli_engine.replace("-cli", "")
+    engine_slug = external_cli_engine.replace("-cli", "").replace("-", "_")
     work_dir = CLI_WORK_DIR / f"enrich_{engine_slug}_{art.paper_label}_{run_id}"
     work_dir.mkdir(parents=True, exist_ok=False)
     try:
@@ -611,7 +613,6 @@ def prepare_cli_input(
             "prompt_path": str(prompt_path),
             "pdf_for_ai_path": str(art.pdf_path),
             "pdf_for_ai_repo_relative": repo_relative_path(art.pdf_path),
-            "pdf_for_ai_gemini_path": gemini_at_path(art.pdf_path),
             "pdf_for_ai_agy_path": str(art.pdf_path.resolve()),
             "pdf_for_ai_codex_path": str(art.pdf_path.resolve()),
             "missing_keys": missing_keys,
@@ -619,6 +620,8 @@ def prepare_cli_input(
             "past_summary_used": bool(past_summary_text and past_summary_text.strip()),
             "cleanup_dir": str(work_dir),
         }
+        if external_cli_engine == "coding-agent":
+            result["paperhub_root"] = str(PAPERHUB_ROOT)
         if resolved_agy_model is not None:
             result["paperhub_root"] = str(PAPERHUB_ROOT)
             result["agy_cli_model"] = resolved_agy_model
@@ -770,7 +773,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Enrich existing paper folders with AI summary.")
     p.add_argument("--folder", action="append", default=[], required=False,
                    help="Folder name under organized/ or absolute path. Repeat for multiple.")
-    p.add_argument("--engine", choices=("openrouter", "gemini-cli", "agy-cli", "codex-cli"), default="openrouter")
+    p.add_argument("--engine", choices=("openrouter", "agy-cli", "codex-cli", "coding-agent"), default="openrouter")
     p.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     p.add_argument("--model", default=None, help="OpenRouter model id (defaults to config DEFAULT_MODEL)")
     p.add_argument("--agy-model", default=None, help="Agy CLI model label; defaults to config AGY_CLI_MODEL")
@@ -803,8 +806,6 @@ def main() -> None:
     p.add_argument("--response-file", help="Path to AI response text (with --from-response)")
     p.add_argument("--model-label", default="unknown",
                    help="Model label for ai_summary.md frontmatter (with --from-response)")
-    p.add_argument("--gemini-stderr-file", help="Gemini CLI stderr file to validate (with --from-response)")
-    p.add_argument("--gemini-output-json", help="Gemini CLI JSON output to validate (with --from-response)")
     p.add_argument("--agy-stderr-file", help="Agy CLI stderr file to validate (with --from-response)")
     p.add_argument("--agy-log-file", help="Agy CLI log file to validate (with --from-response)")
     p.add_argument("--codex-stderr-file", help="Codex CLI stderr file to validate (with --from-response)")
@@ -851,7 +852,7 @@ def main() -> None:
             include_summary=not args.no_summary,
             additional_instruction=args.instruction,
             past_summary_text=past_summary_text,
-            external_cli_engine=args.engine if args.engine in {"agy-cli", "codex-cli"} else "gemini-cli",
+            external_cli_engine=args.engine if args.engine in {"agy-cli", "codex-cli", "coding-agent"} else "coding-agent",
             agy_model=args.agy_model,
             codex_model=args.codex_model,
             codex_reasoning_effort=args.codex_reasoning_effort,
@@ -882,17 +883,12 @@ def main() -> None:
             or args.model_label.endswith(" (Codex CLI)")
         ):
             external_cli_engine = "codex-cli"
-        elif args.engine != "gemini-cli":
-            external_cli_engine = "gemini-cli"
+        elif args.engine == "openrouter":
+            external_cli_engine = "agy-cli"
 
         response = Path(args.response_file).read_text(encoding="utf-8")
         problems: list[str] = []
-        if external_cli_engine == "gemini-cli":
-            problems = validate_gemini_cli_run(
-                stderr_path=Path(args.gemini_stderr_file).resolve() if args.gemini_stderr_file else None,
-                output_json_path=Path(args.gemini_output_json).resolve() if args.gemini_output_json else None,
-            )
-        elif external_cli_engine == "agy-cli":
+        if external_cli_engine == "agy-cli":
             problems = validate_agy_cli_run(
                 stdout_text=response,
                 stderr_path=Path(args.agy_stderr_file).resolve() if args.agy_stderr_file else None,
@@ -936,7 +932,7 @@ def main() -> None:
             "agy-cli": "agy-native",
             "codex-cli": "codex-cli",
             "coding-agent": "coding-agent",
-        }.get(external_cli_engine, "gemini-native")
+        }.get(external_cli_engine, "external-cli")
 
         # We don't have missing_keys/emit_abstract from prepare here; recompute.
         text = art.meta_path.read_text(encoding="utf-8")
@@ -970,7 +966,7 @@ def main() -> None:
     # Default path: openrouter, possibly multiple folders
     if not args.folder:
         p.error("at least one --folder is required (unless using --cleanup-cli-input)")
-    if args.engine in {"gemini-cli", "agy-cli", "codex-cli"}:
+    if args.engine in {"agy-cli", "codex-cli", "coding-agent"}:
         p.error(f"--engine {args.engine} requires --prepare-cli-input then --from-response (one folder at a time)")
     if args.past_summary_file and len(args.folder) != 1:
         p.error("--past-summary-file is only valid with a single --folder; use --use-past-summary for batches")

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tag_utils.registry import (
+from paperhub.tag_utils.registry import (
     RegistryError,
     load_registry,
     parse_tags_summary,

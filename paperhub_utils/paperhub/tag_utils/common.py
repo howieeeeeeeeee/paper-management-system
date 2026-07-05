@@ -15,7 +15,7 @@ from typing import Iterator
 
 import yaml
 
-from config import DEFAULT_ORGANIZED_DIR, DEFAULT_TAGS_DIR
+from paperhub.config import DEFAULT_ORGANIZED_DIR, DEFAULT_TAGS_DIR
 
 INTERNAL_SUBDIR = "_internal"  # system files (registry, names lists, history)
 

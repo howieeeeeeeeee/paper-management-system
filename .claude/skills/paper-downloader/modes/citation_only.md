@@ -11,7 +11,7 @@ building the `papers to find.md` backlog.
 1. Run the fetcher:
 
    ```bash
-   cd paperhub_utils && uv run python paper_fetcher.py <source> --citation-only
+   cd paperhub_utils && uv run python -m scripts.paper_fetcher <source> --citation-only
    ```
 
 2. Report `sidecar_path` and the resolved title/authors/year. Offer the BibTeX
@@ -24,7 +24,7 @@ If the user already dropped a PDF into `to_be_organized/`, pass `--stem` so the
 sidecar pairs with it (same stem as the PDF, minus `.pdf`):
 
 ```bash
-cd paperhub_utils && uv run python paper_fetcher.py <source> --citation-only --stem <pdf_stem>
+cd paperhub_utils && uv run python -m scripts.paper_fetcher <source> --citation-only --stem <pdf_stem>
 ```
 
 Then the summarizer will pick the citation up automatically when it processes

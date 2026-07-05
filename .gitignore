@@ -38,21 +38,20 @@ env/
 # Obsidian workspace (user-specific)
 .obsidian/workspace*
 .obsidian/workspaces.json
+.claude/settings.local.json
+.claude/scheduled_tasks*
 
 # Logs
 *.log
 
 # Paper summarizer temporary files
 .paperhub_tmp/
-paperhub_utils/raw_outputs/
+paperhub_utils/output/
+paperhub_utils/config/utility_state.json
+paperhub_utils/misc/utility_state.json
 
-# Claude Code runtime / user-specific settings
-.claude/settings.local.json
-.claude/scheduled_tasks*
-.agents/settings.json
+# Antigravity CLI local state (machine-specific symlinks)
+.antigravitycli/
 
-# User-specific Obsidian Bases (customize SamplePaperBoard.base instead)
-Papers.base
 
 .env
-

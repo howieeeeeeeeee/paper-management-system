@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "version": "2026.07.05.3",
+  "source_url": "https://github.com/howieeeeeeeeee/paper-management-system",
+  "managed_paths": [
+    ".agents/skills/**",
+    ".claude/skills/**",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "SamplePaperBoard.base",
+    "onboarding_questionnaire.md",
+    "quick_start/**",
+    "paperhub_utils/README.md",
+    "paperhub_utils/config/.env.example",
+    "paperhub_utils/config/default_tags.yaml",
+    "paperhub_utils/paperhub/**",
+    "paperhub_utils/prompts/**",
+    "paperhub_utils/scripts/**",
+    "paperhub_utils/utility_changelog.json",
+    "paperhub_utils/utility_manifest.json",
+    "paperhub_utils/tests/**",
+    "paperhub_utils/pyproject.toml",
+    "paperhub_utils/uv.lock"
+  ],
+  "prompt_paths": [
+    "paperhub_utils/prompts/**/*.txt"
+  ],
+  "protected_paths": [
+    ".git/**",
+    ".obsidian/**",
+    ".claude/settings.local.json",
+    ".claude/scheduled_tasks*",
+    "Papers.base",
+    "organized/**",
+    "tags/_internal/**",
+    "to_be_organized/**",
+    "paperhub_utils/config/.env",
+    "paperhub_utils/config/config.json",
+    "paperhub_utils/config/onboarding.json",
+    "paperhub_utils/config/utility_state.json",
+    "paperhub_utils/.env",
+    "paperhub_utils/.venv/**",
+    "paperhub_utils/.pytest_cache/**",
+    "paperhub_utils/__pycache__/**",
+    "paperhub_utils/misc/config.json",
+    "paperhub_utils/misc/onboarding.json",
+    "paperhub_utils/misc/utility_state.json",
+    "paperhub_utils/output/**",
+    "paperhub_utils/raw_outputs/**"
+  ]
+}

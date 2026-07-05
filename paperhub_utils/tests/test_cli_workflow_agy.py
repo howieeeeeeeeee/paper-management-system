@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from cli_workflow.agy import (
+from paperhub.cli_workflow.agy import (
     AGY_RESPONSE_BEGIN,
     AGY_RESPONSE_END,
     agy_model_label,
@@ -15,13 +15,13 @@ from cli_workflow.agy import (
     extract_agy_response_block,
     validate_agy_cli_run,
 )
-from cli_workflow.pdf import CLI_WORK_DIR
-from config import AGY_CLI_MODEL, AGY_CLI_MODEL_LIST
-from enrich import (
+from paperhub.cli_workflow.pdf import CLI_WORK_DIR
+from paperhub.config import AGY_CLI_MODEL, AGY_CLI_MODEL_LIST
+from scripts.enrich import (
     find_artifacts,
     prepare_cli_input as prepare_enrich_cli_input,
 )
-from paper_summarizer import (
+from scripts.paper_summarizer import (
     SUMMARY_MODE_FULL,
     SUMMARY_MODE_METADATA_ONLY,
     cleanup_cli_input,
@@ -41,6 +41,9 @@ def _write_blank_pdf(path: Path, pages: int = 1) -> None:
 
 
 class AgyWorkflowTests(unittest.TestCase):
+    def setUp(self) -> None:
+        CLI_WORK_DIR.mkdir(parents=True, exist_ok=True)
+
     def test_default_model_comes_from_paperhub_config(self) -> None:
         self.assertEqual(AGY_CLI_MODEL, "Gemini 3.1 Pro (High)")
         self.assertIn(AGY_CLI_MODEL, AGY_CLI_MODEL_LIST)
@@ -272,6 +275,39 @@ class AgyWorkflowTests(unittest.TestCase):
             finally:
                 _restore_env("AGY_CLI_SETTINGS_PATH", previous)
                 shutil.rmtree(Path(tmp), ignore_errors=True)
+
+    def test_prepare_enrich_mode_coding_agent_input_has_no_agy_settings(self) -> None:
+        with tempfile.TemporaryDirectory(dir=CLI_WORK_DIR) as tmp:
+            output_dir = Path(tmp) / "organized"
+            folder = output_dir / "sample2026paper"
+            folder.mkdir(parents=True)
+            (folder / "sample2026paper.md").write_text(
+                "---\ntitle: Sample\n"
+                "authors:\n  - Example Author\n"
+                "year: 2026\njournal: Test\n"
+                "tags:\n  - testing\ncontributions:\n---\n\n"
+                "## Abstract\n[Abstract not found in provided pages]\n",
+                encoding="utf-8",
+            )
+            pdf_path = folder / "paper.pdf"
+            _write_blank_pdf(pdf_path)
+
+            art = find_artifacts("sample2026paper", output_dir)
+            result = prepare_enrich_cli_input(
+                art,
+                include_summary=True,
+                additional_instruction="",
+                external_cli_engine="coding-agent",
+            )
+
+            self.assertTrue(result["success"])
+            self.assertEqual(result["external_cli_engine"], "coding-agent")
+            self.assertEqual(result["mode"], "enrich")
+            self.assertEqual(result["pdf_for_ai_path"], str(pdf_path))
+            self.assertNotIn("agy_model_label", result)
+            self.assertNotIn("agy_settings_path", result)
+            self.assertFalse(result["past_summary_used"])
+            self.assertTrue(cleanup_cli_input(Path(result["cleanup_dir"])))
 
 
 def _restore_env(key: str, previous: str | None) -> None:

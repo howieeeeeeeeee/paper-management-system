@@ -68,9 +68,9 @@ Duplicate a view, then adjust Filters, Sort, Group, or Properties to make your o
 AI is the ingestion layer, not the library model. Put PDFs in `to_be_organized/`, then ask your coding agent:
 
 ```text
-paper-summarizer: metadata-only batch for everything in to_be_organized/.
+\paper-summarizer: metadata-only batch for everything in `to_be_organized/` using (AGY CLI / Codex CLI / OpenRouter API).
 ```
 
-Use `full summary` instead of `metadata-only` when you also want `ai_summary.md`. To customize generated metadata fields, edit [metadata_template.txt](../paperhub_utils/prompt/shared/metadata_template.txt). For full-summary shape, edit [summary_full.txt](../paperhub_utils/prompt/aspect/summary_full.txt). For shared style, edit [style.txt](../paperhub_utils/prompt/shared/style.txt).
+Use `full summary` instead of `metadata-only` when you also want `ai_summary.md`. To customize generated metadata fields, edit [metadata_template.txt](../paperhub_utils/prompts/shared/metadata_template.txt). For full-summary shape, edit [summary_full.txt](../paperhub_utils/prompts/aspect/summary_full.txt). For shared style, edit [style.txt](../paperhub_utils/prompts/shared/style.txt).
 
 Further reading: [Properties](https://obsidian.md/help/properties), [Tags](https://obsidian.md/help/tags), [Internal links](https://obsidian.md/help/links), [Bases](https://obsidian.md/help/bases), [Bases views](https://obsidian.md/help/bases/views).

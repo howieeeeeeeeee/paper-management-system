@@ -1,15 +1,16 @@
-"""Configuration for Paper Summarizer.
+"""Configuration for PaperHub utility scripts.
 
-User-editable onboarding/runtime settings live in misc/config.json.
+User-editable onboarding/runtime settings live in config/config.json.
 """
 
 import json
 import os
 from pathlib import Path
 
-MISC_DIR = Path(__file__).parent / "misc"
-USER_CONFIG_PATH = MISC_DIR / "config.json"
-ONBOARDING_STATE_PATH = MISC_DIR / "onboarding.json"
+UTILS_ROOT = Path(__file__).resolve().parents[1]
+CONFIG_DIR = UTILS_ROOT / "config"
+USER_CONFIG_PATH = CONFIG_DIR / "config.json"
+ONBOARDING_STATE_PATH = CONFIG_DIR / "onboarding.json"
 
 
 def _load_user_config() -> dict:
@@ -44,7 +45,7 @@ if not isinstance(TAG_PROMPT_CONFIG, dict):
 
 # Root and workflow settings
 PAPERHUB_ROOT = (
-    Path(os.environ.get("PAPERHUB_ROOT", Path(__file__).resolve().parents[1]))
+    Path(os.environ.get("PAPERHUB_ROOT", UTILS_ROOT.parent))
     .expanduser()
     .resolve()
 )
@@ -99,18 +100,8 @@ MODEL_LIST = [
     },
 ]
 
-# Gemini CLI model used by skills/paper-summarizer/engines/gemini_cli.md.
-# Override via misc/config.json's "gemini_cli_model".
-_GEMINI_CLI_MODEL_DEFAULT = "gemini-3.1-pro-preview"
-_gemini_cli_model_value = USER_CONFIG.get("gemini_cli_model")
-GEMINI_CLI_MODEL = (
-    _gemini_cli_model_value.strip()
-    if isinstance(_gemini_cli_model_value, str) and _gemini_cli_model_value.strip()
-    else _GEMINI_CLI_MODEL_DEFAULT
-)
-
 # Agy CLI model used by skills/paper-summarizer/engines/agy_cli.md.
-# Override via misc/config.json's "agy_cli_model".
+# Override via config/config.json's "agy_cli_model".
 AGY_CLI_MODEL_LIST = (
     "Gemini 3.1 Pro (High)",
     "Gemini 3.1 Pro (Low)",
@@ -132,7 +123,7 @@ AGY_CLI_MODEL = (
 
 # Codex CLI model/reasoning pairs used by
 # skills/paper-summarizer/engines/codex_cli.md. Override via
-# misc/config.json's "codex_cli_model" and "codex_cli_reasoning_effort".
+# config/config.json's "codex_cli_model" and "codex_cli_reasoning_effort".
 CODEX_CLI_MODEL_REASONING_PAIRS = (
     ("gpt-5.5", "low"),
     ("gpt-5.5", "medium"),

@@ -11,7 +11,7 @@ Layout produced under `tags/`:
     _internal/meta_names.txt
 
 Usage:
-    uv run python -m tag_utils.periodic.bootstrap_registry \\
+    uv run python -m paperhub.tag_utils.periodic.bootstrap_registry \\
         --scan /tmp/paperhub_tags_after.json \\
         --tags-dir ../tags
 
@@ -32,7 +32,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from tag_utils.registry import INTERNAL_SUBDIR, VALID_TYPES
+from paperhub.tag_utils.registry import INTERNAL_SUBDIR, VALID_TYPES
 
 
 # Round-1 merges are archived at `tags/round1_merges.json` for reproducibility.

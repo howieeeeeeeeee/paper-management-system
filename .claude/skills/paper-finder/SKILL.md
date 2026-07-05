@@ -1,11 +1,11 @@
 ---
 name: paper-finder
-description: Locate papers ALREADY IN this library from a vague or partial memory. Triggers when the user half-remembers a paper and wants to know which one it is - "which paper was it that...", "I vaguely remember a paper about...", "can't remember the paper that showed...", "do I already have a paper on...", "search/find in my library", including "but not the X ones" to steer away from a neighboring literature. Expands the description into search terms (and optional exclude keywords that deduct score), runs one paper_search.py call over organized/, and presents a ranked candidate list with metadata labels and summary snippets. NOT for downloading new papers (paper-downloader) and NOT for summarizing (paper-summarizer).
+description: Locate papers ALREADY IN this library from a vague or partial memory. Triggers when the user half-remembers a paper and wants to know which one it is - "which paper was it that...", "I vaguely remember a paper about...", "can't remember the paper that showed...", "do I already have a paper on...", "search/find in my library", including "but not the X ones" to steer away from a neighboring literature. Expands the description into search terms (and optional exclude keywords that deduct score), runs one scripts.paper_search call over organized/, and presents a ranked candidate list with metadata labels and summary snippets. NOT for downloading new papers (paper-downloader) and NOT for summarizing (paper-summarizer).
 ---
 
 # Paper Finder (library recall)
 
-Turns a fuzzy memory ("that one about ignoring information in a dictator game...?") into a ranked list of candidate papers from `organized/`. The library is far too large to read directly (~6 MB of notes), so **never Read candidate files wholesale** — `paperhub_utils/paper_search.py` does the filtering and returns a token-bounded digest; that digest is your context.
+Turns a fuzzy memory ("that one about ignoring information in a dictator game...?") into a ranked list of candidate papers from `organized/`. The library is far too large to read directly (~6 MB of notes), so **never Read candidate files wholesale** — `paperhub_utils/scripts/paper_search.py` does the filtering and returns a token-bounded digest; that digest is your context.
 
 ## Workflow
 
@@ -21,7 +21,7 @@ Term quality notes:
 ### 2. One search call
 
 ```bash
-cd paperhub_utils && uv run python paper_search.py \
+cd paperhub_utils && uv run python -m scripts.paper_search \
   --terms "moral wiggle room" "dictator game" "self-image" "Dana" \
   --top 15 --detail 5
 ```
@@ -31,7 +31,7 @@ cd paperhub_utils && uv run python paper_search.py \
 - **Optional `--exclude`** (space-separated, quote phrases) penalizes unwanted keywords — hits are *subtracted* at 2× the field weights (same per-field cap). It's a soft deduct, not a hard filter: a paper drops off only when the penalty outweighs its include matches. Use it to separate two close literatures:
 
 ```bash
-cd paperhub_utils && uv run python paper_search.py \
+cd paperhub_utils && uv run python -m scripts.paper_search \
   --terms "correlation neglect" "belief updating" \
   --exclude "survey" "field experiment" \
   --top 15 --detail 5
@@ -40,7 +40,7 @@ cd paperhub_utils && uv run python paper_search.py \
 - **Detailed mode `--full`** (off by default) — turn it on when the user asks for a "detailed", "comprehensive", "in-depth", or "deep" look. Each detailed-rank card then dumps the paper's *entire* metadata note (all sections: reflections, key takeaways, related-paper links) and *full* ai_summary instead of the truncated snippets. It intentionally blows past the usual token budget, so **narrow `--detail` to 1–3** (and usually a smaller `--top`):
 
 ```bash
-cd paperhub_utils && uv run python paper_search.py \
+cd paperhub_utils && uv run python -m scripts.paper_search \
   --terms "correlation neglect" "belief updating" \
   --top 5 --detail 2 --full
 ```
@@ -68,7 +68,7 @@ When the user identifies the paper, offer to open its full metadata note (`organ
 ## Critical rules
 
 - **Paths with spaces:** pass literal paths (spaces as-is) to `Read`/`Edit`/`Write`; backslash-escape only inside Bash commands. The project root contains spaces.
-- **uv run location:** always `cd paperhub_utils` before `uv run` (that's where `pyproject.toml` and `.venv` live). If uv is stale/broken: `uv sync`; if that fails, `rm -rf .venv && uv sync`. The script needs only stdlib + pyyaml, so `python3 paper_search.py ...` also works as a fallback.
+- **uv run location:** always `cd paperhub_utils` before `uv run` (that's where `pyproject.toml` and `.venv` live). If uv is stale/broken: `uv sync`; if that fails, `rm -rf .venv && uv sync`. The script needs only stdlib + pyyaml, so `python3 -m scripts.paper_search ...` also works as a fallback.
 - **Token budget:** rely on the script digest; keep each search round's chat output ≤ ~4K tokens. Only Read a paper's full files after the user picks it. (Detailed mode `--full` is the deliberate exception — it returns full notes for a narrow `--detail` set so you can synthesize deeply.)
 - **Read-only skill:** never modify paper folders, metadata, or tags here.
 

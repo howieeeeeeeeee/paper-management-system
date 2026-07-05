@@ -8,7 +8,7 @@ free **working-paper** copy; always write the citation sidecar.
 1. **Resolve + try the open-access real paper.** Run the fetcher (see `shared/fetcher_contract.md`):
 
    ```bash
-   cd paperhub_utils && uv run python paper_fetcher.py <source> --mode auto
+   cd paperhub_utils && uv run python -m scripts.paper_fetcher <source> --mode auto
    ```
 
    Parse the JSON from stdout.
@@ -26,7 +26,7 @@ free **working-paper** copy; always write the citation sidecar.
      - **Browser via VPN** → read `shared/browser_download.md` and drive gstack to download the real paper to `to_be_organized/<stem>.pdf` (reuse the same `stem` from `sidecar_path`). On success → handoff. On failure (no access / blocked) → offer the working-paper fallback, then citation-only.
      - **Working-paper version** → if `browser_hint.wp_pdf_url` (or `wp_pdf_url`) is set, re-run the fetcher in open-access mode to grab it and keep the published citation:
        ```bash
-       cd paperhub_utils && uv run python paper_fetcher.py <same source> --mode open-access --stem <stem>
+       cd paperhub_utils && uv run python -m scripts.paper_fetcher <same source> --mode open-access --stem <stem>
        ```
        Then handoff. If no `wp_pdf_url`, say so and fall to citation-only.
      - **Just the citation** → nothing more to download; report `sidecar_path`. (No summarizer handoff — there's no PDF.)

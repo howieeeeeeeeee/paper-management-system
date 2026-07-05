@@ -1,23 +1,23 @@
 # Workflow: Agy CLI
 
-This document covers the **Agy CLI / Google Antigravity CLI** paper summarization workflow. Read this file when the user requests "agy cli", "antigravity cli", or a direct Google CLI workflow. This is the active replacement for the old Gemini CLI workflow.
+This document covers the **Agy CLI / Google Antigravity CLI** paper summarization workflow. Read this file when the user requests "agy cli", "antigravity cli", or a direct Google CLI workflow.
 
 ## Prerequisites
 
 - `agy` CLI installed and authenticated with the user's Google account.
-- The default PaperHub Agy model is configured in `paperhub_utils/misc/config.json` as `agy_cli_model`, exported as `config.AGY_CLI_MODEL`.
+- The default PaperHub Agy model is configured in `paperhub_utils/config/config.json` as `agy_cli_model`, exported as `config.AGY_CLI_MODEL`.
 - Default model: `Gemini 3.1 Pro (High)`.
 - If the user requests a different Agy model, pass `--agy-model "MODEL LABEL"` to `--prepare-cli-input`. The script validates it against `config.AGY_CLI_MODEL_LIST`, writes it to `~/.gemini/antigravity-cli/settings.json`, and leaves that setting in place.
-- Agy does not currently expose a per-run `--model` flag or Gemini-style `-o json` token stats. Record model as `<model> (Agy CLI)`, `pdf_engine: agy-native`, and token fields as `N/A`.
+- Agy does not currently expose a per-run `--model` flag or token stats. Record model as `<model> (Agy CLI)`, `pdf_engine: agy-native`, and token fields as `N/A`.
 
 ## Overview
 
 This workflow reuses the same prompt and file-organization logic as the OpenRouter workflow:
 
-1. Call `paper_summarizer.py --prepare-cli-input --external-cli-engine agy-cli` to prepare the prompt/PDF and persist the selected Agy model.
+1. Call `uv run python -m scripts.paper_summarizer --prepare-cli-input --external-cli-engine agy-cli` to prepare the prompt/PDF and persist the selected Agy model.
 2. Call `agy --print` from the paper-library root, with `--add-dir "$PAPERHUB_ROOT"` and an absolute `@PDF` attachment.
 3. Save raw Agy stdout/stderr/log files.
-4. Call `paper_summarizer.py --from-response --external-cli-engine agy-cli`; the script validates Agy artifacts, extracts the sentinel-delimited response block, and organizes the paper.
+4. Call `uv run python -m scripts.paper_summarizer --from-response --external-cli-engine agy-cli`; the script validates Agy artifacts, extracts the sentinel-delimited response block, and organizes the paper.
 
 In `metadata-only` mode, `--prepare-cli-input` creates a temporary first-`METADATA_ONLY_PAGE_LIMIT` PDF under `.paperhub_tmp/`; Agy receives that temporary PDF, while `--from-response` still moves the original PDF into `organized/`.
 
@@ -27,9 +27,9 @@ In `metadata-only` mode, `--prepare-cli-input` creates a temporary first-`METADA
 
 | PaperHub mode | Prepare command | Apply command | Output |
 |---|---|---|---|
-| `full` | `paper_summarizer.py --prepare-cli-input --external-cli-engine agy-cli --summary-mode full` | `paper_summarizer.py --from-response --external-cli-engine agy-cli --summary-mode full` | metadata note + `ai_summary.md` |
-| `metadata-only` | `paper_summarizer.py --prepare-cli-input --external-cli-engine agy-cli --summary-mode metadata-only` | `paper_summarizer.py --from-response --external-cli-engine agy-cli --summary-mode metadata-only` | metadata note only; no `ai_summary.md` |
-| `enrich` | `enrich.py --engine agy-cli --prepare-cli-input --folder FOLDER` | `enrich.py --engine agy-cli --from-response --folder FOLDER` | existing folder patched and/or `ai_summary.md` written |
+| `full` | `uv run python -m scripts.paper_summarizer --prepare-cli-input --external-cli-engine agy-cli --summary-mode full` | `uv run python -m scripts.paper_summarizer --from-response --external-cli-engine agy-cli --summary-mode full` | metadata note + `ai_summary.md` |
+| `metadata-only` | `uv run python -m scripts.paper_summarizer --prepare-cli-input --external-cli-engine agy-cli --summary-mode metadata-only` | `uv run python -m scripts.paper_summarizer --from-response --external-cli-engine agy-cli --summary-mode metadata-only` | metadata note only; no `ai_summary.md` |
+| `enrich` | `uv run python -m scripts.enrich --engine agy-cli --prepare-cli-input --folder FOLDER` | `uv run python -m scripts.enrich --engine agy-cli --from-response --folder FOLDER` | existing folder patched and/or `ai_summary.md` written |
 
 Use the same Agy call shape for all three modes: read `prompt_path`, `pdf_for_ai_agy_path`, `paperhub_root`, and `agy_model_label` from the prepared JSON, then pass raw stdout to the matching `--from-response` command.
 
@@ -41,7 +41,7 @@ cd paperhub_utils
 PAPERHUB_ROOT=$(cd .. && pwd)
 
 # 1. Prepare prompt/PDF and persist the configured Agy model.
-uv run python paper_summarizer.py --prepare-cli-input \
+uv run python -m scripts.paper_summarizer --prepare-cli-input \
   --external-cli-engine agy-cli \
   --pdf-path-arg "$PAPERHUB_ROOT/to_be_organized/paper.pdf" \
   --summary-mode full \
@@ -82,7 +82,7 @@ ORIGINAL_PDF=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_
 SUMMARY_MODE=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['summary_mode'])")
 MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['agy_model_label'])")
 
-uv run python paper_summarizer.py --from-response \
+uv run python -m scripts.paper_summarizer --from-response \
   --external-cli-engine agy-cli \
   --response-file "${AGY_OUTPUT}" \
   --pdf-path-arg "${ORIGINAL_PDF}" \
@@ -95,7 +95,7 @@ uv run python paper_summarizer.py --from-response \
 ```bash
 # 4. Clean up prepared prompt/temp PDF.
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['cleanup_dir'])")
-uv run python paper_summarizer.py --cleanup-cli-input "${CLEANUP_DIR}"
+uv run python -m scripts.paper_summarizer --cleanup-cli-input "${CLEANUP_DIR}"
 ```
 
 ## Validation Guards
@@ -109,7 +109,7 @@ Hard-fatal — do **not** organize output:
 
 Recoverable — tolerated when a valid, non-empty sentinel response was produced:
 
-- `invalid tool call error` / `Model output error` in the log. Gemini routinely emits spurious agentic tool-call steps in print mode (e.g. `echo`-ing a status line), and Agy's arg-marshalling can make them fail, but the model usually recovers and still returns a complete response. These markers are only fatal when no valid response exists.
+- `invalid tool call error` / `Model output error` in the log. Some Agy print-mode runs emit spurious agentic tool-call steps (e.g. `echo`-ing a status line), and Agy's arg-marshalling can make them fail, but the model usually recovers and still returns a complete response. These markers are only fatal when no valid response exists.
 
 The `--from-response --external-cli-engine agy-cli` command enforces this split via `validate_agy_cli_run` in `cli_workflow/agy.py` (`AGY_CLI_HARD_FATAL_MARKERS` vs `AGY_CLI_RECOVERABLE_MARKERS`).
 
@@ -134,7 +134,7 @@ Process Agy papers sequentially by default. Parallel calls share the same global
 
 If Agy fails, ask the user whether to retry Agy, switch to OpenRouter, choose a different allowed Agy model, or abandon the paper. Never silently switch engines or models.
 
-For parse failures, `paper_summarizer.py --from-response` saves raw content under `paperhub_utils/raw_outputs/`. Do not manually rewrite the response with agent tokens. Ask before doing an AI format-repair retry.
+For parse failures, `uv run python -m scripts.paper_summarizer --from-response` saves raw content under `paperhub_utils/output/raw_outputs/`. Do not manually rewrite the response with agent tokens. Ask before doing an AI format-repair retry.
 
 ## Completion Reporting
 

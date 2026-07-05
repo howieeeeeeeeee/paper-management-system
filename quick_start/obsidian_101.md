@@ -8,7 +8,7 @@ PaperHub is an Obsidian-first paper library. Use a current Obsidian app with the
 - Add `aliases:` when a paper has common short names, acronyms, or citation labels.
 - Use YAML properties for anything you want to sort or filter in Bases.
 - Use `tags:` for reusable categories; Obsidian and Bases can filter them directly.
-- Keep `Papers.base` as the dashboard, and treat paper metadata notes as the source of truth.
+- Keep `SamplePaperBoard.base` as the dashboard, and treat paper metadata notes as the source of truth.
 
 ## 1. Understand the Structure
 
@@ -46,9 +46,9 @@ tags:
 
 Use `status` for workflow, `interest` for priority, and `tags` for fields, methods, topics, courses, or projects.
 
-## 4. Use `Papers.base`
+## 4. Use `SamplePaperBoard.base`
 
-Open `Papers.base` in Obsidian. Use the view menu in the top-left corner to switch views. Each view can have its own filters, visible properties, sort order, and grouping. This repo includes:
+Open `SamplePaperBoard.base` in Obsidian. Use the view menu in the top-left corner to switch views. Each view can have its own filters, visible properties, sort order, and grouping. This repo includes:
 
 - `Backlog`: unfinished papers, filtered and grouped by `status`.
 - `Digesting` and `Reflecting`: active reading queues.

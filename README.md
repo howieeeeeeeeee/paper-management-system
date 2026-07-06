@@ -6,7 +6,7 @@ It is built for AI-assisted knowledge work:
 
 - `paper-summarizer` turns PDFs into one folder per paper with metadata and optional `ai_summary.md`.
 - `paper-finder` retrieves papers from vague memories, keywords, authors, tags, or summary snippets using local library files.
-- `ask-knowledge-base` answers questions across visible Markdown notes in the Obsidian vault, citing notes with wikilinks.
+- `ask-knowledge-base` answers questions across visible Markdown notes in the Obsidian vault, citing notes with wikilinks; it can skip generated paper metadata/summaries when you ask for non-paper notes.
 - Obsidian links and Bases make the paper label usable across notes, reading queues, and research projects.
 
 ```mermaid
@@ -71,6 +71,12 @@ For vault questions:
 
 ```text
 \ask-knowledge-base: what do my notes say about strategic ignorance and moral wiggle room?
+```
+
+To search notes while skipping generated paper metadata and AI summaries:
+
+```text
+\ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
 ```
 
 ## Obsidian Base

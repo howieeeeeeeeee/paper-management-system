@@ -20,6 +20,12 @@ For a deeper synthesis:
 \ask-knowledge-base: give me a detailed synthesis of my notes on zero-sum thinking and political economy.
 ```
 
+To search your own notes while skipping generated paper metadata and AI summaries:
+
+```text
+\ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
+```
+
 Output: an answer grounded in the returned notes, with Obsidian wikilinks such as `[[projects/literature_map|Literature Map]]` or `[[danaetal2007moralwiggle]]`.
 
-The skill searches visible `.md` files and skips dot-prefixed folders such as `.claude/`, `.agents/`, `.obsidian/`, `.git/`, and `.venv/`.
+The skill searches visible Markdown files and skips dot-prefixed folders such as `.claude/`, `.agents/`, `.obsidian/`, `.git/`, and `.venv/`. When you ask for "without papers" or "ignore papers", it skips standard PaperHub paper metadata notes, `ai_summary.md`, and legacy `summary.md` paper summaries while keeping regular hand-written notes.

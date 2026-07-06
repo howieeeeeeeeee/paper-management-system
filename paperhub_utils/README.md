@@ -14,7 +14,7 @@ This folder contains the scripts, prompts, and config used by PaperHub skills. M
 ## Search Helpers
 
 - `scripts/paper_search.py`: searches existing PaperHub papers under `organized/` for `paper-finder`.
-- `scripts/knowledge_base_search.py`: searches visible Markdown notes in the configured Obsidian vault for `ask-knowledge-base`.
+- `scripts/knowledge_base_search.py`: searches visible Markdown notes in the configured Obsidian vault for `ask-knowledge-base`; pass `--ignore-papers` to skip standard PaperHub metadata notes and generated paper summaries.
 
 ## Update Boundary
 

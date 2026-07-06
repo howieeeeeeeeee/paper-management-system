@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Search visible Markdown notes in the configured Obsidian vault.
 
-This is a local knowledge-base helper for agent answers. It scans `.md` files
-under the configured Obsidian vault, skips hidden dot-prefixed folders, ranks
-matching notes, and prints bounded context. It does not call an API.
+This is a local knowledge-base helper for agent answers. It scans Markdown
+files under the configured Obsidian vault, skips hidden dot-prefixed folders,
+ranks matching notes, and prints bounded context. It does not call an API.
 """
 
 from __future__ import annotations
@@ -72,6 +72,8 @@ STOPWORDS = {
     "which",
     "with",
 }
+MARKDOWN_SUFFIXES = {".md", ".markdown"}
+PAPER_SUMMARY_STEMS = {"aisummary", "summary"}
 
 
 @dataclass(frozen=True)
@@ -169,16 +171,44 @@ def has_hidden_segment(path: Path) -> bool:
     return any(part.startswith(".") for part in path.parts)
 
 
-def iter_markdown_notes(vault_root: Path) -> list[Path]:
+def is_standard_paper_folder(path: Path, vault_root: Path) -> bool:
+    try:
+        rel_path = path.relative_to(vault_root)
+    except ValueError:
+        return False
+    return len(rel_path.parts) == 2 and rel_path.parts[0] == "organized"
+
+
+def is_paper_metadata_note(path: Path, vault_root: Path) -> bool:
+    return is_standard_paper_folder(path.parent, vault_root) and path.stem == path.parent.name
+
+
+def is_paper_summary_note(path: Path, vault_root: Path) -> bool:
+    normalized_stem = re.sub(r"[\s_-]+", "", path.stem).lower()
+    return is_standard_paper_folder(path.parent, vault_root) and normalized_stem in PAPER_SUMMARY_STEMS
+
+
+def is_paper_markdown(path: Path, vault_root: Path) -> bool:
+    return is_paper_metadata_note(path, vault_root) or is_paper_summary_note(path, vault_root)
+
+
+def iter_markdown_notes(vault_root: Path, *, ignore_paper_markdown: bool = False) -> list[Path]:
     if not vault_root.exists():
         return []
+    paths = set()
+    for suffix in MARKDOWN_SUFFIXES:
+        paths.update(vault_root.rglob(f"*{suffix}"))
     notes = []
-    for path in sorted(vault_root.rglob("*.md")):
+    for path in sorted(paths):
         try:
             rel_path = path.relative_to(vault_root)
         except ValueError:
             continue
+        if not path.is_file():
+            continue
         if has_hidden_segment(rel_path):
+            continue
+        if ignore_paper_markdown and is_paper_markdown(path, vault_root):
             continue
         notes.append(path)
     return notes
@@ -321,6 +351,7 @@ def search(
     keywords: list[str] | None = None,
     exclude_keywords: list[str] | None = None,
     limit: int = 10,
+    ignore_paper_markdown: bool = False,
 ) -> list[NoteResult]:
     root = (vault_root or configured_vault_root()).expanduser().resolve()
     raw_terms = dedupe_preserve_order((keywords or []) + ([query] if query else []))
@@ -334,7 +365,7 @@ def search(
 
     results = [
         score_note(path, root, terms, phrases, exclude_terms, exclude_phrases)
-        for path in iter_markdown_notes(root)
+        for path in iter_markdown_notes(root, ignore_paper_markdown=ignore_paper_markdown)
     ]
     results = [result for result in results if result.score > 0]
     return sorted(results, key=lambda item: item.score, reverse=True)[: max(1, limit)]
@@ -404,6 +435,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--detailed", action="store_true", help="print score details")
     parser.add_argument("--full", action="store_true", help="include bounded full text for detailed cards")
     parser.add_argument("--max-full-chars", type=int, default=12000)
+    parser.add_argument(
+        "--ignore-papers",
+        action="store_true",
+        help="skip PaperHub metadata notes and generated summaries under organized/",
+    )
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -423,6 +459,7 @@ def main() -> int:
         keywords=args.keyword + term_args,
         exclude_keywords=[term for group in args.exclude for term in group],
         limit=limit,
+        ignore_paper_markdown=args.ignore_papers,
     )
     if args.json:
         print(json.dumps([asdict(result) for result in results], indent=2))

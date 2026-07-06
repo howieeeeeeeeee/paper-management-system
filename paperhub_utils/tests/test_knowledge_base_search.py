@@ -7,7 +7,11 @@ from io import StringIO
 from pathlib import Path
 
 from scripts import knowledge_base_search
-from scripts.knowledge_base_search import iter_markdown_notes, search
+from scripts.knowledge_base_search import (
+    is_paper_markdown,
+    iter_markdown_notes,
+    search,
+)
 
 
 class KnowledgeBaseSearchTests(unittest.TestCase):
@@ -65,6 +69,56 @@ class KnowledgeBaseSearchTests(unittest.TestCase):
         self.assertTrue(results)
         self.assertEqual(results[0].wikilink, "[[danaetal2007moralwiggle]]")
 
+    def test_ignore_papers_skips_metadata_and_ai_summary_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paper = root / "organized" / "flowerman2026llmbelief"
+            paper.mkdir(parents=True)
+            metadata = paper / "flowerman2026llmbelief.md"
+            summary = paper / "ai_summary.md"
+            legacy_summary = paper / "summary.md"
+            project_note = paper / "experiment notes.md"
+            metadata.write_text(
+                "# LLM Belief Paper\n\nConfirmation bias appears in large language model belief updates.\n",
+                encoding="utf-8",
+            )
+            summary.write_text(
+                "# AI Summary\n\nConfirmation bias appears in large language model behavior.\n",
+                encoding="utf-8",
+            )
+            legacy_summary.write_text(
+                "# Summary\n\nConfirmation bias appears in large language model agents.\n",
+                encoding="utf-8",
+            )
+            project_note.write_text(
+                "# Experiment Notes\n\nConfirmation bias appears in large language model pilots.\n",
+                encoding="utf-8",
+            )
+
+            default_notes = iter_markdown_notes(root)
+            notes_only = iter_markdown_notes(root, ignore_paper_markdown=True)
+            results = search(
+                "confirmation bias large language model",
+                vault_root=root,
+                ignore_paper_markdown=True,
+            )
+
+        self.assertTrue(is_paper_markdown(metadata, root))
+        self.assertTrue(is_paper_markdown(summary, root))
+        self.assertTrue(is_paper_markdown(legacy_summary, root))
+        self.assertFalse(is_paper_markdown(project_note, root))
+        self.assertIn(metadata, default_notes)
+        self.assertIn(summary, default_notes)
+        self.assertIn(legacy_summary, default_notes)
+        self.assertNotIn(metadata, notes_only)
+        self.assertNotIn(summary, notes_only)
+        self.assertNotIn(legacy_summary, notes_only)
+        self.assertIn(project_note, notes_only)
+        self.assertEqual(
+            [result.relative_path for result in results],
+            ["organized/flowerman2026llmbelief/experiment notes.md"],
+        )
+
     def test_default_top_is_ten(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -113,6 +167,46 @@ class KnowledgeBaseSearchTests(unittest.TestCase):
         text = output.getvalue()
         self.assertIn("[[research|Research Log]]", text)
         self.assertIn("full_context:", text)
+
+    def test_cli_ignore_papers_flag(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paper = root / "organized" / "flowerman2026llmbelief"
+            paper.mkdir(parents=True)
+            (paper / "flowerman2026llmbelief.md").write_text(
+                "# LLM Belief Paper\n\nConfirmation bias appears in large language model belief updates.\n",
+                encoding="utf-8",
+            )
+            (root / "research.md").write_text(
+                "# Research Log\n\nConfirmation bias appears in large language model notes.\n",
+                encoding="utf-8",
+            )
+
+            old_argv = knowledge_base_search.sys.argv
+            knowledge_base_search.sys.argv = [
+                "knowledge_base_search.py",
+                "--vault-root",
+                str(root),
+                "--terms",
+                "confirmation bias",
+                "large language model",
+                "--top",
+                "5",
+                "--detail",
+                "5",
+                "--ignore-papers",
+            ]
+            try:
+                output = StringIO()
+                with redirect_stdout(output):
+                    exit_code = knowledge_base_search.main()
+            finally:
+                knowledge_base_search.sys.argv = old_argv
+
+        self.assertEqual(exit_code, 0)
+        text = output.getvalue()
+        self.assertIn("[[research|Research Log]]", text)
+        self.assertNotIn("[[flowerman2026llmbelief]]", text)
 
 
 if __name__ == "__main__":

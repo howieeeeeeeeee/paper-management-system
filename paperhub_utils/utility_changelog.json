@@ -24,15 +24,16 @@
       "date": "2026-07-06",
       "title": "Vault Knowledge Base Search",
       "update_kind": "structural + content",
-      "summary": "Adds ask-knowledge-base for answering questions from visible Obsidian Markdown notes, backed by a local vault search script and skill-specific quick-start docs.",
-      "how_to_apply": "Safe skill, script, test, and docs updates can be applied directly. The new search uses obsidian.vault_abs_path from config.json when valid and otherwise falls back to the PaperHub root; no migration is required.",
+      "summary": "Adds ask-knowledge-base for answering questions from visible Obsidian Markdown notes, backed by a local vault search script, optional non-paper-note mode, and skill-specific quick-start docs.",
+      "how_to_apply": "Safe skill, script, test, and docs updates can be applied directly. The new search uses obsidian.vault_abs_path from config.json when valid and otherwise falls back to the PaperHub root; no migration is required. Use --ignore-papers only when you want to search vault notes while skipping generated PaperHub paper metadata and summaries.",
       "added": [
         "ask-knowledge-base skill for question answering across visible vault Markdown with Obsidian wikilink citations.",
-        "knowledge_base_search.py utility script with top/detail limits, exclude penalties, JSON output, and bounded full-context mode.",
+        "knowledge_base_search.py utility script with top/detail limits, exclude penalties, JSON output, bounded full-context mode, and optional --ignore-papers filtering.",
         "Skill-specific quick-start docs for paper-summarizer, paper-finder, ask-knowledge-base, and update-paperhub-utils."
       ],
       "changed": [
         "README and quick-start docs now describe ask-knowledge-base below paper-finder without promoting immature downloader workflows.",
+        "ask-knowledge-base can now honor explicit non-paper-note requests by skipping standard PaperHub metadata notes plus ai_summary.md and legacy summary.md generated summaries while keeping hand-written Markdown notes searchable.",
         "public-template-sync is protected as maintainer-only in both .claude and .agents skill paths."
       ]
     },

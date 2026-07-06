@@ -18,11 +18,8 @@ flowchart TD
     D --> F[Mention paper_label across the Obsidian vault]
     D --> H[Browse from Obsidian Base / Paperbase]
     H --> I[Reading queue, status, tags, and interest views]
-    D --> J[Run paper-finder with keywords or vague memory]
+    D --> J[Search papers or vault notes<br/>with wikilinked answers]
     E --> J
-    D --> K[Ask knowledge-base questions across vault notes]
-    E --> K
-    K --> L[Cited answer with Obsidian wikilinks]
     E --> G[Read AI summary when useful]
 ```
 

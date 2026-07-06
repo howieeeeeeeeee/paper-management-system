@@ -1,6 +1,6 @@
 # paperhub_utils
 
-This folder contains the scripts, prompts, and config used by the `paper-summarizer` skill. Most users only need the files below.
+This folder contains the scripts, prompts, and config used by PaperHub skills. Most users only need the files below.
 
 ## Folder Layout
 
@@ -10,6 +10,11 @@ This folder contains the scripts, prompts, and config used by the `paper-summari
 - `config/`: local preferences, secrets, onboarding state, and template defaults. Preserve user-owned files here during updates.
 - `output/`: generated reports, backups, and raw model outputs. Do not sync or replace this folder.
 - `tests/`: update-managed checks for the utility code.
+
+## Search Helpers
+
+- `scripts/paper_search.py`: searches existing PaperHub papers under `organized/` for `paper-finder`.
+- `scripts/knowledge_base_search.py`: searches visible Markdown notes in the configured Obsidian vault for `ask-knowledge-base`.
 
 ## Update Boundary
 

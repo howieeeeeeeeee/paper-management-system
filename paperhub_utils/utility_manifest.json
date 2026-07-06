@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026.07.06.1",
+  "version": "2026.07.06.2",
   "source_url": "https://github.com/howieeeeeeeeee/paper-management-system",
   "path_policy": {
     "replaceable_utility_code": [
@@ -48,8 +48,10 @@
   "protected_paths": [
     ".git/**",
     ".obsidian/**",
+    ".agents/skills/public-template-sync/**",
     ".claude/settings.local.json",
     ".claude/scheduled_tasks*",
+    ".claude/skills/public-template-sync/**",
     "Papers.base",
     "organized/**",
     "tags/_internal/**",

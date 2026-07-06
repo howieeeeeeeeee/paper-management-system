@@ -6,6 +6,7 @@ It is built for AI-assisted knowledge work:
 
 - `paper-summarizer` turns PDFs into one folder per paper with metadata and optional `ai_summary.md`.
 - `paper-finder` retrieves papers from vague memories, keywords, authors, tags, or summary snippets using local library files.
+- `ask-knowledge-base` answers questions across visible Markdown notes in the Obsidian vault, citing notes with wikilinks.
 - Obsidian links and Bases make the paper label usable across notes, reading queues, and research projects.
 
 ```mermaid
@@ -19,7 +20,10 @@ flowchart TD
     H --> I[Reading queue, status, tags, and interest views]
     D --> J[Run paper-finder with keywords or vague memory]
     E --> J
-	 E --> G[Read AI summary when useful]
+    D --> K[Ask knowledge-base questions across vault notes]
+    E --> K
+    K --> L[Cited answer with Obsidian wikilinks]
+    E --> G[Read AI summary when useful]
 ```
 
 ## Quick Start
@@ -66,6 +70,12 @@ For retrieval:
 \paper-finder: which paper was it where dictators avoided knowing the recipient's payoff?
 ```
 
+For vault questions:
+
+```text
+\ask-knowledge-base: what do my notes say about strategic ignorance and moral wiggle room?
+```
+
 ## Obsidian Base
 
 Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for reading status, tags, interest, and topic views.
@@ -87,6 +97,6 @@ The updater focuses on skills and utility code while preserving local papers, ta
 ## Useful Files
 
 - [quick_start/obsidian_101.md](quick_start/obsidian_101.md): Obsidian links, metadata notes, and Bases.
-- [quick_start/use-cases.md](quick_start/use-cases.md): prompt cookbook for common workflows.
+- [quick_start/use-cases.md](quick_start/use-cases.md): concise index for the skill-specific quick starts.
 - [paperhub_utils/config/config.json](paperhub_utils/config/config.json): runtime preferences.
 - [paperhub_utils/utility_changelog.json](paperhub_utils/utility_changelog.json): structured utility update notes.

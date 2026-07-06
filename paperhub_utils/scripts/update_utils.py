@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_SOURCE_URL = "https://github.com/howieeeeeeeeee/paper-management-system"
-DEFAULT_VERSION = "2026.07.05.3"
+DEFAULT_VERSION = "2026.07.06.2"
 STATE_PATH = Path("paperhub_utils/config/utility_state.json")
 CONFIG_PATH = Path("paperhub_utils/config/config.json")
 REPORT_DIR = Path("paperhub_utils/output/update_reports")
@@ -79,8 +79,10 @@ DEFAULT_MANIFEST: dict[str, Any] = {
     "protected_paths": [
         ".git/**",
         ".obsidian/**",
+        ".agents/skills/public-template-sync/**",
         ".claude/settings.local.json",
         ".claude/scheduled_tasks*",
+        ".claude/skills/public-template-sync/**",
         "Papers.base",
         "organized/**",
         "tags/_internal/**",

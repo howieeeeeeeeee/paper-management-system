@@ -80,7 +80,7 @@ For vault questions:
 
 Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for reading status, tags, interest, and topic views.
 
-![Obsidian Base / Paperbase screenshot placeholder](quick_start/paperbase-screenshot.png)
+![Obsidian Base / Paperbase screenshot](./quick_start/paperbase-screenshot.png)
 
 ## Updating Utilities and Skills 
 

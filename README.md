@@ -23,6 +23,14 @@ flowchart TD
     E --> G[Read AI summary when useful]
 ```
 
+## Claim(s)
+
+As an economics PhD student, I am still building up my research skill set. I do not think AI, or any automatic tool, can replace the process of reading the literature and building knowledge throughout the research lifecycle. I truly believe that the mental connections we form among papers while engaging with the literature are irreplaceable and cannot be outsourced to an external tool.
+
+The main purpose of this tool is management, not summarization. The AI-augmented summary feature is meant to help users quickly skim the main idea of a new paper and decide whether it is worth reading deeply. There have been times when I remembered only a small part of a paper I had encountered but could not fully recall what it was. The `paper-finder` skill is designed to help with exactly that. There are also times when I want to save a paper for later but cannot read it immediately. This management system, built with Obsidian Bases, is my project-management-style solution to that pain point.
+
+For deep reading, I strongly recommend the Obsidian plugin [PDF++](https://github.com/RyotaUshio/obsidian-pdf-plus).
+
 ## Quick Start
 
 Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) for this one-time setup. Routine paper runs can use a faster or cheaper model (I use haiku, and it works smoothly).

@@ -83,9 +83,10 @@ _Codex CLI._ Confirm it actually runs: type `codex` in your Terminal and check i
 
 Codex model + reasoning default:
 
-- [ ] `gpt-5.5` + `high` (recommended)
-- [ ] `gpt-5.5` + `medium`
-- [ ] `gpt-5.5` + `xhigh`
+- [ ] `gpt-5.6-sol` + `high` (recommended)
+- [ ] `gpt-5.6-terra` + `high` 
+- [ ] `gpt-5.5` + `high`
+
 
 Git behavior:
 

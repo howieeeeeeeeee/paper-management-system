@@ -148,6 +148,14 @@ CODEX_CLI_MODEL_REASONING_PAIRS = (
     ("gpt-5.5", "medium"),
     ("gpt-5.5", "high"),
     ("gpt-5.5", "xhigh"),
+    ("gpt-5.6-sol", "low"),
+    ("gpt-5.6-sol", "medium"),
+    ("gpt-5.6-sol", "high"),
+    ("gpt-5.6-sol", "xhigh"),
+    ("gpt-5.6-terra", "low"),
+    ("gpt-5.6-terra", "medium"),
+    ("gpt-5.6-terra", "high"),
+    ("gpt-5.6-terra", "xhigh"),
 )
 CODEX_CLI_MODEL_LIST = tuple(
     dict.fromkeys(model for model, _ in CODEX_CLI_MODEL_REASONING_PAIRS)
@@ -155,7 +163,7 @@ CODEX_CLI_MODEL_LIST = tuple(
 CODEX_CLI_REASONING_EFFORT_LIST = tuple(
     dict.fromkeys(effort for _, effort in CODEX_CLI_MODEL_REASONING_PAIRS)
 )
-_CODEX_CLI_MODEL_DEFAULT = "gpt-5.5"
+_CODEX_CLI_MODEL_DEFAULT = "gpt-5.6-sol"
 _CODEX_CLI_REASONING_EFFORT_DEFAULT = "xhigh"
 _codex_cli_model_value = USER_CONFIG.get("codex_cli_model")
 CODEX_CLI_MODEL = (

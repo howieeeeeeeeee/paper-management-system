@@ -16,7 +16,7 @@ Use values in this order:
 4. Safe defaults documented in this skill.
 5. `AskUserQuestion`, only for missing or conflicting values that block setup.
 
-Do not guess the user's vault path, API key, starter taxonomy, or Git preference. Do not ask about values already answered in the questionnaire and verified as valid. Never print or echo secrets from `.env`.
+Do not guess the user's API key, starter taxonomy, or Git preference. Do not ask about values already answered in the questionnaire and verified as valid. Never print or echo secrets from `.env`. Never ask the user for the Obsidian vault path up front: find it yourself by walking up parent directories from the paper-library root until one contains `.obsidian/` (details in section 1, step 2), and ask only if that search finds nothing.
 
 ## 0. Load questionnaire, state, and config
 
@@ -45,17 +45,22 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
 ## 1. Discover and prepare the local project
 
 1. Resolve the paper-library root and utilities directory. The utilities directory is usually `{paper_library_root}/paperhub_utils/`. Run `uv sync` and script checks from there.
-2. Resolve the Obsidian vault root for base setup:
-   - Prefer an explicit user message value.
-   - Otherwise use the questionnaire's "Obsidian vault absolute path".
-   - Otherwise use `paperhub_utils/config/config.json` if valid.
-   - Otherwise find the nearest ancestor containing `.obsidian/`.
-   - If no valid vault path is available, ask for the vault root or ask whether to skip Bases setup for now.
+2. Resolve the Obsidian vault root. Do not ask the user for this path up front — it is discoverable from the filesystem:
+   - Prefer an explicit user message value (validate it before using it).
+   - Otherwise auto-discover it: walk up from the paper-library root through its parent directories until one contains `.obsidian/`; that directory is the vault root. Record its absolute path, for example:
+
+     ```bash
+     d="$PWD"; while [ "$d" != "/" ]; do [ -d "$d/.obsidian" ] && { echo "$d"; break; }; d=$(dirname "$d"); done
+     ```
+
+   - Otherwise use `obsidian.vault_abs_path` from `paperhub_utils/config/config.json` if valid, or a vault path written in an older questionnaire.
+   - If discovery finds nothing, the paper library is probably not inside an Obsidian vault (or the folder has never been opened in Obsidian, so `.obsidian/` does not exist yet). Only then ask the user for the vault root, or ask whether to skip Bases setup for now.
 3. Validate that the vault path exists and contains `.obsidian/`. If not, ask the user to confirm or correct it.
 4. Derive the vault-relative paper-library path:
-   - If the paper-library folder is inside the vault, derive it automatically.
+   - If the paper-library folder is inside the vault, derive it automatically (the paper-library root's path relative to the vault root, with forward slashes).
    - The agent should discover the paper-library root from the working directory or nearest project marker; do not ask the user for the PaperHub path during normal onboarding.
    - If the paper-library folder is not inside the provided vault and Bases setup is requested, ask where the library will live inside the vault before editing `.base` files.
+   - Persist both resolved values into `paperhub_utils/config/config.json` under the `obsidian` block (`vault_abs_path`, `vault_relative_paper_library_path`) — `scripts/knowledge_base_search.py` reads `vault_abs_path` to search the whole vault and silently falls back to the paper-library root when it is null. Mirror `context.obsidian_vault_abs_path` and `context.vault_relative_paper_library_path` in `onboarding.json`. If the library is not inside a vault, leave both as `null`.
 5. Confirm these folders exist or create them if missing: `to_be_organized/`, `organized/`, and `tags/`.
 6. Read `paperhub_utils/config/config.json` for the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`), `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
 7. Read `paperhub_utils/paperhub/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `USE_GIT`, `SYNC_TO_REMOTE_GIT`, `GIT_BACKUP_ABS_PATH`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS`.
@@ -266,14 +271,14 @@ Obsidian Bases is a core plugin for database-like views over Markdown files and 
 Obsidian `file.inFolder(...)` filters must use vault-relative paths, not absolute filesystem paths. Use forward slashes and preserve the user's actual folder casing.
 
 1. Use the questionnaire's Bases choice:
-   - Ask the agent to configure root `.base` files from the Obsidian vault absolute path already provided in the Project Paths section.
+   - Ask the agent to configure root `.base` files using the auto-discovered Obsidian vault path.
    - Configure `.base` files.
    - Leave `.base` files unchanged.
    - Not using Bases yet.
 2. If Bases setup is skipped, record `configure_obsidian_bases` as `skipped` and continue.
 3. If Bases setup is enabled, inspect root `*.base` files. The repository already includes `SamplePaperBoard.base`, so the normal onboarding task is to help update its paths, not create a new sample base.
 4. Derive the paper-library folder path relative to the Obsidian vault from the discovered project root and the vault absolute path.
-5. If the user chose agent-configured Bases but no valid vault absolute path is available, ask for that path before editing `.base` files. If the project root is outside the vault, ask where the paper library should live inside the vault.
+5. If the user chose agent-configured Bases but no valid vault absolute path is available (auto-discovery failed and the user has not supplied one), ask for that path before editing `.base` files. If the project root is outside the vault, ask where the paper library should live inside the vault.
 6. After the vault path is settled, update the `is in path` filter shown by Obsidian Bases in `SamplePaperBoard.base`. In YAML this is the `file.inFolder(...)` path; set it to the path from the vault root to the intake folder, such as `file.inFolder("{vault_relative_paper_library}/to_be_organized")`. Never use an absolute filesystem path.
 7. Update base filters so examples match the user's machine:
    - intake papers waiting to be organized: `file.inFolder("{vault_relative_paper_library}/to_be_organized")`

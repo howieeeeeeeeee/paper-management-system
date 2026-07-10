@@ -34,17 +34,7 @@ cd "/path/to/PaperHub"
 
 ## 2. Project Paths
 
-The agent uses this path to connect PaperHub to your Obsidian vault and configure Obsidian views correctly. Paste the full absolute path, not a shortened path.
-
-On macOS, one easy way to get the full path is to drag the Obsidian vault folder into Terminal. Terminal will paste the absolute path for you.
-
-If PaperHub is inside your Obsidian vault, paste the path to the vault folder itself, not just the `PaperHub` folder.
-
-Obsidian vault absolute path:
-
-```text
-
-```
+Nothing to fill in here. The agent finds your Obsidian vault automatically during onboarding: it walks up from the PaperHub folder through its parent folders until it finds the one containing `.obsidian/`, and works out both the vault path and where PaperHub sits inside the vault. It will only ask you for a path if PaperHub is not inside an Obsidian vault — for example, if you have not yet opened the surrounding folder as a vault in Obsidian, so no `.obsidian/` folder exists.
 
 **Strongly recommended: keep your Obsidian vault inside iCloud (or another cloud sync).** That way your paper library syncs across your devices automatically. If you do, also set the vault folder to **"Keep Downloaded"** (in Finder, right-click the vault folder → **Keep Downloaded**) so every file is stored locally as a real file, not an `.icloud` placeholder. The git backup step copies real files; if the vault is not fully downloaded, placeholders would be backed up instead of your actual notes.
 
@@ -207,7 +197,7 @@ Custom paper label rules, if any. Avoid spaces and characters that are awkward i
 
 Obsidian Bases are optional database-style views inside Obsidian. If you use them, the agent can configure root `.base` files so you can browse papers by tags, fields, status, or other metadata. If you do not know what Bases are, choose "I am not using Obsidian Bases yet."
 
-- [ ] Ask the agent to configure root `.base` files for me using the Obsidian vault path above.
+- [ ] Ask the agent to configure root `.base` files for me using the auto-detected Obsidian vault path.
 - [ ] I am not using Obsidian Bases yet.
 
 Notes for Bases filters or views, if any:

@@ -5,9 +5,8 @@ This document covers the **OpenAI Codex CLI** paper summarization workflow. Read
 ## Prerequisites
 
 - `codex` CLI installed and authenticated.
-- The default PaperHub Codex model/reasoning pair is configured in `paperhub_utils/config/config.json` as `codex_cli_model` and `codex_cli_reasoning_effort`, exported as `config.CODEX_CLI_MODEL` and `config.CODEX_CLI_REASONING_EFFORT`.
-- Default pair: `gpt-5.5` + `xhigh` reasoning.
-- The allowed pairs live in `config.CODEX_CLI_MODEL_REASONING_PAIRS`. Current allowed pairs are `gpt-5.5+low`, `gpt-5.5+medium`, `gpt-5.5+high`, and `gpt-5.5+xhigh`.
+- The default PaperHub Codex model/reasoning pair is configured in `paperhub_utils/config/config.json` (`codex_cli_model`, `codex_cli_reasoning_effort`) and resolved by `paperhub/config.py` as `config.CODEX_CLI_MODEL` and `config.CODEX_CLI_REASONING_EFFORT`. This doc does not name a default pair — read it from config, or from the prepared JSON, which carries the resolved values.
+- The allowed model/reasoning pairs are defined in `config.CODEX_CLI_MODEL_REASONING_PAIRS` (`paperhub/config.py`). Treat that constant as the single source of truth; do not enumerate the pairs here. `--prepare-cli-input` validates the selection against it and rejects unsupported pairs.
 - If the user requests a different allowed Codex model or thinking level, pass `--codex-model "MODEL_ID"` and/or `--codex-reasoning-effort "EFFORT"` to `--prepare-cli-input`.
 - Codex exposes per-run model selection as `codex exec --model MODEL` / `-m MODEL`. Thinking level is passed as a per-run config override: `-c "model_reasoning_effort=\"${CODEX_REASONING_EFFORT}\""`. PaperHub does not write Codex global settings.
 - PaperHub's Codex workflow uses local yolo/full-access mode by default (`codex_cli_yolo: true`) for smooth local-folder runs. `--cd "$PAPERHUB_ROOT"` sets the working root, but yolo removes OS-level sandboxing; keep this for trusted PaperHub folders only.
@@ -53,7 +52,7 @@ uv run python -m scripts.paper_summarizer --prepare-cli-input \
 
 Use `--summary-mode metadata-only` for metadata-only mode.
 
-Add `--codex-model "gpt-5.5"` or `--codex-reasoning-effort "xhigh"` only when the user explicitly requests a different allowed model/thinking pair. If unspecified, the default is `gpt-5.5` + `xhigh`.
+Add `--codex-model "MODEL_ID"` and/or `--codex-reasoning-effort "EFFORT"` only when the user explicitly requests a different allowed model/thinking pair (validated against `config.CODEX_CLI_MODEL_REASONING_PAIRS`). If unspecified, `--prepare-cli-input` resolves the configured default and writes it into the prepared JSON.
 
 ```bash
 # 2. Call Codex (still in paperhub_utils/).
@@ -120,7 +119,7 @@ The `--from-response --external-cli-engine codex-cli` command enforces this via 
 ## Reasoning And Yolo Settings
 
 - Set the default model in `paperhub_utils/config/config.json` with `codex_cli_model`.
-- Set the default thinking level with `codex_cli_reasoning_effort`. Current supported values for `gpt-5.5` are `low`, `medium`, `high`, and `xhigh`.
+- Set the default thinking level with `codex_cli_reasoning_effort`. Allowed model/effort combinations are enforced against `config.CODEX_CLI_MODEL_REASONING_PAIRS` (`paperhub/config.py`).
 - Set `codex_cli_yolo` to `true` for the local full-access flow. The command starts Codex in the PaperHub root with `--cd "$PAPERHUB_ROOT"`, disables web search with `-c 'web_search="disabled"'`, and instructs Codex not to edit files. Yolo/full-access itself is not an OS-level folder restriction.
 - If the user wants sandboxed Codex runs later, set `codex_cli_yolo` to `false` and replace `--dangerously-bypass-approvals-and-sandbox` with `--sandbox read-only -c 'approval_policy="never"'` in the command shape.
 
@@ -140,7 +139,7 @@ In `full` mode, `ai_summary.md` frontmatter should show:
 
 ```yaml
 ---
-model: gpt-5.5 (xhigh reasoning) (Codex CLI)
+model: <model> (<effort> reasoning) (Codex CLI)
 pdf_engine: codex-cli
 tokens_prompt: N/A
 tokens_completion: N/A

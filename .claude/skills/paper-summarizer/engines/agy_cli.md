@@ -5,8 +5,8 @@ This document covers the **Agy CLI** paper summarization workflow. Users may cal
 ## Prerequisites
 
 - `agy` CLI installed and authenticated with the user's Google account.
-- The default PaperHub Agy model is configured in `paperhub_utils/config/config.json` as `agy_cli_model`, exported as `config.AGY_CLI_MODEL`.
-- Default model: `Gemini 3.1 Pro (High)`.
+- The default PaperHub Agy model is configured in `paperhub_utils/config/config.json` (`agy_cli_model`) and resolved by `paperhub/config.py` as `config.AGY_CLI_MODEL`. This doc does not name a default model — read it from config, or from the prepared JSON, which carries the resolved `agy_model_label`.
+- The allowed Agy models are defined in `config.AGY_CLI_MODEL_LIST` (`paperhub/config.py`). Treat that constant as the single source of truth; do not enumerate the models here.
 - If the user requests a different Agy model, pass `--agy-model "MODEL LABEL"` to `--prepare-cli-input`. The script validates it against `config.AGY_CLI_MODEL_LIST`, writes it to the Agy settings path, and leaves that setting in place. Set `AGY_CLI_SETTINGS_PATH` if the local install uses a custom settings location.
 - Agy does not currently expose a per-run `--model` flag or token stats. Record model as `<model> (Agy CLI)`, `pdf_engine: agy-native`, and token fields as `N/A`.
 
@@ -50,7 +50,7 @@ uv run python -m scripts.paper_summarizer --prepare-cli-input \
 
 Use `--summary-mode metadata-only` for metadata-only mode. Do not change the Agy call shape.
 
-Add `--agy-model "Gemini 3.5 Flash (Medium)"` only when the user explicitly requests a different allowed Agy model.
+Add `--agy-model "MODEL LABEL"` only when the user explicitly requests a different allowed Agy model (validated against `config.AGY_CLI_MODEL_LIST`).
 
 ```bash
 # 2. Call Agy (still in paperhub_utils/).
@@ -142,7 +142,7 @@ In `full` mode, `ai_summary.md` frontmatter should show:
 
 ```yaml
 ---
-model: Gemini 3.1 Pro (High) (Agy CLI)
+model: <model> (Agy CLI)
 pdf_engine: agy-native
 tokens_prompt: N/A
 tokens_completion: N/A

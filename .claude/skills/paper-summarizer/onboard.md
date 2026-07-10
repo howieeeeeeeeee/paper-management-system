@@ -161,7 +161,7 @@ Ask only for missing or conflicting information.
   - Codex CLI is acceptable when the questionnaire selects it and `codex` is available/authenticated.
   - Current coding agent is acceptable for metadata-only first runs.
   - If the chosen engine is not available, ask whether to configure it, switch to an available engine, or skip engine setup.
-  - If Codex CLI is selected, persist `codex_cli_model`, `codex_cli_reasoning_effort`, and `codex_cli_yolo` in `paperhub_utils/config/config.json`. Default to `gpt-5.5`, `xhigh`, and `true` when unspecified.
+  - If Codex CLI is selected, persist `codex_cli_model`, `codex_cli_reasoning_effort`, and `codex_cli_yolo` in `paperhub_utils/config/config.json`. When the user leaves any unspecified, fall back to the resolved defaults from `paperhub/config.py` (`CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_YOLO`) rather than hardcoding literals here.
   - Validate the selected Codex pair against `CODEX_CLI_MODEL_REASONING_PAIRS`; reject or ask about invalid pairs instead of silently changing the thinking level.
   - Verify Codex CLI availability without starting a paper run:
 

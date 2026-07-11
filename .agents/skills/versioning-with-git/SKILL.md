@@ -1,6 +1,6 @@
 ---
 name: versioning-with-git
-description: Version the paper library with git WITHOUT keeping a .git inside the (iCloud-synced) vault. Copies the whole vault into a separate out-of-iCloud "git backup folder" that IS a git repo, and commits all changes there (optionally pulling/pushing a remote). Triggers when the user wants to "version / commit / back up / snapshot my library", "sync to git/GitHub", or after paper-summarizer finishes a batch and needs to commit. NOT for summarizing/organizing papers (that is paper-summarizer).
+description: Version the paper library with git WITHOUT keeping a .git inside the (iCloud-synced) vault. Copies the whole vault into a separate out-of-iCloud "git backup folder" that IS a git repo, and commits all changes there (optionally pulling/pushing a remote). Triggers when the user wants to "version / commit / back up / snapshot my library", "sync to git/GitHub", or after paper-organizer finishes a batch and needs to commit. NOT for organizing papers (that is paper-organizer).
 ---
 
 # Versioning with Git (out-of-vault backup)
@@ -11,7 +11,7 @@ vault itself holds **no** `.git`. Instead, history lives in a **separate git rep
 iCloud** — the "git backup folder". This skill copies the whole vault into that folder,
 commits **all** changes there, and (optionally) pulls before / pushes after.
 
-This is the single commit step for the whole system: `paper-summarizer`'s post-AI flow, the tag
+This is the single commit step for the whole system: `paper-organizer`'s post-AI flow, the tag
 flows, and any manual "back up my library" request all route here.
 
 ## Inputs
@@ -135,5 +135,5 @@ Use when `DST` is empty or not yet a repo:
 
 ## What this skill does NOT do
 
-- Does NOT summarize, organize, or enrich papers — that is `paper-summarizer`.
+- Does NOT summarize, organize, or enrich papers — that is `paper-organizer`.
 - Does NOT keep any git state inside the vault.

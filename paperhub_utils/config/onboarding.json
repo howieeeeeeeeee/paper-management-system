@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "workflow": "paper-summarizer-onboarding",
+  "workflow": "paper-organizer-onboarding",
   "description": "Resumable onboarding state. Agents should read onboarding_questionnaire.md first when present, verify each completed step against the filesystem/config, and update this file after each step finishes.",
   "status_values": [
     "pending",

@@ -45,7 +45,7 @@ for i in "${!PAPERS[@]}"; do
     echo "  [$PAPER_NUM/${#PAPERS[@]}] Preparing: $(basename "$PAPER")"
 
     cd "$PAPERHUB_ROOT/paperhub_utils"
-    uv run python -m scripts.paper_summarizer --prepare-cli-input \
+    uv run python -m scripts.paper_organizer --prepare-cli-input \
         --external-cli-engine agy-cli \
         --pdf-path-arg "$PAPERHUB_ROOT/$PAPER" \
         --summary-mode "$SUMMARY_MODE" \
@@ -130,7 +130,7 @@ for FILE_INFO in "${AGY_FILES[@]}"; do
     echo "  [$PAPER_NUM] Processing: $(basename "$ORIGINAL_PDF")"
 
     cd "$PAPERHUB_ROOT/paperhub_utils"
-    if uv run python -m scripts.paper_summarizer --from-response \
+    if uv run python -m scripts.paper_organizer --from-response \
         --external-cli-engine agy-cli \
         --response-file "$AGY_OUTPUT" \
         --pdf-path-arg "$ORIGINAL_PDF" \
@@ -147,7 +147,7 @@ for FILE_INFO in "${AGY_FILES[@]}"; do
 
     # Cleanup prepared temp PDF
     cd "$PAPERHUB_ROOT/paperhub_utils"
-    uv run python -m scripts.paper_summarizer --cleanup-cli-input "$CLEANUP_DIR" 2>/dev/null || true
+    uv run python -m scripts.paper_organizer --cleanup-cli-input "$CLEANUP_DIR" 2>/dev/null || true
     cd "$PAPERHUB_ROOT"
 done
 

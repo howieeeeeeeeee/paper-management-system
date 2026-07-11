@@ -119,7 +119,7 @@ MODEL_LIST = [
     },
 ]
 
-# Agy CLI model used by skills/paper-summarizer/engines/agy_cli.md.
+# Agy CLI model used by skills/paper-organizer/engines/agy_cli.md.
 # Override via config/config.json's "agy_cli_model".
 AGY_CLI_MODEL_LIST = (
     "Gemini 3.1 Pro (High)",
@@ -141,7 +141,7 @@ AGY_CLI_MODEL = (
 )
 
 # Codex CLI model/reasoning pairs used by
-# skills/paper-summarizer/engines/codex_cli.md. Override via
+# skills/paper-organizer/engines/codex_cli.md. Override via
 # config/config.json's "codex_cli_model" and "codex_cli_reasoning_effort".
 CODEX_CLI_MODEL_REASONING_PAIRS = (
     ("gpt-5.5", "low"),

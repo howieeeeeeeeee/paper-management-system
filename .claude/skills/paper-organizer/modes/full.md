@@ -2,7 +2,7 @@
 
 Full PDF → AI generates `{paper_label}.md` (metadata) + `ai_summary.md` (detailed summary).
 
-Triggered by: "with summary" / "full summary" / "AI summary", or as the user's choice when asked. This is the default for direct `scripts.paper_summarizer` calls (`--summary-mode full`).
+Triggered by: "with summary" / "full summary" / "AI summary", or as the user's choice when asked. This is the default for direct `scripts.paper_organizer` calls (`--summary-mode full`).
 
 Engines that support `full`: **OpenRouter** (`engines/openrouter.md`), **Agy CLI** (`engines/agy_cli.md`), **Codex CLI** (`engines/codex_cli.md`), **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap).
 

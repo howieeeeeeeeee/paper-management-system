@@ -20,7 +20,7 @@ Do not guess the user's API key, starter taxonomy, or Git preference. Do not ask
 
 ## 0. Load questionnaire, state, and config
 
-1. Find the paper-library root: nearest parent containing `paperhub_utils/paperhub/config.py`, `.claude/skills/paper-summarizer/SKILL.md`, `SamplePaperBoard.base`, or `onboarding_questionnaire.md`.
+1. Find the paper-library root: nearest parent containing `paperhub_utils/paperhub/config.py`, `.claude/skills/paper-organizer/SKILL.md`, `SamplePaperBoard.base`, or `onboarding_questionnaire.md`.
 2. If `onboarding_questionnaire.md` exists at the root, read it before asking anything.
    - Parse its frontmatter `status`.
    - Accepted statuses: `not_started`, `in_progress`, `ready_for_agent`, `done`.
@@ -173,6 +173,10 @@ Ask only for missing or conflicting information.
     ```bash
     command -v codex && codex exec --help
     ```
+  - Explain that link ingestion first runs `scripts.paper_link_context`. Agy,
+    Codex, and OpenRouter receive the completed local text and keep their web
+    tools disabled. Browsing by the invoking coding agent is an optional
+    preprocessing fallback; missing public facts may remain placeholders.
 - **Metadata page depth**:
   - Use the questionnaire value if present.
   - Recommended values are `2` for fast first-run triage or `4` for more introduction/context.
@@ -304,9 +308,13 @@ End onboarding with:
 
 1. The resolved paper-library root, utilities directory, organized directory, tags directory, vault-relative base path, and the Git settings (versioning on/off, backup folder path, remote sync on/off).
 2. Whether OpenRouter, Agy CLI, Codex CLI, or current-agent processing is available.
-3. A short instruction to add PDFs to `to_be_organized/`.
-4. A recommended first request: run metadata-only mode on one or a small batch of PDFs.
-5. A note that `full` mode creates `ai_summary.md`, while `enrich` adds or refreshes summaries for folders that already exist.
+3. A short instruction to add PDFs to `to_be_organized/` or paste/save public
+   paper links in a Markdown/plain-text note.
+4. Two recommended first requests: metadata-only on one PDF, and link metadata
+   for one pasted URL or a named section of `papers to find.md`.
+5. A note that `full` mode creates `ai_summary.md` when a PDF is available,
+   link metadata writes YAML plus abstract only, and `enrich` adds or refreshes
+   summaries for folders that already exist.
 6. A short done/remaining summary from `paperhub_utils/config/onboarding.json`.
 
 If onboarding is complete and `onboarding_questionnaire.md` still exists, delete it from the root after recording the final state. Do not delete it if onboarding is blocked, if required answers remain unresolved, or if the user explicitly asks to keep it.

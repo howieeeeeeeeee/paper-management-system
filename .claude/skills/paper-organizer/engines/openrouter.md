@@ -1,6 +1,6 @@
 # Workflow: OpenRouter Script
 
-This document covers the **default** paper summarization workflow using `scripts.paper_summarizer` via the OpenRouter API. Read this file when the user does not request Agy CLI or the current coding agent.
+This document covers the **default** paper summarization workflow using `scripts.paper_organizer` via the OpenRouter API. Read this file when the user does not request Agy CLI or the current coding agent.
 
 ## Script Location
 
@@ -28,19 +28,23 @@ In `metadata-only` mode, the script creates a temporary first-`METADATA_ONLY_PAG
 
 ```bash
 cd paperhub_utils
-uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf"
+uv run python -m scripts.paper_organizer "../to_be_organized/paper.pdf"
 ```
 
 **Single PDF, metadata only:**
 
 ```bash
-uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --summary-mode metadata-only
+uv run python -m scripts.paper_organizer "../to_be_organized/paper.pdf" --summary-mode metadata-only
 ```
 
-**Multiple PDFs (script processes in parallel, max 4 workers):**
+**Multiple PDFs (parallel, four workers by default):**
 
 ```bash
-uv run python -m scripts.paper_summarizer "../to_be_organized/paper1.pdf" "../to_be_organized/paper2.pdf" "../to_be_organized/paper3.pdf"
+uv run python -m scripts.paper_organizer \
+  "../to_be_organized/paper1.pdf" \
+  "../to_be_organized/paper2.pdf" \
+  "../to_be_organized/paper3.pdf" \
+  --max-workers 4
 ```
 
 Pass the same `--summary-mode` once for the whole batch.
@@ -48,25 +52,25 @@ Pass the same `--summary-mode` once for the whole batch.
 **With custom model:**
 
 ```bash
-uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --model "anthropic/claude-sonnet-4"
+uv run python -m scripts.paper_organizer "../to_be_organized/paper.pdf" --model "anthropic/claude-sonnet-4"
 ```
 
 **With additional instructions (user-provided context):**
 
 ```bash
-uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --instruction "Focus on the identification strategy and data sources"
+uv run python -m scripts.paper_organizer "../to_be_organized/paper.pdf" --instruction "Focus on the identification strategy and data sources"
 ```
 
 **With explicit full-summary mode:**
 
 ```bash
-uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --summary-mode full
+uv run python -m scripts.paper_organizer "../to_be_organized/paper.pdf" --summary-mode full
 ```
 
 **With verbose logging:**
 
 ```bash
-uv run python -m scripts.paper_summarizer "../to_be_organized/paper.pdf" --verbose
+uv run python -m scripts.paper_organizer "../to_be_organized/paper.pdf" --verbose
 ```
 
 **Note on `--instruction`:** If the user provides any additional context, notes, or specific requests in their message (e.g., "this paper is about X", "pay attention to the welfare analysis"), pass it via the `--instruction` flag. Omit the flag if the user provides no extra info.
@@ -201,13 +205,13 @@ When API succeeds but parsing fails, the script saves raw content to `output/raw
 2. Read the raw file (has YAML frontmatter with `pdf_path`, token usage)
 3. Extract sections according to the selected mode: `full` expects metadata plus `# ai_summary`; `metadata-only` expects metadata only
 4. Create folder under organized/, write `{label}.md`, write `ai_summary.md` only in `full` mode, move PDF
-5. Clean up: `uv run python -m scripts.paper_summarizer --delete-raw "output/raw_outputs/raw_file.md"`
+5. Clean up: `uv run python -m scripts.paper_organizer --delete-raw "output/raw_outputs/raw_file.md"`
 6. Commit and report as usual
 
 ## Batch Processing Logic
 
 1. **Collect PDF paths** — Gather all PDF file paths
-2. **Single script call** — Pass all paths to the script in one command (handles parallel processing internally, max 4 workers)
+2. **Single script call** — Pass all paths to the script in one command; `--max-workers` accepts 1-8 and defaults to 4.
 3. **Parse results** — Check each paper's status in the `results` array
 4. **Handle failures** — Retry or ask user
 5. **Validate & fix** — Check output files, auto-fix issues (see shared rules in SKILL.md; summary file check is `full` mode only)

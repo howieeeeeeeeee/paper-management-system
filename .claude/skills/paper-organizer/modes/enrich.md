@@ -92,7 +92,7 @@ The interactive stderr prompt fires only when `--force` is omitted; the skill sh
 
 Same handshake pattern as `engines/agy_cli.md` — process **one folder at a time**. The model is resolved from `config.AGY_CLI_MODEL` (configured via `paperhub_utils/config/config.json` key `agy_cli_model`) unless the user requests an allowed `--agy-model`. The prepare step persists the selected model to the Agy settings path; set `AGY_CLI_SETTINGS_PATH` if the local Agy install uses a custom settings location.
 
-This is the third Agy-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_summarizer`, but it uses the same Agy `--add-dir`, absolute `@PDF`, sentinel, stderr/log, and model-label pattern.
+This is the third Agy-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_organizer`, but it uses the same Agy `--add-dir`, absolute `@PDF`, sentinel, stderr/log, and model-label pattern.
 
 ```bash
 # 1. Prepare prompt + PDF path and persist the Agy model.
@@ -149,7 +149,7 @@ The prepared JSON includes `"past_summary_used": true|false` so the skill can co
 
 Same handshake pattern as `engines/codex_cli.md` — process **one folder at a time**. The model/reasoning pair is resolved from `config.CODEX_CLI_MODEL` and `config.CODEX_CLI_REASONING_EFFORT` (configured via `paperhub_utils/config/config.json` keys `codex_cli_model` and `codex_cli_reasoning_effort`) unless the user requests an allowed `--codex-model` and/or `--codex-reasoning-effort`.
 
-This is the third Codex-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_summarizer`, but it uses the same `codex exec`, sentinel, stderr, and model-label pattern.
+This is the third Codex-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_organizer`, but it uses the same `codex exec`, sentinel, stderr, and model-label pattern.
 
 ```bash
 # 1. Prepare prompt + PDF path and resolve the Codex model/reasoning pair.

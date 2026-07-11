@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Search organized PaperHub papers from a vague description.
 
-This is a local recall helper: it reads metadata notes and summaries under
-`organized/`, ranks candidates, and prints the best matches. It does not call
-an API.
+This local recall helper reads all visible Markdown associated with each valid
+paper folder under ``organized/``, ranks papers, and prints the best matches.
+It does not call an API.
 """
 
 from __future__ import annotations
@@ -71,6 +71,16 @@ STOPWORDS = {
 
 
 @dataclass(frozen=True)
+class MarkdownMatch:
+    path: str
+    relative_path: str
+    matched_terms: list[str]
+    excluded_terms: list[str]
+    match_count: int
+    snippets: list[str]
+
+
+@dataclass(frozen=True)
 class SearchResult:
     label: str
     score: float
@@ -84,6 +94,9 @@ class SearchResult:
     matched_terms: list[str]
     excluded_terms: list[str]
     snippets: list[str]
+    metadata_snippets: list[str]
+    summary_snippets: list[str]
+    matched_markdown: list[MarkdownMatch]
     score_detail: dict[str, float]
 
 
@@ -100,13 +113,20 @@ def normalize_token(token: str) -> str:
     return token
 
 
-def extract_terms(text: str) -> list[str]:
-    terms = []
-    seen = set()
+def normalized_tokens(text: str) -> list[str]:
+    tokens = []
     for raw in WORD_RE.findall(text):
         term = normalize_token(raw)
         if term in STOPWORDS or len(term) < 3:
             continue
+        tokens.append(term)
+    return tokens
+
+
+def extract_terms(text: str) -> list[str]:
+    terms = []
+    seen = set()
+    for term in normalized_tokens(text):
         if term not in seen:
             seen.add(term)
             terms.append(term)
@@ -116,8 +136,12 @@ def extract_terms(text: str) -> list[str]:
 def read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return ""
+
+
+def strip_frontmatter(text: str) -> str:
+    return FRONTMATTER_RE.sub("", text, count=1)
 
 
 def parse_metadata(text: str) -> dict[str, Any]:
@@ -151,6 +175,28 @@ def iter_papers(organized_dir: Path) -> list[dict[str, Any]]:
         metadata_text = read_text(metadata_path)
         summary_path = folder / "ai_summary.md"
         summary_text = read_text(summary_path)
+        extra_markdown = []
+        candidates = sorted(
+            folder.rglob("*"),
+            key=lambda path: path.relative_to(folder).as_posix().casefold(),
+        )
+        for path in candidates:
+            relative_path = path.relative_to(folder)
+            if (
+                path in {metadata_path, summary_path}
+                or path.is_symlink()
+                or not path.is_file()
+                or path.suffix.lower() != ".md"
+                or any(part.startswith(".") for part in relative_path.parts)
+            ):
+                continue
+            extra_markdown.append(
+                {
+                    "path": path,
+                    "relative_path": relative_path.as_posix(),
+                    "text": read_text(path),
+                }
+            )
         meta = parse_metadata(metadata_text)
         papers.append(
             {
@@ -159,6 +205,7 @@ def iter_papers(organized_dir: Path) -> list[dict[str, Any]]:
                 "metadata_path": metadata_path,
                 "metadata_text": metadata_text,
                 "summary_text": summary_text,
+                "extra_markdown": extra_markdown,
                 "title": str(meta.get("title") or ""),
                 "authors": coerce_list(meta.get("authors")),
                 "year": str(meta.get("year") or ""),
@@ -171,24 +218,98 @@ def iter_papers(organized_dir: Path) -> list[dict[str, Any]]:
 
 
 def count_term(text: str, term: str) -> int:
-    normalized = " ".join(extract_terms(text))
-    if not normalized:
-        return 0
-    return normalized.split().count(term)
+    return normalized_tokens(text).count(term)
 
 
 def snippets_for(text: str, terms: list[str], limit: int = 2) -> list[str]:
     snippets = []
     for raw_line in text.splitlines():
         line = raw_line.strip()
-        if not line or len(line) < 20:
+        if not line:
             continue
         normalized_line_terms = set(extract_terms(line))
         if normalized_line_terms.intersection(terms):
-            snippets.append(line[:280])
+            snippets.append(window_around_match(line, terms))
         if len(snippets) >= limit:
             break
     return snippets
+
+
+def window_around_match(text: str, terms: list[str], max_chars: int = 280) -> str:
+    if len(text) <= max_chars:
+        return text
+    match_start = 0
+    for match in WORD_RE.finditer(text):
+        if normalize_token(match.group()) in terms:
+            match_start = match.start()
+            break
+    start = max(0, match_start - max_chars // 3)
+    end = min(len(text), start + max_chars)
+    start = max(0, end - max_chars)
+    excerpt = text[start:end].strip()
+    if start:
+        excerpt = "..." + excerpt
+    if end < len(text):
+        excerpt += "..."
+    return excerpt
+
+
+def word_excerpt(text: str, limit: int) -> str:
+    words = strip_frontmatter(text).split()
+    if not words:
+        return ""
+    excerpt = " ".join(words[:limit])
+    if len(words) > limit:
+        excerpt += " ..."
+    return excerpt
+
+
+def preferred_snippets(
+    text: str,
+    terms: list[str],
+    *,
+    fallback_text: str,
+    fallback_words: int,
+) -> list[str]:
+    matches = snippets_for(strip_frontmatter(text), terms, limit=2)
+    if matches:
+        return matches
+    fallback = word_excerpt(fallback_text, fallback_words)
+    return [fallback] if fallback else []
+
+
+def markdown_matches(
+    notes: list[dict[str, Any]],
+    terms: list[str],
+    exclude_terms: list[str],
+) -> list[MarkdownMatch]:
+    matches = []
+    for note in notes:
+        text = note["text"]
+        positive = {term: count_term(text, term) for term in terms}
+        positive = {term: count for term, count in positive.items() if count}
+        if not positive:
+            continue
+        excluded = sorted(term for term in exclude_terms if count_term(text, term))
+        matches.append(
+            MarkdownMatch(
+                path=str(note["path"]),
+                relative_path=note["relative_path"],
+                matched_terms=sorted(positive),
+                excluded_terms=excluded,
+                match_count=sum(positive.values()),
+                snippets=snippets_for(strip_frontmatter(text), terms, limit=2),
+            )
+        )
+    return sorted(
+        matches,
+        key=lambda item: (
+            -len(item.matched_terms),
+            -item.match_count,
+            item.relative_path.casefold(),
+            item.relative_path,
+        ),
+    )
 
 
 def score_paper(
@@ -204,6 +325,7 @@ def score_paper(
         "abstract": extract_abstract(paper["metadata_text"]),
         "metadata": paper["metadata_text"],
         "summary": paper["summary_text"],
+        "extra_markdown": "\n".join(note["text"] for note in paper["extra_markdown"]),
     }
     weights = {
         "title": 3.0,
@@ -212,6 +334,7 @@ def score_paper(
         "abstract": 1.5,
         "metadata": 1.0,
         "summary": 0.5,
+        "extra_markdown": 1.0,
     }
     detail: dict[str, float] = {}
     matched_terms = set()
@@ -239,14 +362,30 @@ def score_paper(
         score += coverage_bonus
 
     normalized_query = " ".join(extract_terms(query))
-    combined = " ".join([paper["metadata_text"], paper["summary_text"]]).lower()
-    if normalized_query and normalized_query in combined:
+    documents = [paper["metadata_text"], paper["summary_text"]] + [
+        note["text"] for note in paper["extra_markdown"]
+    ]
+    if normalized_query and any(
+        normalized_query in " ".join(normalized_tokens(document)) for document in documents
+    ):
         detail["phrase"] = 4.0
         score += 4.0
 
-    snippets = snippets_for(paper["summary_text"], terms)
-    if len(snippets) < 2:
-        snippets.extend(snippets_for(paper["metadata_text"], terms, limit=2 - len(snippets)))
+    abstract = extract_abstract(paper["metadata_text"])
+    metadata_snippets = preferred_snippets(
+        paper["metadata_text"],
+        terms,
+        fallback_text=abstract or paper["metadata_text"],
+        fallback_words=80,
+    )
+    summary_snippets = preferred_snippets(
+        paper["summary_text"],
+        terms,
+        fallback_text=paper["summary_text"],
+        fallback_words=100,
+    )
+    snippets = (summary_snippets + metadata_snippets)[:2]
+    matched_markdown = markdown_matches(paper["extra_markdown"], terms, exclude_terms)
 
     return SearchResult(
         label=paper["label"],
@@ -261,6 +400,9 @@ def score_paper(
         matched_terms=sorted(matched_terms),
         excluded_terms=sorted(excluded_matches),
         snippets=snippets,
+        metadata_snippets=metadata_snippets,
+        summary_snippets=summary_snippets,
+        matched_markdown=matched_markdown,
         score_detail=detail,
     )
 
@@ -284,7 +426,10 @@ def search(
         for paper in iter_papers(organized_dir)
     ]
     results = [result for result in results if result.score > 0]
-    return sorted(results, key=lambda item: item.score, reverse=True)[:limit]
+    return sorted(
+        results,
+        key=lambda item: (-item.score, item.label.casefold(), item.label),
+    )[:limit]
 
 
 def extract_abstract(metadata_text: str) -> str:
@@ -301,7 +446,7 @@ def read_summary_for_metadata_path(metadata_path: str) -> str:
     return read_text(path.with_name("ai_summary.md"))
 
 
-def print_full_context(result: SearchResult) -> None:
+def print_full_context(result: SearchResult, *, max_extra_full_chars: int) -> None:
     metadata_text = read_text(Path(result.path))
     summary_text = read_summary_for_metadata_path(result.path)
     print("   metadata_note:")
@@ -311,6 +456,35 @@ def print_full_context(result: SearchResult) -> None:
         print("   ai_summary:")
         for line in summary_text.rstrip().splitlines():
             print(f"     {line}")
+    if not result.matched_markdown:
+        return
+    print("   matched_markdown_notes:")
+    remaining = max_extra_full_chars
+    omitted = []
+    for match in result.matched_markdown:
+        if max_extra_full_chars and remaining <= 0:
+            omitted.append(match.relative_path)
+            continue
+        text = read_text(Path(match.path)).rstrip()
+        print(f"     file={match.relative_path}")
+        if not max_extra_full_chars or len(text) <= remaining:
+            rendered = text
+            if max_extra_full_chars:
+                remaining -= len(text)
+        else:
+            rendered = text[:remaining].rstrip()
+            print_chars = len(rendered)
+            rendered += (
+                f"\n...[truncated after {print_chars} of {len(text)} characters; "
+                "increase --max-extra-full-chars or use 0 for unbounded]"
+            )
+            remaining = 0
+        for line in rendered.splitlines():
+            print(f"       {line}")
+    if omitted:
+        print("     omitted_after_limit:")
+        for relative_path in omitted:
+            print(f"       - {relative_path}")
 
 
 def print_human(
@@ -319,6 +493,7 @@ def print_human(
     detail_count: int,
     show_score_detail: bool,
     full: bool,
+    max_extra_full_chars: int,
 ) -> None:
     if not results:
         print("No matching papers found.")
@@ -347,12 +522,31 @@ def print_human(
         print("   matched=" + ", ".join(result.matched_terms))
         if result.excluded_terms:
             print("   exclude_penalty=" + ", ".join(result.excluded_terms))
-        for snippet in result.snippets:
-            print(f"   - {snippet}")
+        print("   metadata_excerpt:")
+        for snippet in result.metadata_snippets:
+            print(f"     - {snippet}")
+        print("   ai_summary_excerpt:")
+        if result.summary_snippets:
+            for snippet in result.summary_snippets:
+                print(f"     - {snippet}")
+        else:
+            print("     [not available]")
+        if result.matched_markdown:
+            print("   matched_markdown:")
+            for match in result.matched_markdown:
+                print(
+                    f"     - {match.relative_path} "
+                    f"matched={','.join(match.matched_terms)} "
+                    f"match_count={match.match_count}"
+                )
+                if match.excluded_terms:
+                    print("       exclude_penalty=" + ", ".join(match.excluded_terms))
+                for snippet in match.snippets:
+                    print(f"       - {snippet}")
         if show_score_detail:
             print("   detail=" + json.dumps(result.score_detail, sort_keys=True))
         if full:
-            print_full_context(result)
+            print_full_context(result, max_extra_full_chars=max_extra_full_chars)
         print()
 
 
@@ -380,6 +574,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--detail", type=int, default=5, help="number of full cards to print")
     parser.add_argument("--detailed", action="store_true", help="print score details")
     parser.add_argument("--full", action="store_true", help="include full metadata and ai_summary for detailed cards")
+    parser.add_argument(
+        "--max-extra-full-chars",
+        type=int,
+        default=60000,
+        help="per-paper character limit for matched extra Markdown in --full mode; 0 is unbounded",
+    )
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -393,6 +593,8 @@ def main() -> int:
     limit = args.top if args.top is not None else args.limit
     limit = max(1, limit or 8)
     detail_count = max(0, min(args.detail, limit))
+    if args.max_extra_full_chars < 0:
+        raise SystemExit("--max-extra-full-chars must be 0 or greater")
     results = search(
         query,
         organized_dir=args.organized_dir,
@@ -408,6 +610,7 @@ def main() -> int:
             detail_count=detail_count,
             show_score_detail=args.detailed,
             full=args.full,
+            max_extra_full_chars=args.max_extra_full_chars,
         )
     return 0
 

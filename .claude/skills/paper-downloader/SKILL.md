@@ -1,11 +1,11 @@
 ---
 name: paper-downloader
-description: Download and cite NEW research papers from the web, then hand off to paper-summarizer. Triggers when users want to fetch, download, get, pull, or grab a paper (or several) they do NOT yet have, by title/author, DOI, arXiv ID, or URL; resolve a citation/BibTeX; or process the "papers to find.md" backlog. Searches open-access APIs (arXiv/OpenAlex/Crossref/Unpaywall) and, for paywalled journals, drives the local gstack browser over the user's school VPN for legitimate institutional access. Real published version first, free working-paper version as fallback. Always writes a citation sidecar and offers to summarize. NOT for locating papers already in organized/ — that is the paper-finder skill.
+description: Download and cite NEW research papers from the web, then hand off to paper-organizer. Triggers when users want to fetch, download, get, pull, or grab a paper (or several) they do NOT yet have, by title/author, DOI, arXiv ID, or URL; resolve a citation/BibTeX; or process the "papers to find.md" backlog. Searches open-access APIs (arXiv/OpenAlex/Crossref/Unpaywall) and, for paywalled journals, drives the local gstack browser over the user's school VPN for legitimate institutional access. Real published version first, free working-paper version as fallback. Always writes a citation sidecar and offers to summarize. NOT for locating papers already in organized/ — that is the paper-finder skill.
 ---
 
 # Research Paper Downloader
 
-The front-end to `paper-summarizer`. Given paper info, this **resolves metadata → downloads a PDF into `to_be_organized/` → writes a `{stem}.citation.md` sidecar → offers to summarize**. The summarizer auto-detects that sidecar and uses it as authoritative context, so the citation flows through automatically.
+The front-end to `paper-organizer`. Given paper info, this **resolves metadata → downloads a PDF into `to_be_organized/` → writes a `{stem}.citation.md` sidecar → offers to summarize**. The summarizer auto-detects that sidecar and uses it as authoritative context, so the citation flows through automatically.
 
 **Read only the doc(s) you need** — this file routes; the details live in the sub-docs.
 
@@ -23,7 +23,7 @@ modes/
 shared/
   fetcher_contract.md          ← the exact `scripts.paper_fetcher` CLI + JSON contract
   browser_download.md          ← gstack recipe, cookie-bridge, handoff/resume, ETHICS boundary
-  handoff_to_summarizer.md     ← end-of-flow "summarize now?" + how to invoke paper-summarizer
+  handoff_to_summarizer.md     ← end-of-flow "summarize now?" + how to invoke paper-organizer
 ```
 
 ## Core flow
@@ -84,6 +84,6 @@ Skip a question whenever it's already determined. If the user pasted a DOI and s
 
 ## What this skill does NOT do
 
-- Does NOT summarize or organize papers itself — it hands off to `paper-summarizer`.
+- Does NOT summarize or organize papers itself — it hands off to `paper-organizer`.
 - Does NOT circumvent paywalls — institutional/VPN and open-access only.
 - Does NOT invent metadata — everything in the sidecar comes from a citation database (or is left blank for the summarizer to fill from the PDF).

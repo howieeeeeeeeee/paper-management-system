@@ -87,7 +87,7 @@ from paperhub.cli_workflow.pdf import (
     ensure_safe_cli_cleanup_path,
     repo_relative_path,
 )
-from scripts.paper_summarizer import (
+from scripts.paper_organizer import (
     call_openrouter_api,
     call_openrouter_text_api,
     encode_pdf_to_base64,

@@ -13,7 +13,7 @@ This folder contains the scripts, prompts, and config used by PaperHub skills. M
 
 ## Search Helpers
 
-- `scripts/paper_search.py`: searches existing PaperHub papers under `organized/` for `paper-finder`.
+- `scripts/paper_search.py`: searches all visible Markdown inside each valid paper folder under `organized/`, aggregates evidence by paper label, and returns bounded context for `paper-finder`.
 - `scripts/knowledge_base_search.py`: searches visible Markdown notes in the configured Obsidian vault for `ask-knowledge-base`; pass `--ignore-papers` to skip standard PaperHub metadata notes and generated paper summaries.
 
 ## Update Boundary
@@ -26,9 +26,25 @@ PaperHub treats this folder as two kinds of content:
 
 Run `update-paperhub-utils` from the repository root to refresh the update-managed parts. Prompt files are compared before update; customized prompts are merged by the agent instead of overwritten.
 
+## Organizer Entry Points
+
+- `scripts/paper_organizer.py`: canonical PDF/link organizer; preserves the
+  legacy PDF CLI.
+- `scripts/paper_link_context.py`: resolves public paper links into bounded,
+  offline `source_context.txt` files and classifies pure links versus public
+  PDFs for pending, metadata-only, or full routing.
+- `scripts/paper_summarizer.py`: compatibility implementation for older
+  commands.
+
+Pass repeated `--link-context` values to `scripts.paper_organizer` with
+`--engine openrouter|agy-cli|codex-cli` and `--max-workers 1-8` for managed
+parallel pure-link generation. Public PDFs are returned as routed results and
+processed separately in same-mode PDF batches.
+
 ## Prompt Files
 
-All three modes (`full`, `metadata-only`, `enrich`) compose their prompt from the fragments below. Edit the fragment to change behavior across modes.
+PDF modes (`full`, `metadata-only`, `enrich`) compose their prompt from the
+shared fragments below. Link metadata uses a dedicated offline fragment.
 
 - `prompts/shared/style.txt`: shared writing style rules.
 - `prompts/shared/paper_label.txt`: `# paper_label` section rules.
@@ -37,6 +53,8 @@ All three modes (`full`, `metadata-only`, `enrich`) compose their prompt from th
 - `prompts/aspect/summary_full.txt`: full `ai_summary.md` structure (used by `full` and `enrich`).
 - `prompts/aspect/enrich_intro.txt`: enrich-mode instructions.
 - `prompts/aspect/past_summary.txt`: how an existing summary is reused during enrich.
+- `prompts/aspect/link_metadata.txt`: YAML + abstract-only output from prepared
+  public link context; external engines must not browse.
 - `paperhub/prompt/builder.py`: composes the fragments per mode.
 
 ## Config Files

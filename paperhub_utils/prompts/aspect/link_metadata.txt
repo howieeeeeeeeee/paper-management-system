@@ -1,0 +1,43 @@
+Use only the prepared PaperHub link context below. Do not browse, search, fetch
+the URL, call web tools, or infer unsupported facts. Missing information must
+remain explicit rather than being guessed.
+
+Return exactly two level-1 sections, with no code fence and no text outside:
+
+# paper_label
+# metadata
+
+The paper label must follow the configured PaperHub author-year-topic format.
+When the context supplies a fallback label, use it if normal citation fields are
+insufficient.
+
+The metadata section must contain exactly this shape:
+
+---
+title: "[Full title or [Unknown title]]"
+authors:
+  - [Verified author]
+year: [Verified year or blank]
+journal: "[Verified journal or empty string]"
+link: [Canonical public landing or DOI URL]
+status:
+  - initiated
+tags:
+  - [3-5 concise tags grounded in the supplied title and abstract]
+created: {today}
+interest: none
+importance: none
+contributions:
+---
+
+# [Full title or [Unknown title]]
+
+## Abstract
+[Copy the verified abstract verbatim, or write [Abstract not available from public sources]]
+
+Do not add Reflections, takeaways, methodology, relevance, related papers,
+research ideas, quick reference, or an AI summary.
+
+<paperhub_link_context>
+{link_context_text}
+</paperhub_link_context>

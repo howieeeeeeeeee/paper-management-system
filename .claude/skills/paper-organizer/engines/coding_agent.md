@@ -152,7 +152,7 @@ Run the pre-flight `AskUserQuestion` gate above. If the user picks Proceed:
 
 ```bash
 cd paperhub_utils
-uv run python -m scripts.paper_summarizer --prepare-cli-input \
+uv run python -m scripts.paper_organizer --prepare-cli-input \
   --pdf-path-arg "../to_be_organized/paper.pdf" \
   --summary-mode full \
   [--instruction "..."] \
@@ -250,7 +250,7 @@ Then strip the `# ai_summary` heading line from the body before writing.
 ```bash
 cd paperhub_utils
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agent_input.json'))['cleanup_dir'])")
-uv run python -m scripts.paper_summarizer --cleanup-cli-input "${CLEANUP_DIR}"
+uv run python -m scripts.paper_organizer --cleanup-cli-input "${CLEANUP_DIR}"
 ```
 
 Then `shared/post_ai.md` for validation + tag handoff + commit. The `ai_summary.md` check now applies (full mode requires it).

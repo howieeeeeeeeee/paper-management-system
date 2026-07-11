@@ -1,13 +1,17 @@
 ---
 name: paper-summarizer
-description: Automated research paper organization using AI. Triggers when users upload PDFs and ask to summarize, organize, or add papers to their library, or when they ask to enrich an existing folder with an AI summary. Supports OpenRouter, Agy CLI, Codex CLI, and current-coding-agent engines across full / metadata-only / enrich modes.
+description: Deprecated compatibility alias for PaperHub paper organization. Use when an existing prompt names paper-summarizer, then route the complete request to paper-organizer.
 ---
 
-# Research Paper Summarizer
+# Paper Summarizer Compatibility Alias
 
-The project’s root folder contains a `.claude` directory. Open `.claude/skills/paper-summarizer/SKILL.md` (from that root) for the canonical workflow and rules.
+The project's root folder contains a `.claude` directory. Open
+`.claude/skills/paper-organizer/SKILL.md` from that root and follow the canonical
+workflow without changing the user's requested inputs, mode, engine, or extra
+instructions.
 
-Routes the user's request to the right `engine x mode`, then delegates to a per-doc playbook. **Read only the doc(s) you need**; don't load unrelated ones. For routine runs, **do not read** `paperhub_utils/scripts/*.py` or `paperhub_utils/paperhub/**/*.py`; execute what the canonical skill and linked engine/mode docs specify. **Always provide an end-of-batch summary** per canonical `shared/post_ai.md` step 5 Report (and `modes/{mode}.md` templates) - see canonical `SKILL.md` Critical rules and Post-AI flow.
+Mention the new `paper-organizer` name in the completion report, but do not
+block the legacy request or require migration.
 
 ## Local uv environment
 

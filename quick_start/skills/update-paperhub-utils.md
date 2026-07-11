@@ -8,4 +8,4 @@ Use the best available model because the updater may need semantic prompt merges
 \update-paperhub-utils: check for updates and apply safe utility updates.
 ```
 
-Utility release notes live in [utility_changelog.json](../paperhub_utils/utility_changelog.json).
+Utility release notes live in [utility_changelog.json](../../paperhub_utils/utility_changelog.json).

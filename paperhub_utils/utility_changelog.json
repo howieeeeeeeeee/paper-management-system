@@ -1,8 +1,41 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.06.2",
+  "latest_version": "2026.07.11.4",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.11.4": {
+      "date": "2026-07-11",
+      "title": "Paper Organizer, Link Batches, and Library Search",
+      "update_kind": "structural + content",
+      "summary": "Renames the canonical paper workflow to paper-organizer, adds safe offline link ingestion and parallel mixed-link batches, reorganizes user guides, and expands Paper Finder across every Markdown note associated with a paper.",
+      "how_to_apply": "Update the managed skills, scripts, tests, prompts, and documentation together. Use paper-organizer for new PDF and link tasks; paper-summarizer remains a compatibility alias. Preprocess public links into local source_context.txt files before external-engine calls. No configuration or paper-library migration is required.",
+      "added": [
+        "paper-organizer canonical skill and scripts.paper_organizer entrypoint with paper-summarizer compatibility routers.",
+        "Safe public-link preprocessing through landing-page metadata, arXiv, Crossref, OpenAlex, and Unpaywall, producing local source_context.txt files without authentication, browser sessions, or paywall bypassing.",
+        "Dedicated link-metadata generation for existing YAML fields, the paper-title heading, and the public abstract without interpretive sections or ai_summary.md.",
+        "Managed parallel pure-link generation for OpenRouter, Agy CLI, and Codex CLI with four workers by default and a configurable 1-8 limit.",
+        "Public-PDF routes for pending mode, metadata-only, and full summary, plus structured authoritative citation sidecars, batch deduplication, and existing-library checks.",
+        "Recursive visible-Markdown discovery inside valid paper folders, including legacy summary.md and future nested notes.",
+        "Structured matched-note paths, terms, counts, and bounded excerpts in human and JSON search results.",
+        "Full matched-note context with a 60,000-character per-paper default and an explicit unbounded option.",
+        "README and quick-start guidance for vault placement, PDF and link entry points, Markdown link inboxes, mixed batches, copyright awareness, and valid paper folders with or without PDFs."
+      ],
+      "changed": [
+        "External link engines receive prepared text only: OpenRouter receives no tools, Codex web search stays disabled, and Agy is instructed not to browse.",
+        "Public Google Drive PDFs can be retained through unauthenticated downloads without sending PDF text to link-metadata engines.",
+        "Coding-Agent Additions and structured citation sidecars override weaker engine metadata; bare DOI links and canonical landing URLs participate in duplicate detection.",
+        "Mixed batches split pure links from public-PDF metadata/full groups, finalize folder writes sequentially, retain failed diagnostics, and report partial failures in input order.",
+        "OpenRouter PDF batches accept --max-workers, while Agy and Codex managed calls use isolated per-run inputs and diagnostics.",
+        "Paper folders and validation allow link-only records without a PDF, and cross-skill handoffs and onboarding use paper-organizer as the canonical name.",
+        "Skill guides now live under quick_start/skills, Obsidian guidance lives under quick_start/obsidian, and all README and use-case links point to the categorized paths.",
+        "Additional note matches contribute through one capped paper-level scoring field so repeated files cannot create independent field bonuses.",
+        "Normal Paper Finder results separately expose trimmed metadata, AI-summary context, and matched additional-note evidence.",
+        "Term occurrence counting now preserves repetitions so the documented logarithmic field caps operate correctly."
+      ],
+      "removed": [
+        "The obsolete duplicated paper-summarizer quick-start guide; the thin compatibility guide remains under quick_start/skills."
+      ]
+    },
     "2026.07.06.1": {
       "date": "2026-07-06",
       "title": "Out-of-vault Git Versioning",

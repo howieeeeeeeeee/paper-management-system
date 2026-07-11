@@ -42,12 +42,13 @@ Nothing to fill in here. The agent finds your Obsidian vault automatically durin
 
 ## 3. Engine And Runtime
 
-PaperHub summarizes papers with different AI engines. Pick your preferred one(s); if it is not available, the agent falls back to whatever works.
+PaperHub organizes PDFs and public paper links with different AI engines. Pick your preferred one(s); if it is not available, the agent asks before changing
+engines. Link runs prepare public metadata as local text before calling an engine, so external engines do not browse the link themselves.
 
 **Preferred AI engine** (pick one):
 
-- [ ] OpenRouter — simplest for full summaries; just needs an API key (recommended)
-- [ ] Agy CLI — direct Google/Gemini CLI (recommended if subscribing to Google AI Pro, only if already installed)
+- [ ] OpenRouter — simplest for the full workflow; just needs an API key (recommended)
+- [ ] Agy CLI — direct Google/Antigravity CLI (recommended if subscribing to Google AI Pro, only if already installed)
 - [ ] Codex CLI — OpenAI `codex exec` (only if already installed)
 - [ ] Current coding agent — allow full summaries (no separate service; higher token use)
 - [ ] Current coding agent — metadata-only first, ask before full summaries
@@ -99,7 +100,7 @@ Paste the absolute path of a **plain local folder outside iCloud/Dropbox/any clo
 
 **3. Sync to a remote (GitHub/GitLab)?**
 
-If yes, each versioning run will `git pull` before and `git push` after, keeping a remote copy in sync (useful across devices).
+If yes, each versioning run will `git pull` before and `git push` after, keeping a remote copy in sync.
 
 - [ ] Yes — pull before and push after each versioning run. (After onboarding I will add the remote, e.g. `git remote add origin <url>`, and confirm I can push. The agent can help wire this up.)
 - [ ] No — keep versions local in the backup folder only.
@@ -115,6 +116,9 @@ This controls how many pages the agent reads during the metadata-only mode. A sm
 ```text
 
 ```
+
+Link inputs do not use this page limit unless a public PDF is downloaded for a full-summary request. Public link metadata is limited to citation fields and the
+abstract. Missing facts remain explicit placeholders.
 
 ## 4. Research Interests
 
@@ -179,7 +183,7 @@ Paper labels become folder names, file names, and Obsidian link targets. For exa
 
 Choose one:
 
-- [ ] Recommended compact author-year-title keywords: `melitz2003heterogeneousfirms`, `cardkrueger1994minimumwage`, `autoretal2020importcompetition`
+- [ ] Compact author-year-title keywords: `melitz2003heterogeneousfirms`, `cardkrueger1994minimumwage`, `autoretal2020importcompetition`
 - [ ] First-author plus etal for multi-author papers: `melitz2003heterogeneous`, `cardetal1994minimum`, `autoretal2020trade`
 - [ ] Author-year only, shortest labels: `melitz2003`, `cardkrueger1994`, `autoretal2020`
 - [ ] Readable snake_case: `melitz_2003_heterogeneous`, `card_krueger_1994_minimum`, `autor_etal_2020_trade`
@@ -219,5 +223,5 @@ Use this space for preferences that do not fit above. Examples: where PDFs are c
 After filling the questionnaire, paste this into your coding agent, make sure you have `cd` to the `PaperHub` folder:
 
 ```text
-Use the \paper-summarizer skill to onboard this project from scratch.
+Use the \paper-organizer skill to onboard this project from scratch.
 ```

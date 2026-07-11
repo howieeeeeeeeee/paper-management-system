@@ -43,6 +43,8 @@ except ImportError:
     print("ERROR: 'requests' package not found. Install with: pip install requests")
     sys.exit(1)
 
+import yaml
+
 try:
     from dotenv import load_dotenv
 
@@ -474,6 +476,64 @@ def call_openrouter_text_api(
         "error": "API call failed after all retries",
         "max_retries": MAX_RETRIES,
     }
+
+
+def call_openrouter_prompt_api(
+    api_key: str,
+    model_id: str,
+    prompt: str,
+    provider: dict | None = None,
+    reasoning: dict | None = None,
+) -> dict:
+    """Call OpenRouter with a plain text prompt and no external tools."""
+    payload = {
+        "model": model_id,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 8000,
+        "temperature": 0,
+    }
+    if reasoning:
+        payload["reasoning"] = reasoning
+    if provider:
+        payload["provider"] = provider
+
+    headers = make_openrouter_headers(api_key)
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = requests.post(
+                OPENROUTER_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=300,
+            )
+            if response.status_code == 200:
+                result = parse_openrouter_success_response(response)
+                result["input_mode"] = "plain_text"
+                result["web_tools"] = False
+                return result
+            try:
+                body = response.json()
+            except ValueError:
+                body = {"response_text": response.text[:2000]}
+            if attempt == MAX_RETRIES - 1:
+                return {
+                    "success": False,
+                    "error": f"HTTP {response.status_code}: {response.reason}",
+                    "status_code": response.status_code,
+                    "error_details": body,
+                }
+        except requests.RequestException as exc:
+            if attempt == MAX_RETRIES - 1:
+                return {
+                    "success": False,
+                    "error": f"Request exception: {type(exc).__name__}: {exc}",
+                    "error_type": type(exc).__name__,
+                }
+        if attempt < MAX_RETRIES - 1:
+            import time
+
+            time.sleep(2**attempt)
+    return {"success": False, "error": "API call failed after all retries"}
 
 
 def call_openrouter_text_fallback(
@@ -1506,6 +1566,72 @@ def fold_sidecar_into_instruction(pdf_path: Path, instruction: str) -> str:
     return f"{block}\n\n{instruction}".strip() if instruction else block
 
 
+def load_verified_sidecar_metadata(pdf_path: Path) -> dict:
+    """Load structured public-link facts from a PaperHub citation sidecar."""
+    sidecar = find_sidecar_for_pdf(pdf_path)
+    if sidecar is None:
+        return {}
+    try:
+        text = sidecar.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    match = re.match(r"(?s)^---\n(.*?)\n---", text)
+    if not match:
+        return {}
+    try:
+        loaded = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError:
+        return {}
+    if not isinstance(loaded, dict) or loaded.get("paperhub_link_context") is not True:
+        return {}
+    return loaded
+
+
+def apply_verified_sidecar_metadata(content: str, verified: dict) -> str:
+    """Overlay verified public-link facts on generated PDF metadata Markdown."""
+    if not verified:
+        return content
+    match = re.match(r"(?s)^---\n(.*?)\n---", content.strip())
+    if not match:
+        return content
+    try:
+        frontmatter = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError:
+        return content
+    if not isinstance(frontmatter, dict):
+        return content
+
+    for key in ("title", "authors", "year", "journal", "link"):
+        value = verified.get(key)
+        if value not in (None, "", []):
+            frontmatter[key] = value
+
+    body = content.strip()[match.end() :].lstrip()
+    title = verified.get("title")
+    if title:
+        body = re.sub(r"^#\s+.*$", f"# {title}", body, count=1, flags=re.MULTILINE)
+    abstract = verified.get("abstract")
+    if abstract:
+        abstract_pattern = re.compile(
+            r"(^##\s+Abstract\s*$\n)(.*?)(?=^##\s+|\Z)",
+            flags=re.IGNORECASE | re.MULTILINE | re.DOTALL,
+        )
+        if abstract_pattern.search(body):
+            body = abstract_pattern.sub(
+                lambda found: found.group(1) + str(abstract).strip() + "\n\n",
+                body,
+                count=1,
+            ).rstrip()
+
+    rendered = yaml.safe_dump(
+        frontmatter,
+        allow_unicode=True,
+        sort_keys=False,
+        default_flow_style=False,
+    ).strip()
+    return f"---\n{rendered}\n---\n\n{body.strip()}\n"
+
+
 def organize_from_response(
     content: str,
     pdf_path: Path,
@@ -1526,6 +1652,7 @@ def organize_from_response(
     if summary_mode not in SUMMARY_MODES:
         raise ValueError(f"Unknown summary mode: {summary_mode}")
     usage = usage or {}
+    verified_sidecar = load_verified_sidecar_metadata(pdf_path)
 
     # Parse response
     try:
@@ -1604,6 +1731,11 @@ def organize_from_response(
                 metadata_content = "---\n" + metadata_content
         else:
             metadata_content = generate_metadata_markdown(parsed_data)
+        metadata_content = normalize_metadata_markdown(metadata_content)
+        metadata_content = apply_verified_sidecar_metadata(
+            metadata_content,
+            verified_sidecar,
+        )
         metadata_content = normalize_metadata_markdown(metadata_content)
         metadata_path = paper_dir / f"{actual_label}.md"
         write_file(metadata_path, metadata_content)
@@ -2035,6 +2167,12 @@ def main():
         help="Summary mode: full writes ai_summary.md; metadata-only writes metadata only",
     )
     parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=4,
+        help="Maximum parallel PDF engine calls (1-8; default: 4)",
+    )
+    parser.add_argument(
         "--prepare-cli-input",
         action="store_true",
         help="Prepare prompt and external-CLI-readable PDF input, then print JSON and exit",
@@ -2138,6 +2276,9 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if not 1 <= args.max_workers <= 8:
+        parser.error("--max-workers must be between 1 and 8")
 
     global logger
     logger = setup_logging(args.verbose)
@@ -2360,7 +2501,7 @@ def main():
     model = args.model if args.model is not None else DEFAULT_MODEL
 
     results = []
-    max_workers = min(4, len(pdf_paths)) if pdf_paths else 1
+    max_workers = min(args.max_workers, len(pdf_paths)) if pdf_paths else 1
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
             executor.submit(
@@ -2412,6 +2553,7 @@ def main():
         "total": len(results),
         "succeeded": len(successes),
         "failed": len(failures),
+        "max_workers": args.max_workers,
         "results": results,
     }
     print(json.dumps(output, indent=2))

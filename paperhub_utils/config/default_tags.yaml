@@ -1,4 +1,4 @@
-# Default starter taxonomy for the paper-summarizer.
+# Default starter taxonomy for the paper-organizer.
 # Loaded once during onboarding when no tags/_internal/registry.json exists.
 # Every entry is registered at count=0.
 #

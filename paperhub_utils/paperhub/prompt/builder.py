@@ -1,4 +1,4 @@
-"""Prompt composition for paper-summarizer modes.
+"""Prompt composition for paper-organizer modes.
 
 All three modes (`full`, `metadata-only`, `enrich`) compose their prompt from
 the same fragments under `prompts/shared/` and `prompts/aspect/`. Dynamic
@@ -43,7 +43,8 @@ from paperhub.tag_utils.registry import RegistryError, load_registry
 MODE_FULL = "full"
 MODE_METADATA_ONLY = "metadata-only"
 MODE_ENRICH = "enrich"
-MODES = (MODE_FULL, MODE_METADATA_ONLY, MODE_ENRICH)
+MODE_LINK_METADATA = "link-metadata"
+MODES = (MODE_FULL, MODE_METADATA_ONLY, MODE_ENRICH, MODE_LINK_METADATA)
 
 _PROMPT_DIR = Path(__file__).resolve().parent
 _FRAGMENT_DIR = Path(__file__).resolve().parents[2] / "prompts"
@@ -173,6 +174,7 @@ def build_prompt(
     emit_abstract: bool = False,
     include_summary: bool = True,
     past_summary_text: str = "",
+    link_context_text: str = "",
 ) -> str:
     if mode not in MODES:
         raise ValueError(f"Unknown prompt mode: {mode}")
@@ -197,6 +199,13 @@ def build_prompt(
             instruction_section=instruction_section,
             metadata_only=True,
         )
+    if mode == MODE_LINK_METADATA:
+        return _build_link_metadata(
+            today=today,
+            tag_context_section=tag_context_section,
+            instruction_section=instruction_section,
+            link_context_text=link_context_text,
+        )
     return _build_enrich(
         today=today,
         research_section=research_section,
@@ -209,6 +218,29 @@ def build_prompt(
         include_summary=include_summary,
         past_summary_section=render_past_summary_section(past_summary_text),
     )
+
+
+def _build_link_metadata(
+    *,
+    today: str,
+    tag_context_section: str,
+    instruction_section: str,
+    link_context_text: str,
+) -> str:
+    """Compose the offline link-metadata prompt.
+
+    The invoking coding agent prepares the source context before this prompt is
+    sent. External engines must not browse or fetch the URL themselves.
+    """
+    template = _read(_ASPECT_DIR / "link_metadata.txt").rstrip("\n")
+    template = template.replace("{today}", today)
+    template = template.replace("{link_context_text}", link_context_text.strip())
+    parts = [template]
+    if tag_context_section:
+        parts.append(tag_context_section.rstrip("\n"))
+    if instruction_section:
+        parts.append(instruction_section.rstrip("\n"))
+    return "\n\n".join(parts).strip()
 
 
 def _build_full_or_metadata_only(

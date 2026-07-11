@@ -1,4 +1,4 @@
-"""Per-batch tag registration. Called by the paper-summarizer skill after a
+"""Per-batch tag registration. Called by the paper-organizer skill after a
 batch finishes, once per new tag, after the user has decided what to do.
 
 Three operations:

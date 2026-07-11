@@ -1,18 +1,22 @@
 # Use Cases
 
-Run these prompts from the repository root. Use `to_be_organized/` for new PDFs and `organized/<folder>/` for existing paper folders.
+Run these prompts from the repository root. Use `to_be_organized/` for new PDFs or link-inbox notes and `organized/<folder>/` for existing paper folders.
 
 ## Skill Quick Starts
 
-- [paper-summarizer](paper-summarizer.md): organize PDFs, create metadata notes, add or refresh `ai_summary.md`.
-- [paper-finder](paper-finder.md): retrieve an existing paper from a vague memory, claim, author, tag, or snippet.
-- [ask-knowledge-base](ask-knowledge-base.md): answer questions across visible Markdown notes in the Obsidian vault, with an opt-in mode for skipping generated paper metadata/summaries.
-- [update-paperhub-utils](update-paperhub-utils.md): refresh skills and utility code while preserving local papers and config.
+- [paper-organizer](skills/paper-organizer.md): organize PDFs or public paper links, create metadata notes, and add or refresh `ai_summary.md` when a PDF is available.
+- [paper-finder](skills/paper-finder.md): retrieve an existing paper from a vague memory, claim, author, tag, or snippet.
+- [ask-knowledge-base](skills/ask-knowledge-base.md): answer questions across visible Markdown notes in the Obsidian vault, with an opt-in mode for skipping generated paper metadata/summaries.
+- [update-paperhub-utils](skills/update-paperhub-utils.md): refresh skills and utility code while preserving local papers and config.
 
 ## Common Prompts
 
 ```text
-\paper-summarizer: metadata-only batch for everything in `to_be_organized/` using (AGY CLI / Codex CLI / OpenRouter API).
+\paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
+```
+
+```text
+\paper-organizer: import links under "Paper Organizer Integration Tests" from `to_be_organized/papers to find.md` using OpenRouter.
 ```
 
 ```text

@@ -88,6 +88,6 @@ If the user is trying to remember a specific paper already in `organized/`, swit
 
 ## What this skill does NOT do
 
-- Does NOT organize, summarize, or enrich PDFs - that is `paper-summarizer`.
+- Does NOT organize, summarize, or enrich PDFs - that is `paper-organizer`.
 - Does NOT locate a half-remembered paper from `organized/` - that is `paper-finder`.
 - Does NOT search the web.

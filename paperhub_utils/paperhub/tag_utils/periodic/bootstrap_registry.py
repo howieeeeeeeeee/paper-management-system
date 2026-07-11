@@ -20,7 +20,7 @@ CHANGELOG.md, not the table. The `?` flag on the type column marks rows where
 the heuristic was uncertain; user hand-edits the type to remove the flag.
 
 Periodic only — the per-batch new-tag flow uses `tag_utils.register_tag`
-instead. See `.claude/skills/paper-summarizer/tags/post_summary_update.md`.
+instead. See `.claude/skills/paper-organizer/tags/post_summary_update.md`.
 """
 
 from __future__ import annotations

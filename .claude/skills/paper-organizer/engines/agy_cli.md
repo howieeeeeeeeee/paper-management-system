@@ -8,16 +8,16 @@ This document covers the **Agy CLI** paper summarization workflow. Users may cal
 - The default PaperHub Agy model is configured in `paperhub_utils/config/config.json` (`agy_cli_model`) and resolved by `paperhub/config.py` as `config.AGY_CLI_MODEL`. This doc does not name a default model — read it from config, or from the prepared JSON, which carries the resolved `agy_model_label`.
 - The allowed Agy models are defined in `config.AGY_CLI_MODEL_LIST` (`paperhub/config.py`). Treat that constant as the single source of truth; do not enumerate the models here.
 - If the user requests a different Agy model, pass `--agy-model "MODEL LABEL"` to `--prepare-cli-input`. The script validates it against `config.AGY_CLI_MODEL_LIST`, writes it to the Agy settings path, and leaves that setting in place. Set `AGY_CLI_SETTINGS_PATH` if the local install uses a custom settings location.
-- Agy does not currently expose a per-run `--model` flag or token stats. Record model as `<model> (Agy CLI)`, `pdf_engine: agy-native`, and token fields as `N/A`.
+- Current Agy releases expose per-run `--model`; managed link batches use it to avoid shared-settings races. The compatibility PDF prepare flow still persists its validated model. Agy does not expose token stats, so record token fields as `N/A`.
 
 ## Overview
 
 This workflow reuses the same prompt and file-organization logic as the OpenRouter workflow:
 
-1. Call `uv run python -m scripts.paper_summarizer --prepare-cli-input --external-cli-engine agy-cli` to prepare the prompt/PDF and persist the selected Agy model.
+1. Call `uv run python -m scripts.paper_organizer --prepare-cli-input --external-cli-engine agy-cli` to prepare the prompt/PDF and persist the selected Agy model.
 2. Call `agy --print` from the paper-library root, with `--add-dir "$PAPERHUB_ROOT"` and an absolute `@PDF` attachment.
 3. Save raw Agy stdout/stderr/log files.
-4. Call `uv run python -m scripts.paper_summarizer --from-response --external-cli-engine agy-cli`; the script validates Agy artifacts, extracts the sentinel-delimited response block, and organizes the paper.
+4. Call `uv run python -m scripts.paper_organizer --from-response --external-cli-engine agy-cli`; the script validates Agy artifacts, extracts the sentinel-delimited response block, and organizes the paper.
 
 In `metadata-only` mode, `--prepare-cli-input` creates a temporary first-`METADATA_ONLY_PAGE_LIMIT` PDF under `.paperhub_tmp/`; Agy receives that temporary PDF, while `--from-response` still moves the original PDF into `organized/`.
 
@@ -27,8 +27,8 @@ In `metadata-only` mode, `--prepare-cli-input` creates a temporary first-`METADA
 
 | PaperHub mode | Prepare command | Apply command | Output |
 |---|---|---|---|
-| `full` | `uv run python -m scripts.paper_summarizer --prepare-cli-input --external-cli-engine agy-cli --summary-mode full` | `uv run python -m scripts.paper_summarizer --from-response --external-cli-engine agy-cli --summary-mode full` | metadata note + `ai_summary.md` |
-| `metadata-only` | `uv run python -m scripts.paper_summarizer --prepare-cli-input --external-cli-engine agy-cli --summary-mode metadata-only` | `uv run python -m scripts.paper_summarizer --from-response --external-cli-engine agy-cli --summary-mode metadata-only` | metadata note only; no `ai_summary.md` |
+| `full` | `uv run python -m scripts.paper_organizer --prepare-cli-input --external-cli-engine agy-cli --summary-mode full` | `uv run python -m scripts.paper_organizer --from-response --external-cli-engine agy-cli --summary-mode full` | metadata note + `ai_summary.md` |
+| `metadata-only` | `uv run python -m scripts.paper_organizer --prepare-cli-input --external-cli-engine agy-cli --summary-mode metadata-only` | `uv run python -m scripts.paper_organizer --from-response --external-cli-engine agy-cli --summary-mode metadata-only` | metadata note only; no `ai_summary.md` |
 | `enrich` | `uv run python -m scripts.enrich --engine agy-cli --prepare-cli-input --folder FOLDER` | `uv run python -m scripts.enrich --engine agy-cli --from-response --folder FOLDER` | existing folder patched and/or `ai_summary.md` written |
 
 Use the same Agy call shape for all three modes: read `prompt_path`, `pdf_for_ai_agy_path`, `paperhub_root`, and `agy_model_label` from the prepared JSON, then pass raw stdout to the matching `--from-response` command.
@@ -41,7 +41,7 @@ cd paperhub_utils
 PAPERHUB_ROOT=$(cd .. && pwd)
 
 # 1. Prepare prompt/PDF and persist the configured Agy model.
-uv run python -m scripts.paper_summarizer --prepare-cli-input \
+uv run python -m scripts.paper_organizer --prepare-cli-input \
   --external-cli-engine agy-cli \
   --pdf-path-arg "$PAPERHUB_ROOT/to_be_organized/paper.pdf" \
   --summary-mode full \
@@ -82,7 +82,7 @@ ORIGINAL_PDF=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_
 SUMMARY_MODE=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['summary_mode'])")
 MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['agy_model_label'])")
 
-uv run python -m scripts.paper_summarizer --from-response \
+uv run python -m scripts.paper_organizer --from-response \
   --external-cli-engine agy-cli \
   --response-file "${AGY_OUTPUT}" \
   --pdf-path-arg "${ORIGINAL_PDF}" \
@@ -95,7 +95,7 @@ uv run python -m scripts.paper_summarizer --from-response \
 ```bash
 # 4. Clean up prepared prompt/temp PDF.
 CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['cleanup_dir'])")
-uv run python -m scripts.paper_summarizer --cleanup-cli-input "${CLEANUP_DIR}"
+uv run python -m scripts.paper_organizer --cleanup-cli-input "${CLEANUP_DIR}"
 ```
 
 ## Validation Guards
@@ -115,11 +115,15 @@ The `--from-response --external-cli-engine agy-cli` command enforces this split 
 
 ## Batches
 
-Process Agy papers sequentially by default. Parallel calls share the same global Agy settings file and are harder to debug. If the user explicitly wants parallelism, only batch papers using the same resolved Agy model and keep per-paper output/stderr/log paths distinct.
+For multiple papers, prepare sequentially, then run up to the selected worker
+limit concurrently using the same resolved model and distinct output/stderr/log
+paths. Apply responses sequentially. PDF preparation retains the compatibility
+settings behavior; managed pure-link batches instead pass the model per run with
+`agy --model` and never mutate shared settings.
 
 ### Parallel Batch Guidelines (When User Requests)
 
-1. **Preconditions:** All papers must use the same Agy model; verify `agy_model_label` is identical across all prepared JSONs.
+1. **Preconditions:** All papers must use the same Agy model; verify `agy_model_label` is identical across all prepared JSONs. Default to four workers and allow 1-8.
 2. **Working directory:** Stay in `paperhub_utils/` throughout. Set `PAPERHUB_ROOT=$(cd .. && pwd)` once at the start.
 3. **File isolation:** Each paper needs distinct temp files:
    - `prepare_N.json` (prepared input)
@@ -134,7 +138,7 @@ Process Agy papers sequentially by default. Parallel calls share the same global
 
 If Agy fails, ask the user whether to retry Agy, switch to OpenRouter, choose a different allowed Agy model, or abandon the paper. Never silently switch engines or models.
 
-For parse failures, `uv run python -m scripts.paper_summarizer --from-response` saves raw content under `paperhub_utils/output/raw_outputs/`. Do not manually rewrite the response with agent tokens. Ask before doing an AI format-repair retry.
+For parse failures, `uv run python -m scripts.paper_organizer --from-response` saves raw content under `paperhub_utils/output/raw_outputs/`. Do not manually rewrite the response with agent tokens. Ask before doing an AI format-repair retry.
 
 ## Completion Reporting
 

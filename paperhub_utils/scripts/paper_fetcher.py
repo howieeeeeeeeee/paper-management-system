@@ -2,7 +2,7 @@
 """
 Paper Fetcher - Search, resolve, and download research papers.
 
-The front-end to scripts.paper_summarizer: given a paper's title/author, DOI,
+The front-end to scripts.paper_organizer: given a paper's title/author, DOI,
 arXiv ID, or URL, this resolves bibliographic metadata via free APIs (OpenAlex,
 Crossref, arXiv, Unpaywall), downloads an available PDF into to_be_organized/,
 and writes a `{stem}.citation.md` sidecar holding the citation. The summarizer

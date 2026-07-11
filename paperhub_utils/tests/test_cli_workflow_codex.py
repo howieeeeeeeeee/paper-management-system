@@ -50,10 +50,13 @@ class CodexWorkflowTests(unittest.TestCase):
         CLI_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
     def test_default_model_comes_from_paperhub_config(self) -> None:
-        self.assertEqual(CODEX_CLI_MODEL, "gpt-5.5")
+        self.assertEqual(CODEX_CLI_MODEL, "gpt-5.6-sol")
         self.assertIn(CODEX_CLI_REASONING_EFFORT, CODEX_CLI_REASONING_EFFORT_LIST)
         self.assertTrue(CODEX_CLI_YOLO)
-        self.assertEqual(CODEX_CLI_MODEL_LIST, ("gpt-5.5",))
+        self.assertEqual(
+            CODEX_CLI_MODEL_LIST,
+            tuple(dict.fromkeys(model for model, _ in CODEX_CLI_MODEL_REASONING_PAIRS)),
+        )
         self.assertIn(CODEX_CLI_MODEL, CODEX_CLI_MODEL_LIST)
         self.assertIn(
             (CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT),

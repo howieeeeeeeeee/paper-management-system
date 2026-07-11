@@ -1,4 +1,4 @@
-# Tag System: Post-Summary Update
+# Tag System: Post-Organization Update
 
 Run this flow **once after all paper-summary threads finish**. Multi-threaded OpenRouter batches may summarize in parallel; tag work is serial, post-batch.
 

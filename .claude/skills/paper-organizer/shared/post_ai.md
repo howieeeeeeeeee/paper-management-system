@@ -14,6 +14,7 @@ Token-light: use shell tests and `rg`, not full file reads.
 | 4 | (mode-specific summary check) | see `modes/{mode}.md` |
 | 5 | No markup artifacts | `rg -l 'cite_start\|cite_end\|<ref>\|</ref>' "{output_dir}"` |
 | 6 | Valid YAML frontmatter | parses; has `title`, `authors`, `year`, `tags`, `contributions` (empty); body has `## Abstract`; tags have no spaces |
+| 7 | Reciprocal navigation (when `ai_summary.md` exists) | metadata ends with `[[ai_summary\|Link to AI Summary]]`; summary's first visible line is `[[{paper_label}\|Back to Metadata]]` |
 
 ## 2. Auto-fix issues
 

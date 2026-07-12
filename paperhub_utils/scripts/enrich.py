@@ -64,6 +64,7 @@ from paperhub.config import (
     PAPERHUB_ROOT,
 )
 from paperhub.prompt.builder import MODE_ENRICH, build_prompt
+from paperhub.note_navigation import ensure_navigation_links
 from paperhub.cli_workflow.agy import (
     AGY_RESPONSE_BEGIN,
     AGY_RESPONSE_END,
@@ -702,6 +703,7 @@ def apply_response(
         summary_path = write_summary(
             art.folder, parsed.ai_summary, model_label, pdf_engine, usage
         )
+        ensure_navigation_links(art.meta_path, summary_path)
         summary_status = "generated" if art.summary_path is None else "overwritten"
     elif include_summary and not parsed.ai_summary:
         summary_status = "missing-from-response"

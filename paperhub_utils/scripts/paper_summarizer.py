@@ -73,6 +73,7 @@ from paperhub.config import (
     MY_RESEARCH_INTERESTS,
     PAPERHUB_ROOT,
 )
+from paperhub.note_navigation import ensure_navigation_links
 from paperhub.prompt.builder import build_prompt
 from paperhub.cli_workflow.agy import (
     AGY_RESPONSE_BEGIN,
@@ -1765,6 +1766,7 @@ generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             summary_content = summary_metadata + summary_content
             summary_path = paper_dir / "ai_summary.md"
             write_file(summary_path, summary_content)
+            ensure_navigation_links(metadata_path, summary_path)
             files_created.append("ai_summary.md")
 
         result = {

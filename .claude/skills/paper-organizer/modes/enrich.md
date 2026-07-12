@@ -21,7 +21,9 @@ If the user mentions multiple folders, batch them in a single call (OpenRouter) 
 4. Build the enrich prompt (PRIMARY = summary, SECONDARY = meta patch). The prompt embeds the current metadata file verbatim, lists exactly which keys may be filled, and — if applicable — embeds the past summary as a polish reference. The script derives `paper_label` from the folder name; the AI response does not need to echo it.
 5. Call the AI engine.
 6. Surgically merge the returned `# metadata_patch` into the existing frontmatter — only blank fields, never `contributions` / `status` / `interest`.
-7. Write `ai_summary.md` (with model + token frontmatter, plus `enriched: true`).
+7. Write `ai_summary.md` (with model + token frontmatter, plus `enriched: true`),
+   then add reciprocal navigation: `Link to AI Summary` at the bottom of the
+   metadata note and `Back to Metadata` at the top of the summary body.
 8. Run the standard post-summary tag flow (see `tags/post_summary_update.md`).
 9. Version via the `versioning-with-git` skill (see `shared/post_ai.md` §4) with message `feat(papers): enrich {folder}` (or `enrich {N} folders`).
 

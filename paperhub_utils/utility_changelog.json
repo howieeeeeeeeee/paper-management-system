@@ -1,8 +1,22 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.11.4",
+  "latest_version": "2026.07.12.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.12.1": {
+      "date": "2026-07-12",
+      "title": "Metadata and AI Summary Navigation",
+      "update_kind": "content",
+      "summary": "Adds deterministic reciprocal Obsidian links between each generated ai_summary.md and its paper metadata note.",
+      "how_to_apply": "Update the managed paper-organizer skill, scripts, paperhub package, and tests together. Future full-summary and enrich runs add the links automatically; metadata-only and link-metadata runs are unchanged. No config or existing-library migration is required.",
+      "added": [
+        "A shared note-navigation helper that writes portable same-folder wikilinks after successful summary generation.",
+        "Post-AI validation guidance for the metadata footer and summary backlink."
+      ],
+      "changed": [
+        "Full-summary and enrich outputs now end metadata notes with Link to AI Summary and begin summary content with Back to Metadata, independent of the selected engine."
+      ]
+    },
     "2026.07.11.4": {
       "date": "2026-07-11",
       "title": "Paper Organizer, Link Batches, and Library Search",

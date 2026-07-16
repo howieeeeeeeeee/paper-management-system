@@ -88,6 +88,7 @@ class SearchResult:
     title: str
     authors: list[str]
     year: str
+    journal: str
     status: str
     interest: str
     tags: list[str]
@@ -209,6 +210,7 @@ def iter_papers(organized_dir: Path) -> list[dict[str, Any]]:
                 "title": str(meta.get("title") or ""),
                 "authors": coerce_list(meta.get("authors")),
                 "year": str(meta.get("year") or ""),
+                "journal": str(meta.get("journal") or "").strip(),
                 "status": str(meta.get("status") or ""),
                 "interest": str(meta.get("interest") or ""),
                 "tags": coerce_list(meta.get("tags")),
@@ -394,6 +396,7 @@ def score_paper(
         title=paper["title"],
         authors=paper["authors"],
         year=paper["year"],
+        journal=paper["journal"],
         status=paper["status"],
         interest=paper["interest"],
         tags=paper["tags"],
@@ -507,8 +510,9 @@ def print_human(
             authors += ", et al."
         print(f"{index}. {result.label}  score={result.score}")
         print(f"   {result.title}")
-        if authors or result.year:
-            print(f"   {authors} ({result.year})".strip())
+        year_venue = ", ".join(bit for bit in (result.year, result.journal) if bit)
+        if authors or year_venue:
+            print(f"   {authors} ({year_venue})".strip())
         bits = []
         if result.status:
             bits.append(f"status={result.status}")

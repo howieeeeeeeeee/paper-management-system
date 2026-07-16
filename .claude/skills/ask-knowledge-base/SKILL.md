@@ -28,7 +28,7 @@ uv run python -m scripts.knowledge_base_search \
 - Default to `--top 10 --detail 10`.
 - If the user asks for more sources, increase `--top` and `--detail` to the requested count.
 - The script searches Markdown files under `paperhub_utils/config/config.json`'s `obsidian.vault_abs_path` when valid; otherwise it falls back to the PaperHub root. It skips any path with a dot-prefixed segment such as `.claude/`, `.agents/`, `.obsidian/`, `.git/`, or `.venv/`.
-- Cards include score, Obsidian wikilink, title, relative path, matched terms, and snippets.
+- Cards include score, Obsidian wikilink, title, relative path, matched terms, and snippets. When the matched note is a paper (metadata note or generated summary), the card also carries a `journal=` line with the journal/conference from the paper's metadata.
 - By default, PaperHub paper metadata notes and generated summaries are included. If the user explicitly asks for notes but not papers, says "without papers", "ignore papers", "non-paper notes", or similar, add `--ignore-papers`. That skips only standard PaperHub paper Markdown: `organized/<paper_label>/<paper_label>.md` metadata notes plus `ai_summary.md`, `AI summary`, and legacy `summary.md` files inside paper folders. Other Markdown notes, including hand-written notes inside `organized/<paper_label>/`, remain searchable.
 
 Use `--exclude` for nearby topics the user does not want:
@@ -58,7 +58,7 @@ uv run python -m scripts.knowledge_base_search \
 
 ### 3. Answer from the returned context
 
-Write a direct answer to the user's question using only the search output. Cite the notes inline with the returned wikilinks, for example `[[projects/literature_map|Literature Map]]`. For standard paper metadata notes, the script returns compact links such as `[[danaetal2007moralwiggle]]`.
+Write a direct answer to the user's question using only the search output. Cite the notes inline with the returned wikilinks, for example `[[projects/literature_map|Literature Map]]`. For standard paper metadata notes, the script returns compact links such as `[[danaetal2007moralwiggle]]`. When a cited source is a paper and its card carries a `journal=` line, mention the journal/conference alongside the citation.
 
 Useful answer shapes:
 - **Factual question:** concise answer first, then 2-4 cited supporting points.

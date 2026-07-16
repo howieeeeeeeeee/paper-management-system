@@ -83,6 +83,7 @@ class NoteResult:
     relative_path: str
     wikilink: str
     title: str
+    journal: str
     matched_terms: list[str]
     excluded_terms: list[str]
     snippets: list[str]
@@ -176,7 +177,7 @@ def is_standard_paper_folder(path: Path, vault_root: Path) -> bool:
         rel_path = path.relative_to(vault_root)
     except ValueError:
         return False
-    return len(rel_path.parts) == 2 and rel_path.parts[0] == "organized"
+    return len(rel_path.parts) >= 2 and rel_path.parts[-2] == "organized"
 
 
 def is_paper_metadata_note(path: Path, vault_root: Path) -> bool:
@@ -190,6 +191,17 @@ def is_paper_summary_note(path: Path, vault_root: Path) -> bool:
 
 def is_paper_markdown(path: Path, vault_root: Path) -> bool:
     return is_paper_metadata_note(path, vault_root) or is_paper_summary_note(path, vault_root)
+
+
+def paper_journal_for(path: Path, vault_root: Path, text: str) -> str:
+    if is_paper_metadata_note(path, vault_root):
+        meta = parse_frontmatter(text)
+    elif is_paper_summary_note(path, vault_root):
+        meta = parse_frontmatter(read_text(path.parent / f"{path.parent.name}.md"))
+    else:
+        return ""
+    value = meta.get("journal")
+    return str(value).strip() if value else ""
 
 
 def iter_markdown_notes(vault_root: Path, *, ignore_paper_markdown: bool = False) -> list[Path]:
@@ -248,7 +260,7 @@ def snippets_for(text: str, terms: list[str], phrases: list[str], limit: int = 3
 def obsidian_wikilink(path: Path, vault_root: Path, title: str) -> str:
     rel_path = path.relative_to(vault_root).with_suffix("").as_posix()
     parts = path.relative_to(vault_root).parts
-    if len(parts) == 3 and parts[0] == "organized" and parts[1] == path.stem:
+    if len(parts) >= 3 and parts[-3] == "organized" and parts[-2] == path.stem:
         return f"[[{path.stem}]]"
     if title and title != path.stem:
         return f"[[{rel_path}|{title}]]"
@@ -325,6 +337,7 @@ def score_note(
         relative_path=rel_path,
         wikilink=obsidian_wikilink(path, vault_root, title),
         title=title,
+        journal=paper_journal_for(path, vault_root, text),
         matched_terms=sorted(matched_terms),
         excluded_terms=sorted(excluded_matches),
         snippets=snippets,
@@ -397,6 +410,8 @@ def print_human(
             continue
         print(f"{index}. {result.wikilink}  score={result.score}")
         print(f"   title={result.title}")
+        if result.journal:
+            print(f"   journal={result.journal}")
         print(f"   path={result.relative_path}")
         print("   matched=" + ", ".join(result.matched_terms))
         if result.excluded_terms:

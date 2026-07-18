@@ -47,6 +47,43 @@ For paper processing, first identify the input kind. For a URL or Markdown/plain
 text link list, read `link_input.md`. For a local PDF or existing folder, pick
 **one engine** and **one mode** per batch below.
 
+### New local-PDF duplicate preflight
+
+Before asking for a mode, selecting an engine, preparing a prompt, or sending any
+**new local PDF** to an engine, check whether `organized/` already contains a PDF
+with the same filename. This checkpoint applies to local PDF inputs only (for
+example, files in `to_be_organized/` or another local path). Do not run it for
+URL/link ingestion, which has its own canonical-link duplicate check, or for
+`enrich`, which intentionally targets an existing folder.
+
+1. Use ordinary filesystem tools, not a new utility script. For example, list
+   existing PDFs with `find organized -type f -iname '*.pdf' -print`, then compare
+   each incoming PDF's basename to those basenames with an exact,
+   case-insensitive comparison. Do not use fuzzy names, stems, titles, DOI/link
+   inference, or file-content hashes.
+2. For every matching incoming PDF, collect **all** matching paths. Each match's
+   paper folder is the PDF's parent; its canonical metadata note is
+   `{folder}/{folder_name}.md`.
+3. Read each available canonical metadata note and show the user a compact record
+   containing the paper-folder path, metadata-note path, title, authors, year,
+   journal, link, status, interest, and tags. If the note is missing, unreadable,
+   malformed, or lacks a field, show the paths and mark the unavailable values;
+   the checkpoint still applies.
+4. Use `AskUserQuestion` once per matched incoming PDF (grouping all existing
+   matches for that filename) with `Skip (Recommended)` and `Process again`.
+   `Skip` is the default: unless the user explicitly chooses `Process again`,
+   remove that PDF from the active batch and never send it to an engine.
+5. Resolve every matched input before starting a batch. If all inputs are
+   skipped, report the existing records and stop without running the post-AI,
+   tag, or versioning flows because nothing changed.
+
+If the user explicitly chooses `Process again`, continue through normal routing
+but never overwrite the existing record. Script-backed engines use the existing
+timestamp-suffixed collision behavior. For direct current-coding-agent writes,
+when `organized/{paper_label}` already exists, create a unique
+`{paper_label}_{YYYYMMDD_HHMMSS}` folder and use that suffixed name consistently
+for the folder and canonical metadata filename.
+
 ### Engines
 
 | User says | Engine | Read |

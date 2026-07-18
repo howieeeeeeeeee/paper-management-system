@@ -1,8 +1,21 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.12.1",
+  "latest_version": "2026.07.18.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.18.1": {
+      "date": "2026-07-18",
+      "title": "Duplicate PDF Intake Checkpoint",
+      "update_kind": "content",
+      "summary": "Adds a preflight checkpoint that detects exact case-insensitive PDF filename matches in organized papers before a new local PDF is sent to an AI engine.",
+      "how_to_apply": "Update the managed paper-organizer skill. No configuration, command, dependency, or existing-library migration is required; URL ingestion and enrich workflows are unchanged.",
+      "added": [
+        "A local-PDF filename preflight that displays every matching paper's paths and compact metadata, then defaults to skipping the incoming PDF unless the user explicitly chooses to process it again."
+      ],
+      "changed": [
+        "Duplicate overrides preserve existing records through timestamp-suffixed output folders, including direct current-coding-agent writes."
+      ]
+    },
     "2026.07.12.1": {
       "date": "2026-07-12",
       "title": "Metadata and AI Summary Navigation",

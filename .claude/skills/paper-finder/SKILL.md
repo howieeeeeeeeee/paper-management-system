@@ -52,6 +52,8 @@ Show a ranked list in chat:
 - **Top matches (up to 5):** for each — `[[label]]`, title, authors (year, journal/conference — the card's venue is shown next to the year when the metadata records one; always report it), status/interest, tags, and a one-line **"why it matches"** tying the user's memory to the digest evidence. Mention matched additional-note paths when they supply the relevant evidence, but keep the paper as the result.
 - **Other candidates:** the brief tail as one line each (`[[label]]` — title, year).
 
+Format mathematical expressions with Obsidian-compatible LaTeX delimiters: use `$...$` for inline math and `$$...$$` for display equations.
+
 Do not pad: if only 2 papers plausibly match, show 2 detailed and say so.
 
 **Detailed mode:** when you ran with `--full`, write a comprehensive synthesis from the complete metadata, AI summary, and matched additional notes returned by the script. Distinguish the canonical paper record from personal lecture, presentation, model, or experiment notes when attributing evidence.

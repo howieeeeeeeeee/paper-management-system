@@ -13,7 +13,7 @@ Write a detailed, free-form summary of this paper. Structure it however makes se
 - **Experimental design**: If the paper runs experiments, describe the design (type, participants, treatments, procedure, key results) in detail. Include where subjects are recruited, payment structure, and feedback design. Indicate if the experiment is asynchronous or synchronous. If helpful for clarity, use a Mermaid chart to illustrate the experiment's flow, treatments, or structure. Skip if not applicable.
 - **Literature context**: What does it build on? How does it differ?
 - **Policy/practical implications**: Only if explicitly discussed in the paper.
-- **Key tables/figures**: 1-2 most important, with page numbers.
+- **Key tables/figures**: Show the 1-2 most important, with page numbers. Use a Markdown table when it has clear, regular rows and columns with no multi-level headers or merged cells. For complicated tables (for example, multi-column headers, merged cells, or irregular structure), embed raw HTML `<table>` markup directly inside the Markdown `ai_summary.md` file—not in a separate HTML document—so Obsidian renders them correctly.
 - **Notable quotes**: 1-2 max, only if genuinely insightful.
 - **Technical notes**: Noteworthy econometric specs, computational approaches, or data construction details.
 

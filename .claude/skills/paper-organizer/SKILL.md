@@ -56,26 +56,49 @@ example, files in `to_be_organized/` or another local path). Do not run it for
 URL/link ingestion, which has its own canonical-link duplicate check, or for
 `enrich`, which intentionally targets an existing folder.
 
-1. Use ordinary filesystem tools, not a new utility script. For example, list
-   existing PDFs with `find organized -type f -iname '*.pdf' -print`, then compare
-   each incoming PDF's basename to those basenames with an exact,
-   case-insensitive comparison. Do not use fuzzy names, stems, titles, DOI/link
+1. Use ordinary filesystem tools, not a new utility script. List existing PDFs,
+   then compare each incoming PDF's basename to those basenames with an exact,
+   case-insensitive comparison. Do not use fuzzy filename matching, DOI/link
    inference, or file-content hashes.
-2. For every matching incoming PDF, collect **all** matching paths. Each match's
-   paper folder is the PDF's parent; its canonical metadata note is
+2. Treat obviously non-identifying stems such as `main` and `paper`, including
+   ordinary numbered/copy-suffixed forms, as **generic filenames**. For a generic
+   exact-filename match, extract only page 1 from the incoming PDF and every
+   matching organized PDF with a local tool such as
+   `pdftotext -f 1 -l 1 -layout`. Identify the displayed paper titles and compare
+   them case-insensitively after normalizing whitespace and punctuation.
+   - If every existing title is clearly different from the incoming title, this
+     is a filename collision, not a duplicate. Process the incoming PDF normally
+     without asking the user.
+   - If one or more titles match, retain only those same-title records as
+     duplicates and continue to the checkpoint below.
+   - If either title cannot be extracted confidently, keep that match as a
+     potential duplicate and continue to the checkpoint below. Never infer a
+     title from the filename or send first-page content to an AI engine during
+     preflight.
+3. For a non-generic exact-filename match, continue directly to the duplicate
+   checkpoint. Collect **all** matching paths. Each match's paper folder is the
+   PDF's parent; its canonical metadata note is
    `{folder}/{folder_name}.md`.
-3. Read each available canonical metadata note and show the user a compact record
+4. Read each available canonical metadata note and show the user a compact record
    containing the paper-folder path, metadata-note path, title, authors, year,
-   journal, link, status, interest, and tags. If the note is missing, unreadable,
-   malformed, or lacks a field, show the paths and mark the unavailable values;
-   the checkpoint still applies.
-4. Use `AskUserQuestion` once per matched incoming PDF (grouping all existing
-   matches for that filename) with `Skip (Recommended)` and `Process again`.
-   `Skip` is the default: unless the user explicitly chooses `Process again`,
-   remove that PDF from the active batch and never send it to an engine.
-5. Resolve every matched input before starting a batch. If all inputs are
-   skipped, report the existing records and stop without running the post-AI,
-   tag, or versioning flows because nothing changed.
+   journal, link, status, interest, and tags. For generic filenames, also show the
+   incoming and existing first-page titles (or mark them unavailable). If the
+   note is missing, unreadable, malformed, or lacks a field, show the paths and
+   mark the unavailable values; the checkpoint still applies.
+5. Use `AskUserQuestion` once per duplicate or potential-duplicate incoming PDF,
+   grouping all applicable existing matches for that input. Offer:
+   - `Skip and keep (Recommended)`: remove the PDF from the active batch but leave
+     the incoming file in place.
+   - `Skip and delete`: remove the PDF from the active batch and delete only that
+     resolved incoming file. This is never the default. Prefer a recoverable
+     trash operation when available; otherwise make clear that deletion is
+     permanent, and report afterward whether recovery is possible.
+   - `Process again`: keep the PDF in the active batch.
+6. Resolve every checkpoint before starting a batch. Never send a skipped PDF to
+   an engine. If all inputs are skipped and kept, report the existing records and
+   stop without running post-AI, tag, or versioning flows because nothing
+   changed. If any incoming PDF was deleted, skip post-AI and tag flows but run
+   the normal versioning handoff because the vault changed.
 
 If the user explicitly chooses `Process again`, continue through normal routing
 but never overwrite the existing record. Script-backed engines use the existing
@@ -119,7 +142,7 @@ for the folder and canonical metadata filename.
 - **uv run location:** Always `cd paperhub_utils` before running `uv run` commands, since `pyproject.toml` and `.venv` are stored there. Example: `cd paperhub_utils && uv run python -m scripts.paper_organizer ... && cd ..`
 - **Batch processing paths:** Always cd into `paperhub_utils` first. Use `PAPERHUB_ROOT=$(cd .. && pwd)` to get the PaperHub root (works on any machine). For Agy: use `agy --add-dir "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON. For Codex: use `codex exec --cd "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON; PaperHub's default Codex path uses local yolo/full-access mode with web search disabled.
 - Treat `.venv` as disposable local state. In iCloud-synced vaults, never preserve or share `.venv` across machines. If a `uv` command fails because the environment is stale or broken, run `uv sync` from `paperhub_utils/`; if it still fails, run `rm -rf .venv` and then `uv sync`.
-- **NEVER read the PDF directly** — except `engines/coding_agent.md`. In `metadata-only` mode it extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
+- **NEVER read the PDF directly** — except `engines/coding_agent.md` and the first-page-only local title comparison for generic filenames in the duplicate preflight above. The duplicate preflight must not send page content to AI. In `metadata-only` mode the coding-agent engine extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
 - For `openrouter`, `agy-cli`, and `codex-cli`, ALWAYS delegate PDF processing to the script or external CLI. Only validate and fix the output.
 - For links, ALWAYS run `scripts.paper_link_context` before invoking an engine.
   External engines receive only the resulting text. Keep Codex web search

@@ -1,8 +1,24 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.18.1",
+  "latest_version": "2026.07.20.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.20.1": {
+      "date": "2026-07-20",
+      "title": "PaperHub Obsidian Skill Router",
+      "update_kind": "structural + content",
+      "summary": "Adds one PaperHub router for Obsidian Markdown, Bases, JSON Canvas, live Obsidian CLI work, and optional ordinary-webpage extraction, backed by a pinned and attributed snapshot of kepano/obsidian-skills.",
+      "how_to_apply": "Update the managed .claude and .agents skills, tests, README, and quick-start documentation together. No configuration or paper-library migration is required. Public adopters receive reviewed upstream snapshots through update-paperhub-utils; direct Kepano refresh remains maintainer-only.",
+      "added": [
+        "paperhub-obsidian canonical router and thin .agents compatibility wrapper with explicit handoffs to paper-organizer, ask-knowledge-base, and paper-finder.",
+        "An unchanged MIT-licensed snapshot of the upstream obsidian-markdown, obsidian-bases, json-canvas, obsidian-cli, and defuddle skills with full commit and file-hash provenance.",
+        "A maintainer-gated check/apply refresh script that detects local drift and requires explicit approval for upstream skill-set changes.",
+        "Concise README and Obsidian quick-start guidance for Markdown, Base, Canvas, and live-vault use cases."
+      ],
+      "changed": [
+        "PaperHub now has a general Obsidian authoring route while paper ingestion, vault Q&A, and remembered-paper retrieval remain assigned to their dedicated skills."
+      ]
+    },
     "2026.07.18.1": {
       "date": "2026-07-18",
       "title": "Duplicate PDF Intake Checkpoint",

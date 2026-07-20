@@ -1,0 +1,4 @@
+interface:
+  display_name: "PaperHub Obsidian"
+  short_description: "Create and maintain Obsidian vault artifacts"
+  default_prompt: "Use $paperhub-obsidian to create or edit an Obsidian note, Base, Canvas, or live-vault workflow."

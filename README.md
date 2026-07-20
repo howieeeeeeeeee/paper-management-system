@@ -130,6 +130,18 @@ Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for r
 
 ![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/paperbase-screenshot.png)
 
+## Obsidian Authoring Skill
+
+Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps,
+or live-vault workflows. It routes each task to the relevant open-source
+[`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) reference
+while preserving PaperHub's paper workflows and safeguards. See the short
+[Obsidian skill guide](quick_start/obsidian/paperhub-obsidian.md).
+
+```text
+\paperhub-obsidian: add a Base view for high-interest papers I am currently digesting.
+```
+
 ## Updating Utilities and Skills 
 
 PaperHub keeps improving — new skills, engines, and workflow features ship over time. Rather than re-cloning, run the local `update-paperhub-utils` skill to sync the latest skills and utilities into your own project, so new features land on your local copy while your papers and settings stay untouched.
@@ -145,6 +157,7 @@ The updater focuses on skills and utility code while preserving local papers, ta
 ## Useful Files
 
 - [quick_start/obsidian/obsidian-101.md](quick_start/obsidian/obsidian-101.md): Obsidian links, metadata notes, and Bases.
+- [quick_start/obsidian/paperhub-obsidian.md](quick_start/obsidian/paperhub-obsidian.md): agent-assisted Markdown, Bases, Canvas, and live Obsidian workflows.
 - [quick_start/use-cases.md](quick_start/use-cases.md): concise index for the skill-specific quick starts.
 - [quick_start/skills/paper-organizer.md](quick_start/skills/paper-organizer.md): PDF and public-link ingestion.
 - [paperhub_utils/config/config.json](paperhub_utils/config/config.json): runtime preferences.

@@ -65,6 +65,7 @@ Duplicate a view, then adjust Filters, Sort, Group, or Properties to make your o
 
 - Sync: keep the vault inside an iCloud Drive-synced folder, or another sync service you trust, so the same library is available on desktop and mobile. Avoid editing the same note on two devices before sync finishes, or you risk conflict copies.
 - Overview: in Bases, combine filters such as status, tags, and interest with table or list views so one board can show active reading, methods shelves, or seminar queues. Start from `SamplePaperBoard.base` as a smaller example.
+- Agent authoring: use [`paperhub-obsidian`](paperhub-obsidian.md) for Obsidian Markdown, Bases, Canvas maps, or optional live-vault CLI work.
 
 ## AI Integration
 

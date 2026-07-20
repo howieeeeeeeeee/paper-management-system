@@ -26,7 +26,7 @@ flowchart TD
 
 ## Claim(s)
 
-As an economics PhD student, I am still building up my research skill set. I do not think AI, or any automatic tool, can replace the process of reading the literature and building knowledge throughout the research lifecycle. I truly believe that the mental connections we form among papers while engaging with the literature are irreplaceable and cannot be outsourced to an external tool.
+As an economics PhD student, I am still building up my research skill set. I do not think AI, or any automatic tool, can completely replace the process of reading the literature and building knowledge throughout the research lifecycle. I truly believe that the mental connections we form among papers while engaging with the literature cannot be outsourced to an external tool.
 
 The main purpose of this tool is management, not summarization. The AI-augmented summary feature is meant to help users quickly skim the main idea of a new paper and decide whether it is worth reading deeply. There have been times when I remembered only a small part of a paper I had encountered but could not fully recall what it was. The `paper-finder` skill is designed to help with exactly that. There are also times when I want to save a paper for later but cannot read it immediately. This management system, built with Obsidian Bases and the `paper-organizer` skill, is my project-management-style solution to that pain point.
 
@@ -38,7 +38,7 @@ For deep reading a PDF, I strongly recommend the Obsidian plugin [PDF++](https:/
 
 Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) for this one-time setup. Routine paper runs can use a faster or cheaper model (I use haiku, and it works smoothly).
 
-1. Clone the template inside your Obsidian vault:
+1. Clone the template anywhere inside your Obsidian vault (the folder that contains `.obsidian/`). The simplest layout puts it at the vault root:
 
    ```text
    My Obsidian Vault/
@@ -46,10 +46,10 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
    └── PaperHub/
    ```
 
-   `.obsidian/` and `PaperHub/` are sibling entries under the vault root. Run:
+   but any subfolder works too (e.g. `My Obsidian Vault/Research/PaperHub/`). Run:
 
    ```bash
-   cd "/path/to/My Obsidian Vault"
+   cd "/path/to/parent/folder/inside/your/vault"
    git clone --depth 1 https://github.com/howieeeeeeeeee/paper-management-system.git PaperHub
    cd PaperHub
    rm -rf .git
@@ -64,7 +64,7 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
 3. Open your coding agent from the `PaperHub` folder and paste:
 
    ```text
-   Use the \paper-organizer skill to onboard this project from scratch.
+   Use the /paper-organizer skill to onboard this project from scratch.
    ```
 
 ## Daily Workflow
@@ -72,56 +72,50 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
 Put new PDFs in `to_be_organized/`, then ask:
 
 ```text
-\paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
+/paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
 ```
 
 For summaries:
 
 ```text
-\paper-organizer: organize new PDFs in `to_be_organized/` with full summaries using (Agy CLI / Codex CLI / OpenRouter API)
+/paper-organizer: organize new PDFs in `to_be_organized/` with full summaries using (Agy CLI / Codex CLI / OpenRouter API)
 ```
 
 For a link, paste it directly into the task:
 
 ```text
-\paper-organizer: add https://example.org/paper as link metadata using OpenRouter.
+/paper-organizer: add https://example.org/paper as link metadata using OpenRouter.
 ```
 
 You can also save links in any Markdown or plain-text note. The existing
 `to_be_organized/papers to find.md` is a convenient link inbox:
 
 ```text
-\paper-organizer: import the links under "Paper Organizer Integration Tests"
+/paper-organizer: import the links under "Paper Organizer Integration Tests"
 in `to_be_organized/papers to find.md` using Codex CLI.
 ```
 
 The invoking coding agent retrieves public citation data sequentially, then
-separates pure links from publicly downloadable PDFs. Pure links run through the
-selected external engine in parallel using prepared text only; Agy, Codex, and
-OpenRouter do not browse. Public PDFs are grouped separately into metadata-only
-or full-summary PDF batches.
+separates pure links from publicly downloadable PDFs. Pure links run through the selected external engine in parallel using prepared text only; Agy, Codex, and OpenRouter do not browse. Public PDFs are grouped separately into metadata-only or full-summary PDF batches.
 
 For retrieval:
 
 ```text
-\paper-finder: which paper was it where dictators avoided knowing the recipient's payoff?
+/paper-finder: which paper was it where dictators avoided knowing the recipient's payoff?
 ```
 
-Paper Finder searches the metadata note, optional `ai_summary.md`, and every
-other visible Markdown note inside each paper folder. Matches from lecture,
-presentation, model, or experiment notes count toward their parent paper rather
-than appearing as separate results.
+Paper Finder searches the metadata note, optional `ai_summary.md`, and every other visible Markdown note inside each paper folder. Matches from lecture, presentation, model, or experiment notes count toward their parent paper rather than appearing as separate results.
 
 For vault questions:
 
 ```text
-\ask-knowledge-base: what do my notes say about strategic ignorance and moral wiggle room?
+/ask-knowledge-base: what do my notes say about strategic ignorance and moral wiggle room?
 ```
 
 To search notes while skipping generated paper metadata and AI summaries:
 
 ```text
-\ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
+/ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
 ```
 
 ## Obsidian Base
@@ -139,7 +133,7 @@ while preserving PaperHub's paper workflows and safeguards. See the short
 [Obsidian skill guide](quick_start/obsidian/paperhub-obsidian.md).
 
 ```text
-\paperhub-obsidian: add a Base view for high-interest papers I am currently digesting.
+/paperhub-obsidian: add a Base view for high-interest papers I am currently digesting.
 ```
 
 ## Updating Utilities and Skills 
@@ -149,7 +143,7 @@ PaperHub keeps improving — new skills, engines, and workflow features ship ove
 Use the best model available (SOTA GPT w/ xhigh thinking or Opus w/ xhigh thinking) because updates may need semantic prompt merges:
 
 ```text
-\update-paperhub-utils: check for updates and apply safe utility updates.
+/update-paperhub-utils: check for updates and apply safe utility updates.
 ```
 
 The updater focuses on skills and utility code while preserving local papers, tags, API keys, runtime config, Obsidian state, generated outputs, and customized prompts.

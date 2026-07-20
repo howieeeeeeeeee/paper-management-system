@@ -5,7 +5,7 @@ Use `update-paperhub-utils` to refresh PaperHub skills and utility code from the
 Use the best available model because the updater may need semantic prompt merges.
 
 ```text
-\update-paperhub-utils: check for updates and apply safe utility updates.
+/update-paperhub-utils: check for updates and apply safe utility updates.
 ```
 
 Utility release notes live in [utility_changelog.json](../../paperhub_utils/utility_changelog.json).

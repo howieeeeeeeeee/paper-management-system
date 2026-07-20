@@ -13,31 +13,31 @@ Run these prompts from the repository root. Use `to_be_organized/` for new PDFs 
 ## Common Prompts
 
 ```text
-\paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
+/paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
 ```
 
 ```text
-\paper-organizer: import links under "Paper Organizer Integration Tests" from `to_be_organized/papers to find.md` using OpenRouter.
+/paper-organizer: import links under "Paper Organizer Integration Tests" from `to_be_organized/papers to find.md` using OpenRouter.
 ```
 
 ```text
-\paper-finder: which paper was it where dictators avoided knowing the recipient's payoff?
+/paper-finder: which paper was it where dictators avoided knowing the recipient's payoff?
 ```
 
 ```text
-\ask-knowledge-base: what do my notes say about strategic ignorance and moral wiggle room?
+/ask-knowledge-base: what do my notes say about strategic ignorance and moral wiggle room?
 ```
 
 ```text
-\ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
+/ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
 ```
 
 ```text
-\paperhub-obsidian: create a Canvas literature map linking my notes on Bayesian persuasion.
+/paperhub-obsidian: create a Canvas literature map linking my notes on Bayesian persuasion.
 ```
 
 ```text
-\update-paperhub-utils: check for updates and apply safe utility updates.
+/update-paperhub-utils: check for updates and apply safe utility updates.
 ```
 
 ## Customizing Outputs

@@ -7,7 +7,7 @@ Use `paper-organizer` to turn local PDFs or public paper links into PaperHub fol
 Use this when importing many papers and you want a fast searchable library before long summaries.
 
 ```text
-\paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
+/paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
 ```
 
 Output: one folder per paper under `organized/`, with the original PDF and a metadata note.
@@ -17,13 +17,13 @@ Output: one folder per paper under `organized/`, with the original PDF and a met
 Use this when you want metadata plus `ai_summary.md` in one pass.
 
 ```text
-\paper-organizer: organize new PDFs in `to_be_organized/` with full summaries using (Agy CLI / Codex CLI / OpenRouter API).
+/paper-organizer: organize new PDFs in `to_be_organized/` with full summaries using (Agy CLI / Codex CLI / OpenRouter API).
 ```
 
 Add citation context when the PDF is an earlier working-paper version or has ambiguous metadata:
 
 ```text
-\paper-organizer: organize `to_be_organized/xxx.pdf` with full summary using (Agy CLI / Codex CLI / OpenRouter API).
+/paper-organizer: organize `to_be_organized/xxx.pdf` with full summary using (Agy CLI / Codex CLI / OpenRouter API).
 Extra: citation is Acemoglu, Daron, and Pascual Restrepo. 2020.
 "Robots and Jobs: Evidence from US Labor Markets." Journal of Political Economy.
 ```
@@ -33,18 +33,18 @@ Extra: citation is Acemoglu, Daron, and Pascual Restrepo. 2020.
 Use `enrich` when the metadata note already exists but `ai_summary.md` is missing or needs to be refreshed.
 
 ```text
-\paper-organizer: enrich folder `organized/melitz2003trade` - refresh summary.
+/paper-organizer: enrich folder `organized/melitz2003trade` - refresh summary.
 ```
 
 ```text
-\paper-organizer: enrich folder `organized/melitz2003trade` - refresh summary.
+/paper-organizer: enrich folder `organized/melitz2003trade` - refresh summary.
 Extra: focus on the model setup, equilibrium definition, and firm heterogeneity mechanism.
 ```
 
 ## Metadata Fix With Extra Context
 
 ```text
-\paper-organizer: metadata-only for `to_be_organized/paper.pdf`.
+/paper-organizer: metadata-only for `to_be_organized/paper.pdf`.
 Extra: published in American Economic Review, 2024; PDF is an earlier working paper.
 ```
 
@@ -53,7 +53,7 @@ Extra: published in American Economic Review, 2024; PDF is an earlier working pa
 Paste a public paper URL directly:
 
 ```text
-\paper-organizer: add https://example.org/paper as link metadata using OpenRouter.
+/paper-organizer: add https://example.org/paper as link metadata using OpenRouter.
 ```
 
 Link metadata writes the normal YAML citation/workflow fields and a verbatim
@@ -66,7 +66,7 @@ Save URLs in any Markdown or plain-text file. `papers to find.md` is a convenien
 inbox:
 
 ```text
-\paper-organizer: import all links under "Paper Organizer Integration Tests"
+/paper-organizer: import all links under "Paper Organizer Integration Tests"
 from `to_be_organized/papers to find.md` using Agy CLI.
 ```
 

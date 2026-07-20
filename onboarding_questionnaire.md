@@ -223,5 +223,5 @@ Use this space for preferences that do not fit above. Examples: where PDFs are c
 After filling the questionnaire, paste this into your coding agent, make sure you have `cd` to the `PaperHub` folder:
 
 ```text
-Use the \paper-organizer skill to onboard this project from scratch.
+Use the /paper-organizer skill to onboard this project from scratch.
 ```

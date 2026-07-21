@@ -116,6 +116,8 @@ To search notes while skipping generated paper metadata and AI summaries:
 /ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
 ```
 
+PaperHub and the skills in this folder are useful beyond paper management. You can ask your coding agent to search, synthesize, draft, edit, or create an Obsidian Canvas from Markdown notes anywhere in the same vault; paste the full path from your computer's system root to the relevant file or folder (for example, `/Users/your-name/Documents/My Obsidian Vault/Research/`) so the agent knows what material to use.
+
 ## Obsidian Base
 
 Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for reading status, tags, interest, and topic views.

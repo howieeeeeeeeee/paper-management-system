@@ -61,13 +61,11 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
    status: ready_for_agent
    ```
 
-### Agent Handoff
+3. Open your coding agent from the `PaperHub` folder and send:
 
-After completing the questionnaire, change the frontmatter `status` to `ready_for_agent`, open your coding agent from the `PaperHub` folder, and send:
-
-```text
-Use the paper-organizer skill to onboard this project using onboarding_questionnaire.md.
-```
+   ```text
+   Use the paper-organizer skill to onboard this project using onboarding_questionnaire.md.
+   ```
 
 ## Daily Workflow
 

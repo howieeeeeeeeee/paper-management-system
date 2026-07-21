@@ -72,25 +72,25 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
 Put new PDFs in `to_be_organized/`, then ask:
 
 ```text
-/paper-organizer: metadata-only batch for everything in `to_be_organized/` using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
+/paper-organizer : metadata-only batch for everything in `to_be_organized/` using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
 ```
 
 For summaries:
 
 ```text
-/paper-organizer: organize new PDFs in `to_be_organized/` with full summaries using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
+/paper-organizer : organize new PDFs in `to_be_organized/` with full summaries using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
 ```
 
 For a link, paste it directly into the task:
 
 ```text
-/paper-organizer: add https://example.org/paper as link metadata using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
+/paper-organizer : add https://example.org/paper as link metadata using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
 ```
 
 You can also save links in any Markdown or plain-text note. The existing `to_be_organized/papers to find.md` is a convenient link inbox:
 
 ```text
-/paper-organizer: import the links under "Paper Organizer Integration Tests"
+/paper-organizer : import the links under "Paper Organizer Integration Tests"
 in `to_be_organized/papers to find.md` using Codex CLI.
 ```
 
@@ -99,7 +99,7 @@ You can provide either a direct link to a PDF or a link to the paper's webpage.
 For retrieval:
 
 ```text
-/paper-finder: which paper was it where dictators avoided knowing the recipient's payoff?
+/paper-finder : which paper was it where dictators avoided knowing the recipient's payoff?
 ```
 
 Paper Finder searches the metadata note, optional `ai_summary.md`, and every other visible Markdown note inside each paper folder. Matches from lecture, presentation, model, or experiment notes count toward their parent paper rather than appearing as separate results.
@@ -107,13 +107,13 @@ Paper Finder searches the metadata note, optional `ai_summary.md`, and every oth
 For vault questions:
 
 ```text
-/ask-knowledge-base: what do my notes say about strategic ignorance and moral wiggle room?
+/ask-knowledge-base : what do my notes say about strategic ignorance and moral wiggle room?
 ```
 
 To search notes while skipping generated paper metadata and AI summaries:
 
 ```text
-/ask-knowledge-base: search my notes about confirmation bias and large language models, without papers.
+/ask-knowledge-base : search my notes about confirmation bias and large language models, without papers.
 ```
 
 PaperHub and the skills in this folder are useful beyond paper management. You can ask your coding agent to search, synthesize, draft, edit, or create an Obsidian Canvas from Markdown notes anywhere in the same vault; paste the full path from your computer's system root to the relevant file or folder (for example, `/Users/your-name/Documents/My Obsidian Vault/Research/`) so the agent knows what material to use.
@@ -132,11 +132,11 @@ Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for r
 Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps, or live-vault workflows. It routes each task to the relevant open-source [`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) reference while preserving PaperHub's paper workflows and safeguards. See the short [Obsidian skill guide](quick_start/obsidian/paperhub-obsidian.md).
 
 ```text
-/paperhub-obsidian: add a Base view for high-interest papers I am currently digesting.
+/paperhub-obsidian : add a Base view for high-interest papers I am currently digesting.
 ```
 
 ```text
-/paperhub-obsidian: add a Base view that shows only papers tagged `repeated_games`.
+/paperhub-obsidian : add a Base view that shows only papers tagged `repeated_games`.
 ```
 
 ## Updating Utilities and Skills 
@@ -146,7 +146,7 @@ PaperHub keeps improving — new skills, engines, and workflow features ship ove
 Use the best model available (SOTA GPT w/ xhigh thinking or Opus w/ xhigh thinking) because updates may need semantic prompt merges:
 
 ```text
-/update-paperhub-utils: check for updates and apply safe utility updates.
+/update-paperhub-utils : check for updates and apply safe utility updates.
 ```
 
 The updater focuses on skills and utility code while preserving local papers, tags, API keys, runtime config, Obsidian state, generated outputs, and customized prompts.

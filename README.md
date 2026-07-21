@@ -94,7 +94,7 @@ You can also save links in any Markdown or plain-text note. The existing `to_be_
 in `to_be_organized/papers to find.md` using Codex CLI.
 ```
 
-The invoking coding agent retrieves public citation data sequentially, then separates pure links from publicly downloadable PDFs. Pure links run through the selected external engine in parallel using prepared text only; Agy, Codex, and OpenRouter do not browse. Public PDFs are grouped separately into metadata-only or full-summary PDF batches.
+You can provide either a direct link to a PDF or a link to the paper's webpage.
 
 For retrieval:
 

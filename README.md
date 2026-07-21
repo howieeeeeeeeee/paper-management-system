@@ -135,6 +135,10 @@ Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps,
 /paperhub-obsidian: add a Base view for high-interest papers I am currently digesting.
 ```
 
+```text
+/paperhub-obsidian: add a Base view that shows only papers tagged `repeated_games`.
+```
+
 ## Updating Utilities and Skills 
 
 PaperHub keeps improving — new skills, engines, and workflow features ship over time. Rather than re-cloning, run the local `update-paperhub-utils` skill to sync the latest skills and utilities into your own project, so new features land on your local copy while your papers and settings stay untouched.

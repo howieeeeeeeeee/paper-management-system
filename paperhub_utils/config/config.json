@@ -1,5 +1,8 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
+  "available_engines": [
+    "coding-agent"
+  ],
   "git": {
     "use_git": true,
     "sync_to_remote": false,
@@ -8,7 +11,7 @@
   "metadata_only_page_limit": 2,
   "agy_cli_model": "Gemini 3.1 Pro (High)",
   "codex_cli_model": "gpt-5.6-sol",
-  "codex_cli_reasoning_effort": "xhigh",
+  "codex_cli_reasoning_effort": "high",
   "codex_cli_yolo": true,
   "tag_prompt": {
     "include_context": true,

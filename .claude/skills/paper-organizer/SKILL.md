@@ -43,6 +43,39 @@ tags/
 
 For onboarding/setup/first-run requests, read `onboard.md` and execute it before any paper-processing mode. Onboarding is questionnaire-first: if root `onboarding_questionnaire.md` exists, `onboard.md` tells the agent to read it before asking follow-up questions.
 
+### Engine availability gate
+
+Before recommending, selecting, or invoking an AI engine, read `AVAILABLE_ENGINES`
+from `paperhub.config` (backed by `available_engines` in
+`paperhub_utils/config/config.json`). Canonical IDs are `coding-agent`,
+`codex-cli`, `agy-cli`, and `openrouter`.
+
+1. Treat `coding-agent` as available unconditionally. `paperhub.config` adds it
+   even when the config key is missing or malformed.
+2. Suggest or offer only engines in `AVAILABLE_ENGINES`. Keep their configured
+   order and always include the current coding agent as a choice. Do not suggest
+   an unlisted external engine merely because its executable or API key happens
+   to exist.
+3. If the user explicitly requests an external engine that is not listed:
+   - Tell them it is not currently enabled and show the enabled choices.
+   - Ask whether they want to verify the requested engine. If not, let them
+     choose only from the enabled list.
+   - For `openrouter`, verify that `OPENROUTER_API_KEY` loads without printing it.
+     For `agy-cli`, verify the executable and have the user confirm it launches
+     signed in. For `codex-cli`, run `command -v codex && codex exec --help` and
+     confirm authentication when the command cannot prove it.
+   - Do not append the engine when verification fails. If an executable check
+     cannot prove authentication, allow the requested first run but wait for
+     that run to succeed before appending it.
+   - After verification or the first real invocation succeeds, append the
+     canonical ID to `available_engines` in `config.json`, preserving existing
+     order and all unrelated settings. Ensure `coding-agent` remains present.
+4. If an enabled external engine later fails, follow its normal failure flow;
+   do not silently switch engines or remove it from the list.
+5. When the user names no engine, default to `openrouter` only when it is listed;
+   otherwise use `coding-agent`. Any engine-selection question must contain only
+   listed engines plus the current agent.
+
 For paper processing, first identify the input kind. For a URL or Markdown/plain-
 text link list, read `link_input.md`. For a local PDF or existing folder, pick
 **one engine** and **one mode** per batch below.
@@ -114,8 +147,8 @@ for the folder and canonical metadata filename.
 | "use current coding agent" / "use you" / "no external AI" | `coding-agent` | `engines/coding_agent.md` (full / metadata-only / enrich; full+enrich gated for quota) |
 | "with codex cli" / "use codex cli" / "direct OpenAI CLI" | `codex-cli` | `engines/codex_cli.md` |
 | "with agy cli" / "use antigravity cli" / "antigravity" / "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
-| "use gemini" / "with gemini" (no "cli") | ASK first | `AskUserQuestion`: "Gemini via OpenRouter (script) or Agy CLI (direct Google CLI)?" |
-| anything else (default) | `openrouter` | `engines/openrouter.md` |
+| "use gemini" / "with gemini" (no "cli") | FILTER, then ASK if needed | Among enabled `openrouter` and `agy-cli`: route directly if one is enabled, ask which if both are enabled, or run the availability gate if neither is enabled |
+| anything else (default) | enabled default | `openrouter` when listed; otherwise `coding-agent` |
 
 ### Modes
 
@@ -168,7 +201,7 @@ For partial batch failures, ask the user whether to abandon, retry, or choose an
 ## Quick start
 
 ```
-"Summarize this paper"                              → openrouter × ask-mode
+"Summarize this paper"                              → enabled default × ask-mode (OpenRouter if listed; otherwise current agent)
 "Summarize these papers with agy cli"               → agy-cli × ask-mode
 "Summarize these papers with codex cli"             → codex-cli × ask-mode
 "Summarize this paper. Focus on identification."    → openrouter × ask-mode + --instruction
@@ -208,6 +241,7 @@ public PDFs. If public PDFs are pending a mode, ask once before engine calls.
 | Entry scripts | `paperhub_utils/scripts/` (`scripts.paper_organizer`, `scripts.enrich`, `scripts.paper_search`, `scripts.update_utils`) |
 | Python package | `paperhub_utils/paperhub/` (`config.py`, `cli_workflow/`, `tag_utils/`, `prompt/builder.py`) |
 | User config | `paperhub_utils/config/config.json` (`paperhub.config` loads and exports it) |
+| Available engines | `available_engines` in `config.json`; canonicalized as `paperhub.config.AVAILABLE_ENGINES`; current coding agent is always included |
 | Onboarding questionnaire | `onboarding_questionnaire.md` at project root (deleted after successful onboarding) |
 | Prompts | `paperhub_utils/prompts/{shared,aspect}/*.txt` + `paperhub/prompt/builder.py` (all modes compose from fragments) |
 | Tag registry | `tags/_internal/`; initial taxonomy comes from `onboarding_questionnaire.md` when present, otherwise `paperhub_utils/config/default_tags.yaml` |

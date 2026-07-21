@@ -61,42 +61,42 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
    status: ready_for_agent
    ```
 
-3. Open your coding agent from the `PaperHub` folder and paste:
+### Agent Handoff
 
-   ```text
-   Use the /paper-organizer skill to onboard this project from scratch.
-   ```
+After completing the questionnaire, change the frontmatter `status` to `ready_for_agent`, open your coding agent from the `PaperHub` folder, and send:
+
+```text
+Use the paper-organizer skill to onboard this project using onboarding_questionnaire.md.
+```
 
 ## Daily Workflow
 
 Put new PDFs in `to_be_organized/`, then ask:
 
 ```text
-/paper-organizer: metadata-only batch for everything in `to_be_organized/` using (Agy CLI / Codex CLI / OpenRouter API).
+/paper-organizer: metadata-only batch for everything in `to_be_organized/` using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
 ```
 
 For summaries:
 
 ```text
-/paper-organizer: organize new PDFs in `to_be_organized/` with full summaries using (Agy CLI / Codex CLI / OpenRouter API)
+/paper-organizer: organize new PDFs in `to_be_organized/` with full summaries using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
 ```
 
 For a link, paste it directly into the task:
 
 ```text
-/paper-organizer: add https://example.org/paper as link metadata using OpenRouter.
+/paper-organizer: add https://example.org/paper as link metadata using Agy CLI, Codex CLI, OpenRouter API, or the current coding agent.
 ```
 
-You can also save links in any Markdown or plain-text note. The existing
-`to_be_organized/papers to find.md` is a convenient link inbox:
+You can also save links in any Markdown or plain-text note. The existing `to_be_organized/papers to find.md` is a convenient link inbox:
 
 ```text
 /paper-organizer: import the links under "Paper Organizer Integration Tests"
 in `to_be_organized/papers to find.md` using Codex CLI.
 ```
 
-The invoking coding agent retrieves public citation data sequentially, then
-separates pure links from publicly downloadable PDFs. Pure links run through the selected external engine in parallel using prepared text only; Agy, Codex, and OpenRouter do not browse. Public PDFs are grouped separately into metadata-only or full-summary PDF batches.
+The invoking coding agent retrieves public citation data sequentially, then separates pure links from publicly downloadable PDFs. Pure links run through the selected external engine in parallel using prepared text only; Agy, Codex, and OpenRouter do not browse. Public PDFs are grouped separately into metadata-only or full-summary PDF batches.
 
 For retrieval:
 
@@ -126,11 +126,7 @@ Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for r
 
 ## Obsidian Authoring Skill
 
-Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps,
-or live-vault workflows. It routes each task to the relevant open-source
-[`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) reference
-while preserving PaperHub's paper workflows and safeguards. See the short
-[Obsidian skill guide](quick_start/obsidian/paperhub-obsidian.md).
+Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps, or live-vault workflows. It routes each task to the relevant open-source [`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) reference while preserving PaperHub's paper workflows and safeguards. See the short [Obsidian skill guide](quick_start/obsidian/paperhub-obsidian.md).
 
 ```text
 /paperhub-obsidian: add a Base view for high-interest papers I am currently digesting.
@@ -154,5 +150,5 @@ The updater focuses on skills and utility code while preserving local papers, ta
 - [quick_start/obsidian/paperhub-obsidian.md](quick_start/obsidian/paperhub-obsidian.md): agent-assisted Markdown, Bases, Canvas, and live Obsidian workflows.
 - [quick_start/use-cases.md](quick_start/use-cases.md): concise index for the skill-specific quick starts.
 - [quick_start/skills/paper-organizer.md](quick_start/skills/paper-organizer.md): PDF and public-link ingestion.
-- [paperhub_utils/config/config.json](paperhub_utils/config/config.json): runtime preferences.
+- [paperhub_utils/config/config.json](paperhub_utils/config/config.json): runtime preferences, including which AI services have been set up.
 - [paperhub_utils/utility_changelog.json](paperhub_utils/utility_changelog.json): structured utility update notes.

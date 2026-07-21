@@ -3,7 +3,7 @@ summaries:
 filters:
   and:
     - "!title.isEmpty()"
-    - file.inFolder("EconPhD/PaperHub/organized")
+    - file.inFolder("PaperHub/organized")
 views:
   - type: table
     name: Backlog

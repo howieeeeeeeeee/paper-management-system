@@ -1,8 +1,43 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.20.1",
+  "latest_version": "2026.07.21.2",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.21.2": {
+      "date": "2026-07-21",
+      "title": "Verified Multi-Engine Onboarding",
+      "update_kind": "structural + content",
+      "summary": "Adds a persistent available-engine registry, multi-select onboarding, and engine-aware routing that offers configured services while keeping the active coding agent available.",
+      "how_to_apply": "Update the paper-organizer skills, onboarding questionnaire, paperhub config module, config defaults, tests, README, and utility release metadata together. Config schema 3 adds available_engines with canonical IDs coding-agent, codex-cli, agy-cli, and openrouter. For an existing config without this key, PaperHub safely starts with coding-agent only; rerun onboarding or request an external engine once so the agent can verify it and append it. Existing model overrides remain unchanged.",
+      "added": [
+        "Config schema 3 available_engines registry with normalized canonical IDs, preserved preference order, and automatic current-agent availability.",
+        "A runtime availability gate that limits suggestions to configured engines and verifies an explicitly requested new engine before adding it.",
+        "Focused tests for engine aliases, duplicate removal, unknown values, and the current-agent fallback."
+      ],
+      "changed": [
+        "The onboarding questionnaire accepts multiple external-engine selections and keeps provider-specific setup in Advanced Settings.",
+        "Onboarding verifies every selected external engine and writes all working choices to config.json and the onboarding ledger.",
+        "Agy CLI defaults to Gemini 3.1 Pro (High), while the public Codex CLI default is gpt-5.6-sol with high reasoning; personal overrides remain intact.",
+        "Public-template sanitization resets available_engines to coding-agent only and replaces the maintainer's Obsidian Base folder prefix with a generic PaperHub path."
+      ]
+    },
+    "2026.07.21.1": {
+      "date": "2026-07-21",
+      "title": "Simplified Onboarding Questionnaire",
+      "update_kind": "content",
+      "summary": "Reorganizes the PaperHub onboarding questionnaire into a shorter required path with a linked Obsidian table of contents and a separate advanced-settings section.",
+      "how_to_apply": "Update onboarding_questionnaire.md, README.md, and the paper-organizer onboarding skill together. No configuration, command, dependency, or existing-library migration is required.",
+      "added": [
+        "A same-note linked table of contents for every questionnaire section.",
+        "A consolidated advanced-settings section for OpenRouter API-key setup, Agy and Codex CLI readiness, Codex permissions and model overrides, and metadata-only page depth."
+      ],
+      "changed": [
+        "Required model, Git, starter-tag, and paper-label choices use shorter explanations; the bundled Obsidian Base is configured automatically from the detected vault path without a questionnaire checkbox.",
+        "Automatic project and vault discovery is explained without requiring beginners to run pwd or cd during the normal path.",
+        "Local-only Git history is recommended as sufficient for most users; remote sync requires either a supplied repository URL or a verified existing origin remote.",
+        "The README now includes the questionnaire's canonical Agent Handoff prompt."
+      ]
+    },
     "2026.07.20.1": {
       "date": "2026-07-20",
       "title": "PaperHub Obsidian Skill Router",

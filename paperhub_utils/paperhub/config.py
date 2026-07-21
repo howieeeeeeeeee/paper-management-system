@@ -38,7 +38,35 @@ def _config_int(config: dict, key: str, default: int) -> int:
     return max(0, value)
 
 
+SUPPORTED_ENGINE_IDS = ("coding-agent", "codex-cli", "agy-cli", "openrouter")
+CURRENT_AGENT_ENGINE_ID = "coding-agent"
+_ENGINE_ID_ALIASES = {
+    "current-agent": CURRENT_AGENT_ENGINE_ID,
+    "current-coding-agent": CURRENT_AGENT_ENGINE_ID,
+    "codex": "codex-cli",
+    "agy": "agy-cli",
+    "openrouter-api": "openrouter",
+}
+
+
+def _config_available_engines(value: object) -> tuple[str, ...]:
+    """Return canonical configured engines, always including the current agent."""
+    raw_values = value if isinstance(value, (list, tuple)) else ()
+    resolved: list[str] = []
+    for raw_value in raw_values:
+        if not isinstance(raw_value, str):
+            continue
+        engine_id = raw_value.strip().lower()
+        engine_id = _ENGINE_ID_ALIASES.get(engine_id, engine_id)
+        if engine_id in SUPPORTED_ENGINE_IDS and engine_id not in resolved:
+            resolved.append(engine_id)
+    if CURRENT_AGENT_ENGINE_ID not in resolved:
+        resolved.append(CURRENT_AGENT_ENGINE_ID)
+    return tuple(resolved)
+
+
 USER_CONFIG = _load_user_config()
+AVAILABLE_ENGINES = _config_available_engines(USER_CONFIG.get("available_engines"))
 TAG_PROMPT_CONFIG = USER_CONFIG.get("tag_prompt", {})
 if not isinstance(TAG_PROMPT_CONFIG, dict):
     TAG_PROMPT_CONFIG = {}
@@ -164,7 +192,7 @@ CODEX_CLI_REASONING_EFFORT_LIST = tuple(
     dict.fromkeys(effort for _, effort in CODEX_CLI_MODEL_REASONING_PAIRS)
 )
 _CODEX_CLI_MODEL_DEFAULT = "gpt-5.6-sol"
-_CODEX_CLI_REASONING_EFFORT_DEFAULT = "xhigh"
+_CODEX_CLI_REASONING_EFFORT_DEFAULT = "high"
 _codex_cli_model_value = USER_CONFIG.get("codex_cli_model")
 CODEX_CLI_MODEL = (
     _codex_cli_model_value.strip()

@@ -60,7 +60,7 @@ shared fragments below. Link metadata uses a dedicated offline fragment.
 ## Config Files
 
 - `config/.env.example`: copy to `config/.env`, then add local API keys. Do not commit `config/.env`.
-- `config/config.json`: runtime options, including git commits, metadata-only page limit, Agy CLI model defaults, Codex CLI model/reasoning/yolo defaults, and tag prompt limits.
+- `config/config.json`: runtime options, including verified available engines, git commits, metadata-only page limit, Agy CLI model defaults, Codex CLI model/reasoning/yolo defaults, and tag prompt limits.
 - `paperhub/config.py`: model allowlist, script constants, and fallback research-interest text.
 - `config/default_tags.yaml`: first-run canonical tag seed list.
 - `utility_changelog.json`: user-facing update notes for skills and utilities.

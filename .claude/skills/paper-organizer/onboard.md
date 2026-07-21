@@ -16,7 +16,7 @@ Use values in this order:
 4. Safe defaults documented in this skill.
 5. `AskUserQuestion`, only for missing or conflicting values that block setup.
 
-Do not guess the user's API key, starter taxonomy, or Git preference. Do not ask about values already answered in the questionnaire and verified as valid. Never print or echo secrets from `.env`. Never ask the user for the Obsidian vault path up front: find it yourself by walking up parent directories from the paper-library root until one contains `.obsidian/` (details in section 1, step 2), and ask only if that search finds nothing.
+Do not guess the user's API key, external-engine availability, starter taxonomy, or Git preference. The current coding agent is the only automatic engine default. Do not ask about values already answered in the questionnaire and verified as valid. Never print or echo secrets from `.env`. Never ask the user for the Obsidian vault path up front: find it yourself by walking up parent directories from the paper-library root until one contains `.obsidian/` (details in section 1, step 2), and ask only if that search finds nothing.
 
 ## 0. Load questionnaire, state, and config
 
@@ -30,7 +30,7 @@ Do not guess the user's API key, starter taxonomy, or Git preference. Do not ask
 3. Parse the user's current onboarding request for inline overrides:
    - `My Obsidian vault is "..."`
    - starter tag notes such as fields, methodologies, topics, courses, seminars, reading lists, or workflow labels
-   - engine, Git, page-depth, paper-label, or Bases preferences
+   - one or more engine selections, Git, page-depth, paper-label, or Bases preferences
 4. Read `paperhub_utils/config/onboarding.json` as the resumable progress ledger and `paperhub_utils/config/config.json` as the user-editable runtime config.
 5. If either JSON file is missing, recreate it with the same schema and keys from the repository template.
 6. If `onboarding.json` includes an `apply_questionnaire` step, mark it `done` after mapping valid questionnaire answers, or `skipped` if the questionnaire is absent because onboarding was already completed.
@@ -54,7 +54,7 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
      ```
 
    - Otherwise use `obsidian.vault_abs_path` from `paperhub_utils/config/config.json` if valid, or a vault path written in an older questionnaire.
-   - If discovery finds nothing, the paper library is probably not inside an Obsidian vault (or the folder has never been opened in Obsidian, so `.obsidian/` does not exist yet). Only then ask the user for the vault root, or ask whether to skip Bases setup for now.
+   - If discovery finds nothing, the paper library is probably not inside an Obsidian vault (or the folder has never been opened in Obsidian, so `.obsidian/` does not exist yet). Ask the user for the vault root or ask them to open the surrounding folder as a vault in Obsidian, then retry discovery. Skip Bases only when the user explicitly asks to skip it.
 3. Validate that the vault path exists and contains `.obsidian/`. If not, ask the user to confirm or correct it.
 4. Derive the vault-relative paper-library path:
    - If the paper-library folder is inside the vault, derive it automatically (the paper-library root's path relative to the vault root, with forward slashes).
@@ -62,8 +62,8 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    - If the paper-library folder is not inside the provided vault and Bases setup is requested, ask where the library will live inside the vault before editing `.base` files.
    - Persist both resolved values into `paperhub_utils/config/config.json` under the `obsidian` block (`vault_abs_path`, `vault_relative_paper_library_path`) — `scripts/knowledge_base_search.py` reads `vault_abs_path` to search the whole vault and silently falls back to the paper-library root when it is null. Mirror `context.obsidian_vault_abs_path` and `context.vault_relative_paper_library_path` in `onboarding.json`. If the library is not inside a vault, leave both as `null`.
 5. Confirm these folders exist or create them if missing: `to_be_organized/`, `organized/`, and `tags/`.
-6. Read `paperhub_utils/config/config.json` for the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`), `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
-7. Read `paperhub_utils/paperhub/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `USE_GIT`, `SYNC_TO_REMOTE_GIT`, `GIT_BACKUP_ABS_PATH`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS`.
+6. Read `paperhub_utils/config/config.json` for `available_engines`, the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`), `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
+7. Read `paperhub_utils/paperhub/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `AVAILABLE_ENGINES`, `SUPPORTED_ENGINE_IDS`, `USE_GIT`, `SYNC_TO_REMOTE_GIT`, `GIT_BACKUP_ABS_PATH`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS`.
 8. **Make sure `uv` is here.** Every other step in this skill calls `uv run python ...`; if `uv` is not on `PATH`, nothing else works — even when `paperhub_utils/.venv/` already exists from a previous machine. This check is non-optional.
 
    ```bash
@@ -110,7 +110,7 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    Quick smoke test that the environment is usable:
 
    ```bash
-   uv run python -c "from paperhub.config import AGY_CLI_MODEL, CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT, CODEX_CLI_YOLO; print(AGY_CLI_MODEL, CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT, CODEX_CLI_YOLO)"
+   uv run python -c "from paperhub.config import AVAILABLE_ENGINES, AGY_CLI_MODEL, CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT, CODEX_CLI_YOLO; print(AVAILABLE_ENGINES, AGY_CLI_MODEL, CODEX_CLI_MODEL, CODEX_CLI_REASONING_EFFORT, CODEX_CLI_YOLO)"
    ```
 
 ## 2. Apply setup choices from the questionnaire
@@ -131,21 +131,40 @@ Ask only for missing or conflicting information.
     - **Validate it is outside any cloud folder.** If the path contains `Mobile Documents`,
       `Dropbox`, `Google Drive`, or `OneDrive`, warn and ask for a plain local path instead —
       do not proceed with a cloud path.
-    - Set `sync_to_remote` from the "Sync to a remote" answer.
+    - Set `sync_to_remote` from the "Sync to a remote" answer. Local-only versioning is the
+      recommended and sufficient choice for most users; remote sync is optional.
+    - If remote sync is selected, read the questionnaire's remote choice and optional URL:
+      - If the user supplied a URL, retain it for remote setup. Treat it as a repository URL,
+        never as authorization to store a password, personal access token, or other secret.
+      - If the user says the backup folder already has a working remote, verify that `origin`
+        exists with `git -C "{backup_abs_path}" remote get-url origin`. Do not replace a valid
+        existing remote.
+      - If neither a URL nor a verifiable existing `origin` is available, ask for the remote URL.
     - Persist all three into `config.json`'s `git` block and mirror `context.use_git`,
       `context.sync_to_remote`, `context.git_backup_abs_path` in `onboarding.json`.
   - **Set up the backup repo (first-time).** Verify `git --version`. If the backup folder has no
     `.git`, run the `versioning-with-git` skill's *First-time setup* (create the folder, mirror
-    the vault in, `git init -b main`, initial commit). If `sync_to_remote` is true, ask the user
-    for the remote URL and wire up `origin` — never invent a URL.
+    the vault in, `git init -b main`, initial commit). If `sync_to_remote` is true, use the
+    questionnaire URL or a verified existing `origin`; ask only when neither is available, and
+    never invent a URL.
   - **Remove any legacy in-vault `.git`.** If a `.git` exists at the paper-library root, tell the
     user it must be removed (its history is preserved in the backup folder + remote) and, once the
     backup repo holds the current state, `rm -rf` it from the vault. Never `git init` inside the
     vault.
   - **If git is requested but unavailable**, ask the user to install/configure git and rerun
     onboarding; set `git.use_git = false` until git is available.
+- **Available AI engines**:
+  - Canonical engine IDs are `coding-agent`, `openrouter`, `agy-cli`, and `codex-cli`.
+  - Start the resolved list with every external engine selected under **Preferred AI engines** or explicitly requested in its Advanced Settings subsection. Multiple selections are valid.
+  - Always include `coding-agent`, even when it was not written in the questionnaire or existing config. The current coding agent requires no installation check.
+  - Verify every selected external engine before adding it:
+    - `openrouter`: verify the API key as described below without printing it.
+    - `agy-cli`: verify `agy` exists, then use the questionnaire confirmation or ask the user to confirm it launches and is signed in.
+    - `codex-cli`: verify `command -v codex && codex exec --help`; use the questionnaire confirmation or ask the user to confirm authentication.
+  - If verification fails, do not add that engine. Ask whether the user wants to configure it now or continue with the other verified engines.
+  - Persist all verified IDs, preserving questionnaire order, to `config.json` as `available_engines`. Append `coding-agent` if it is absent. Mirror the same list to `context.available_engines` in `onboarding.json`.
 - **OpenRouter API key**:
-  - If the questionnaire says OpenRouter is desired, verify that `OPENROUTER_API_KEY` is available from the environment or `paperhub_utils/config/.env`.
+  - If the questionnaire selects or configures OpenRouter, verify that `OPENROUTER_API_KEY` is available from the environment or `paperhub_utils/config/.env`.
   - Verify without printing the key:
 
     ```bash
@@ -159,13 +178,10 @@ Ask only for missing or conflicting information.
     ```
 
   - Do not ask the user to paste the key into chat except as a last resort, and label that path as not recommended because it puts the secret in the transcript.
-  - If the questionnaire says OpenRouter is not desired, record the selected alternate engine if available.
-- **AI engine**:
-  - OpenRouter is the recommended default when a key is loadable.
-  - Agy CLI is acceptable when the questionnaire selects it and `agy` is available.
-  - Codex CLI is acceptable when the questionnaire selects it and `codex` is available/authenticated.
-  - Current coding agent is acceptable for metadata-only first runs.
-  - If the chosen engine is not available, ask whether to configure it, switch to an available engine, or skip engine setup.
+- **AI engine models**:
+  - The questionnaire's onboarding defaults are `Gemini 3.1 Pro (High)` for Agy CLI and
+    `gpt-5.6-sol` with `high` reasoning for Codex CLI. When the user selects the onboarding
+    default, persist the applicable value instead of inheriting a different local override.
   - If Codex CLI is selected, persist `codex_cli_model`, `codex_cli_reasoning_effort`, and `codex_cli_yolo` in `paperhub_utils/config/config.json`. When the user leaves any unspecified, fall back to the resolved defaults from `paperhub/config.py` (`CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_YOLO`) rather than hardcoding literals here.
   - Validate the selected Codex pair against `CODEX_CLI_MODEL_REASONING_PAIRS`; reject or ask about invalid pairs instead of silently changing the thinking level.
   - Verify Codex CLI availability without starting a paper run:
@@ -274,22 +290,18 @@ Obsidian Bases is a core plugin for database-like views over Markdown files and 
 
 Obsidian `file.inFolder(...)` filters must use vault-relative paths, not absolute filesystem paths. Use forward slashes and preserve the user's actual folder casing.
 
-1. Use the questionnaire's Bases choice:
-   - Ask the agent to configure root `.base` files using the auto-discovered Obsidian vault path.
-   - Configure `.base` files.
-   - Leave `.base` files unchanged.
-   - Not using Bases yet.
-2. If Bases setup is skipped, record `configure_obsidian_bases` as `skipped` and continue.
-3. If Bases setup is enabled, inspect root `*.base` files. The repository already includes `SamplePaperBoard.base`, so the normal onboarding task is to help update its paths, not create a new sample base.
+1. Configure the bundled Base automatically. The questionnaire intentionally has no Bases checkbox or path field; its text explains that the agent will update the existing Base and provides only an optional notes box. Do not ask the user to choose whether to configure Bases during normal onboarding.
+2. Skip Bases only when the user explicitly asks to skip it. In that case, record `configure_obsidian_bases` as `skipped` and continue.
+3. Inspect root `*.base` files. The repository already includes `SamplePaperBoard.base`, so the normal onboarding task is to update its paths, not create another Base.
 4. Derive the paper-library folder path relative to the Obsidian vault from the discovered project root and the vault absolute path.
-5. If the user chose agent-configured Bases but no valid vault absolute path is available (auto-discovery failed and the user has not supplied one), ask for that path before editing `.base` files. If the project root is outside the vault, ask where the paper library should live inside the vault.
+5. If no valid vault absolute path is available after auto-discovery, ask for that path or ask the user to open the surrounding folder as an Obsidian vault before editing `.base` files. If the project root is outside the vault, ask where the paper library should live inside the vault.
 6. After the vault path is settled, update the `is in path` filter shown by Obsidian Bases in `SamplePaperBoard.base`. In YAML this is the `file.inFolder(...)` path; set it to the path from the vault root to the intake folder, such as `file.inFolder("{vault_relative_paper_library}/to_be_organized")`. Never use an absolute filesystem path.
 7. Update base filters so examples match the user's machine:
    - intake papers waiting to be organized: `file.inFolder("{vault_relative_paper_library}/to_be_organized")`
    - organized papers: `file.inFolder("{vault_relative_paper_library}/organized")`
    - all papers in this library: `file.inFolder("{vault_relative_paper_library}")`
 8. Only create `SamplePaperBoard.base` if it is genuinely missing from the project.
-9. Validate edited `.base` files as YAML. If Obsidian does not recognize `.base` files, tell the user to open Obsidian and enable the Bases core plugin; do not edit `.obsidian/` settings unless the user explicitly asks.
+9. Validate edited `.base` files as YAML. Tell the user they can open `SamplePaperBoard.base` in their vault to see the configured views. If Obsidian does not recognize `.base` files, tell the user to enable the Bases core plugin; do not edit `.obsidian/` settings unless the user explicitly asks.
 
 ## 7. Verify the setup
 
@@ -307,7 +319,7 @@ The tag context output may be empty only if tag prompt context is disabled or th
 End onboarding with:
 
 1. The resolved paper-library root, utilities directory, organized directory, tags directory, vault-relative base path, and the Git settings (versioning on/off, backup folder path, remote sync on/off).
-2. Whether OpenRouter, Agy CLI, Codex CLI, or current-agent processing is available.
+2. The final `available_engines` list, noting that current-agent processing is always available.
 3. A short instruction to add PDFs to `to_be_organized/` or paste/save public
    paper links in a Markdown/plain-text note.
 4. Two recommended first requests: metadata-only on one PDF, and link metadata
@@ -319,4 +331,4 @@ End onboarding with:
 
 If onboarding is complete and `onboarding_questionnaire.md` still exists, delete it from the root after recording the final state. Do not delete it if onboarding is blocked, if required answers remain unresolved, or if the user explicitly asks to keep it.
 
-Onboarding is complete when config paths are valid, the `git` block is explicit in `paperhub_utils/config/config.json` (and, when `use_git` is true, `backup_abs_path` points to an initialized out-of-iCloud repo and no `.git` remains in the vault), the tag registry exists, base files are configured or explicitly skipped, and the `uv` environment is installed in `paperhub_utils/`.
+Onboarding is complete when config paths are valid, `available_engines` is explicit in `paperhub_utils/config/config.json` and contains `coding-agent`, the `git` block is explicit (and, when `use_git` is true, `backup_abs_path` points to an initialized out-of-iCloud repo and no `.git` remains in the vault), the tag registry exists, base files are configured or explicitly skipped, and the `uv` environment is installed in `paperhub_utils/`.

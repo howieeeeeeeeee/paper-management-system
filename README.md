@@ -122,8 +122,11 @@ PaperHub and the skills in this folder are useful beyond paper management. You c
 
 Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for reading status, tags, interest, and topic views.
 
-![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/paperbase-screenshot.png)
 
+![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/base-screenshot-2.png)
+![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/base-screenshot-1.png)
+
+![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/base-screenshot-3.png)
 ## Obsidian Authoring Skill
 
 Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps, or live-vault workflows. It routes each task to the relevant open-source [`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) reference while preserving PaperHub's paper workflows and safeguards. See the short [Obsidian skill guide](quick_start/obsidian/paperhub-obsidian.md).

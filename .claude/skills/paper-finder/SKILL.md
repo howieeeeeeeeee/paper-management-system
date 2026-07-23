@@ -18,7 +18,48 @@ Term quality notes:
 - Avoid ultra-generic terms ("model", "experiment", "economics") — they match half the library and dilute ranking.
 - **Exclude terms:** when the user wants to steer *away* from something ("but not the survey ones", "not the field-experiment stuff"), also generate 1–3 exclude keywords for `--exclude`. These deduct score rather than hard-filter, so a strong match still surfaces if it genuinely fits.
 
-### 2. One search call
+#### Specific-but-fuzzy memories: use a claim-first keyword ladder
+
+When the user remembers a fairly specific result or mechanism but not the citation, do not flatten
+the memory into broad topic words. Decompose it into independently searchable dimensions:
+
+1. **Object or population:** who or what was studied ("LLMs", "investors", "children").
+2. **Task or mechanism:** what they did ("Bayesian updating", "forecasting", "dictator game").
+3. **Comparison:** what varied ("newer versus older", "large versus small", treatment versus control).
+4. **Direction of the result:** what changed ("more rational", "less biased", "ignored information").
+5. **Benchmark or design language:** likely task names, canonical biases, datasets, or methods
+   ("base-rate neglect", "AR(1)", "multiple price list").
+
+Start with one or two terms from each remembered dimension. Preserve the user's distinctive
+comparison and directional claim; those often identify the paper better than the broad topic.
+Do not guess an author unless the user has some author memory.
+
+Treat the first results as a **diagnostic vocabulary probe**, not automatically as the answer.
+If high-ranked papers contain generic tokens such as "belief", "model", or "Bayesian" but do not
+state the remembered comparison or finding, that is a vocabulary collision. Refine the next round
+using the field's more discriminating language found in the candidate cards:
+
+- replace loose words with canonical phrases ("calculation" → "base-rate neglect",
+  "Bayes rule", "numerical reasoning");
+- add the comparison axis ("model scale", "advanced versus older", "large versus smaller");
+- add the outcome classification ("rational responses", "belief tasks", "human-like");
+- after a plausible candidate appears, use a distinctive title fragment or result phrase to
+  separate it from neighboring papers and earlier/later versions.
+
+For example, a memory like "newer or larger models were better at calculation and Bayesian
+updating" can progress from:
+
+- broad anchors: `"Bayesian updating"`, `"belief updating"`, `"larger models"`,
+  `"newer models"`, `"numerical reasoning"`, `"large language models"`;
+- diagnostic refinement: `"Bayes rule"`, `"base-rate neglect"`, `"belief tasks"`,
+  `"model scale"`, `"advanced versus older"`, `"large versus smaller"`;
+- candidate confirmation: a distinctive title fragment plus `"probabilistic beliefs"` or the
+  exact comparison/result language shown in the leading cards.
+
+This ladder is still one search call per round. Use at most about three rounds, changing the
+vocabulary materially each time rather than repeatedly submitting near-duplicates.
+
+### 2. One search call per round
 
 ```bash
 cd paperhub_utils && uv run python -m scripts.paper_search \
@@ -38,7 +79,7 @@ cd paperhub_utils && uv run python -m scripts.paper_search \
   --top 15 --detail 5
 ```
 
-- **Detailed mode `--full`** (off by default) — turn it on when the user asks for a "detailed", "comprehensive", "in-depth", or "deep" look. Each detailed-rank card returns the complete metadata note, complete `ai_summary.md`, and complete matched additional notes. It never returns unmatched extra notes. Additional-note text is capped at 60,000 characters per paper by default; adjust `--max-extra-full-chars`, or use `0` explicitly for unbounded output. Narrow `--detail` to 1–3:
+- **Detailed mode `--full`** (off by default) — turn it on when the user asks for a "detailed", "comprehensive", "in-depth", or "deep" look. Also prefer it when the user remembers a specific empirical result, mechanism, or comparison but cannot recall the paper: complete summaries are often needed to verify the claim rather than merely match the topic. Each detailed-rank card returns the complete metadata note, complete `ai_summary.md`, and complete matched additional notes. It never returns unmatched extra notes. Additional-note text is capped at 60,000 characters per paper by default; adjust `--max-extra-full-chars`, or use `0` explicitly for unbounded output. Narrow `--detail` to 1–3:
 
 ```bash
 cd paperhub_utils && uv run python -m scripts.paper_search \
@@ -60,8 +101,16 @@ Do not pad: if only 2 papers plausibly match, show 2 detailed and say so.
 
 ### 4. Iterate if weak
 
-If top scores are low, results look off-topic, or the user says "none of these":
-- Swap in broader/alternative vocabulary (different literature's phrasing, English vs. jargon variants), drop terms that matched everything, re-run. Up to ~3 rounds — each is <1s and cheap.
+If top scores are low, results look off-topic, the cards match only generic vocabulary, or the user says "none of these":
+- Compare the leading cards against the remembered **task, comparison, and direction of result**.
+  A high score is not persuasive when those dimensions are absent.
+- Swap in broader/alternative vocabulary (different literature's phrasing, English vs. jargon
+  variants), then narrow with discriminating phrases from the returned cards. Drop terms that
+  matched everything. Re-run up to ~3 rounds; each round should represent a real hypothesis about
+  how the target literature names the remembered idea.
+- When two nearby papers remain, run the final round as a candidate comparison: include a
+  distinctive phrase from each candidate plus the remembered result. Report the best match and
+  explain why the close alternative is weaker.
 - If the user remembers an **exact phrase** (a quote, a payoff like "$6", a dataset name), first retry it as a quoted search term. If a literal fallback is still necessary, use `rg -il --glob '*.md' "<phrase>" organized/` and map paths back to paper labels; do not read every returned file.
 
 ### 5. On a pick

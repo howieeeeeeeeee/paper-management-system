@@ -33,11 +33,11 @@ Extra: citation is Acemoglu, Daron, and Pascual Restrepo. 2020.
 Use `enrich` when the metadata note already exists but `ai_summary.md` is missing or needs to be refreshed.
 
 ```text
-/paper-organizer : enrich folder `organized/melitz2003trade` - refresh summary.
+/paper-organizer : enrich folder `organized/Melitz2003Trade` - refresh summary.
 ```
 
 ```text
-/paper-organizer : enrich folder `organized/melitz2003trade` - refresh summary.
+/paper-organizer : enrich folder `organized/Melitz2003Trade` - refresh summary.
 Extra: focus on the model setup, equilibrium definition, and firm heterogeneity mechanism.
 ```
 

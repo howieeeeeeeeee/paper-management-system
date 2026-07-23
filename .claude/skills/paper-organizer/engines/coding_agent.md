@@ -177,7 +177,7 @@ Generate a response that follows the prompt's required structure exactly. The pr
 
 ```markdown
 # paper_label
-<single label, lowercase, no spaces>
+<single label following paper_label.txt; ASCII and no spaces>
 
 # metadata
 ---

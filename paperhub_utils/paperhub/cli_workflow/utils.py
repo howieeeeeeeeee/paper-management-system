@@ -4,41 +4,20 @@ from __future__ import annotations
 
 import logging
 import re
-import unicodedata
+
+from paperhub.paper_labels import (
+    author_surname_component,
+    format_hybrid_paper_label,
+    pascal_label_component,
+    title_topic_component,
+)
 
 logger = logging.getLogger(__name__)
 
 
-LABEL_STOPWORDS = {
-    "a",
-    "an",
-    "and",
-    "are",
-    "as",
-    "at",
-    "by",
-    "for",
-    "from",
-    "how",
-    "in",
-    "into",
-    "is",
-    "of",
-    "on",
-    "or",
-    "the",
-    "to",
-    "with",
-    "without",
-}
-
-
 def normalize_label_part(text: str) -> str:
-    """Return lowercase ASCII alphanumerics for paper labels."""
-    ascii_text = (
-        unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
-    )
-    return re.sub(r"[^a-z0-9]+", "", ascii_text.lower())
+    """Return a PascalCase ASCII component for Hybrid paper labels."""
+    return pascal_label_component(text)
 
 
 def clean_yaml_scalar(value: str) -> str:
@@ -79,22 +58,11 @@ def extract_frontmatter_authors(frontmatter: str) -> list[str]:
 
 
 def author_surname(author: str) -> str:
-    if "," in author:
-        surname = author.split(",", 1)[0]
-    else:
-        surname = author.split()[-1] if author.split() else ""
-    return normalize_label_part(surname)
+    return author_surname_component(author)
 
 
 def title_keyword(title: str) -> str:
-    ascii_title = (
-        unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode()
-    )
-    words = re.findall(r"[a-z0-9]+", ascii_title.lower())
-    for word in words:
-        if len(word) >= 3 and word not in LABEL_STOPWORDS:
-            return normalize_label_part(word)
-    return "paper"
+    return title_topic_component(title)
 
 
 def derive_paper_label_from_frontmatter(frontmatter: str) -> str:
@@ -108,21 +76,13 @@ def derive_paper_label_from_frontmatter(frontmatter: str) -> str:
             "frontmatter must include title, authors, and four-digit year"
         )
 
-    surnames = [author_surname(author) for author in authors if author_surname(author)]
-    if not surnames:
+    try:
+        return format_hybrid_paper_label(authors, year, title)
+    except ValueError as exc:
         raise ValueError(
             "Cannot derive paper_label from metadata-first response: "
-            "author surname is empty"
-        )
-
-    if len(surnames) == 1:
-        author_part = surnames[0]
-    elif len(surnames) == 2:
-        author_part = f"{surnames[0]}{surnames[1]}"
-    else:
-        author_part = f"{surnames[0]}etal"
-
-    return f"{author_part}{year}{title_keyword(title)}"
+            f"{exc}"
+        ) from exc
 
 
 def strip_leading_metadata_fence(content: str) -> str:

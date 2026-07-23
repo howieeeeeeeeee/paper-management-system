@@ -58,7 +58,7 @@ uv run python -m scripts.knowledge_base_search \
 
 ### 3. Answer from the returned context
 
-Write a direct answer to the user's question using only the search output. Cite the notes inline with the returned wikilinks, for example `[[projects/literature_map|Literature Map]]`. For standard paper metadata notes, the script returns compact links such as `[[danaetal2007moralwiggle]]`. When a cited source is a paper and its card carries a `journal=` line, mention the journal/conference alongside the citation.
+Write a direct answer to the user's question using only the search output. Cite the notes inline with the returned wikilinks, for example `[[projects/literature_map|Literature Map]]`. For standard paper metadata notes, the script returns compact links such as `[[Dana_etal2007MoralWiggle]]`. When a cited source is a paper and its card carries a `journal=` line, mention the journal/conference alongside the citation.
 
 Format mathematical expressions with Obsidian-compatible LaTeX delimiters: use `$...$` for inline math and `$$...$$` for display equations.
 

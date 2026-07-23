@@ -431,6 +431,49 @@ Engine abstract.
         self.assertTrue(result["success"])
         self.assertEqual(result["paper_label"], "example2025paper")
 
+    def test_preserves_hybrid_pascal_label_case(self) -> None:
+        response = """# Example2025LLMCooperation
+# metadata
+---
+title: Engine Title
+tags:
+  - information
+---
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            context = root / "source_context.txt"
+            _write_context(context)
+            result = organize_link_response(
+                content=response,
+                context_path=context,
+                model_label="test-model",
+                output_dir=root / "organized",
+            )
+        self.assertEqual(result["paper_label"], "Example2025LLMCooperation")
+
+    def test_unsafe_engine_label_uses_hybrid_metadata_fallback(self) -> None:
+        response = """# paper_label
+../unsafe
+# metadata
+---
+title: Engine Title
+tags:
+  - information
+---
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            context = root / "source_context.txt"
+            _write_context(context, title="LLM Cooperation")
+            result = organize_link_response(
+                content=response,
+                context_path=context,
+                model_label="test-model",
+                output_dir=root / "organized",
+            )
+        self.assertEqual(result["paper_label"], "Example2025LLMCooperation")
+
     def test_codex_link_prepare_keeps_web_disabled(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             context = Path(tmp) / "source_context.txt"

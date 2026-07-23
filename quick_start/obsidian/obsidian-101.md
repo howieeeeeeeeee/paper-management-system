@@ -14,9 +14,9 @@ PaperHub is an Obsidian-first paper library. Use a current Obsidian app with the
 
 ```text
 organized/
-`-- melitz2003trade/
+`-- Melitz2003Trade/
     |-- melitz_2003.pdf
-    |-- melitz2003trade.md
+    |-- Melitz2003Trade.md
     `-- ai_summary.md
 ```
 
@@ -30,8 +30,8 @@ Obsidian object.
 The metadata note is the paper's Obsidian handle. Mention a paper from any note with:
 
 ```md
-[[melitz2003trade]]
-[[melitz2003trade#Quick Reference]]
+[[Melitz2003Trade]]
+[[Melitz2003Trade#Quick Reference]]
 ```
 
 ## 3. Track Reading

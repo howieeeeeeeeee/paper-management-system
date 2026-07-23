@@ -237,7 +237,12 @@ The paper-label spec lives in `paperhub_utils/prompts/shared/paper_label.txt` an
 
 1. Prefer the questionnaire's paper-label choice.
 2. Supported presets:
-   - **Recommended compact author-year-topic** (`compact_topic`): `melitz2003heterogeneous`, `cardkrueger1994minimum`, `autoretal2020trade`.
+   - **Hybrid PascalCase with preserved acronyms (recommended)** (`hybrid_pascal`): `Melitz2003HeterogeneousFirms`, `AnDu2026MoralAlignment`, `Huynh_etal2026LLMCooperation`.
+     - Single author: `{Surname}{Year}{TopicWords}`.
+     - Two authors: `{Surname1}{Surname2}{Year}{TopicWords}`.
+     - Three or more authors: `{Surname1}_etal{Year}{TopicWords}`.
+     - Transliterate accents to ASCII. Use PascalCase for surnames and topic words, preserve familiar title/metadata acronyms such as `AI`, `LLM`, and `RCT` in uppercase, and use no separator except lowercase `_etal`.
+   - **Compact author-year-topic** (`compact_topic`): `melitz2003heterogeneous`, `cardkrueger1994minimum`, `autoretal2020trade`.
      - Single author: `{first_author}{year}{topic_keyword}`.
      - Two authors: `{first_author}{second_author}{year}{topic_keyword}`.
      - Three or more authors: `{first_author}etal{year}{topic_keyword}`.
@@ -280,9 +285,10 @@ The paper-label spec lives in `paperhub_utils/prompts/shared/paper_label.txt` an
 5. For Custom, read the resolved scheme back to the user as one confirmation summary with all three worked examples and wait for explicit confirmation before writing.
 6. For any preset except **Keep current**, rewrite `paperhub_utils/prompts/shared/paper_label.txt` so the `# paper_label` heading is preserved and the body reflects the chosen rules with one worked example per author-count case. For **Keep current**, leave the file unchanged.
 7. Record the resolved choice in `paperhub_utils/config/onboarding.json`:
-   - Set `context.paper_label_format` to `compact_topic`, `compact_title`, `first_author_etal`, `author_year`, `snake_case`, `zotero_capital`, `current`, or `custom`.
+   - Set `context.paper_label_format` to `hybrid_pascal`, `compact_topic`, `compact_title`, `first_author_etal`, `author_year`, `snake_case`, `zotero_capital`, `current`, or `custom`.
    - For custom, add a one-line plain-text summary in `notes` on the `configure_paper_label` step.
    - Mark `configure_paper_label` as `done`, set `completed_at`, and save the JSON immediately.
+8. Treat the selection as the default for future papers only. Do not rename existing paper folders during onboarding, and continue accepting existing lowercase and legacy labels.
 
 ## 6. Configure Obsidian Bases
 

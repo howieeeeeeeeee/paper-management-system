@@ -26,6 +26,6 @@ To search your own notes while skipping generated paper metadata and AI summarie
 /ask-knowledge-base : search my notes about confirmation bias and large language models, without papers.
 ```
 
-Output: an answer grounded in the returned notes, with Obsidian wikilinks such as `[[projects/literature_map|Literature Map]]` or `[[danaetal2007moralwiggle]]`.
+Output: an answer grounded in the returned notes, with Obsidian wikilinks such as `[[projects/literature_map|Literature Map]]` or `[[Dana_etal2007MoralWiggle]]`.
 
 The skill searches visible Markdown files and skips dot-prefixed folders such as `.claude/`, `.agents/`, `.obsidian/`, `.git/`, and `.venv/`. When you ask for "without papers" or "ignore papers", it skips standard PaperHub paper metadata notes, `ai_summary.md`, and legacy `summary.md` paper summaries while keeping regular hand-written notes.

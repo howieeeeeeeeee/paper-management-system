@@ -1,8 +1,25 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.21.2",
+  "latest_version": "2026.07.23.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.23.1": {
+      "date": "2026-07-23",
+      "title": "Readable Hybrid PascalCase Paper Labels",
+      "update_kind": "content",
+      "summary": "Makes Hybrid PascalCase the recommended default for new paper labels, with a visible lowercase _etal boundary and preserved acronyms such as AI, LLM, and RCT.",
+      "how_to_apply": "Update the label prompt, paper-organizer and paper-downloader guidance, onboarding questionnaire, public documentation, tests, and utility release metadata together. The new default affects future papers only: existing lowercase and legacy labels remain supported and are not renamed automatically.",
+      "added": [
+        "A hybrid_pascal onboarding preset with separate patterns for one author, two authors, and three or more authors.",
+        "Paper-downloader guidance for expanding both Hybrid PascalCase and legacy lowercase labels into search queries.",
+        "An optional paper-organizer update-label-format toolkit with a reusable agent handoff, bounded mapping-agent instructions, and a manifest-driven migration script that preflights and verifies vault-wide renames."
+      ],
+      "changed": [
+        "New default labels use ASCII PascalCase surname and topic components, lowercase _etal for three or more authors, and uppercase familiar acronyms from title or metadata.",
+        "The onboarding questionnaire presents Hybrid PascalCase as its first recommended paper-label choice.",
+        "Public quick-start examples use readable labels while existing paper labels continue to work unchanged."
+      ]
+    },
     "2026.07.21.2": {
       "date": "2026-07-21",
       "title": "Verified Multi-Engine Onboarding",

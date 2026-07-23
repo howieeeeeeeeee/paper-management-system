@@ -74,6 +74,10 @@ from paperhub.config import (
     PAPERHUB_ROOT,
 )
 from paperhub.note_navigation import ensure_navigation_links
+from paperhub.paper_labels import (
+    looks_like_paper_label,
+    require_safe_paper_label,
+)
 from paperhub.prompt.builder import build_prompt
 from paperhub.cli_workflow.agy import (
     AGY_RESPONSE_BEGIN,
@@ -897,7 +901,9 @@ def parse_markdown_sections(
                 logger.warning(f"Section '{key}' is empty")
             sections[key] = section_text
         if "paper_label" in sections:
-            sections["paper_label"] = sections["paper_label"].strip().strip("`").strip()
+            sections["paper_label"] = require_safe_paper_label(
+                sections["paper_label"].strip().strip("`").strip()
+            )
         return sections
 
     if summary_mode == SUMMARY_MODE_METADATA_ONLY:
@@ -916,7 +922,7 @@ def parse_markdown_sections(
             label_match = re.search(r"^#\s+(.+?)\s*$", before_metadata, re.MULTILINE)
             if label_match:
                 label_candidate = label_match.group(1).strip().strip("`")
-                if re.match(r"^[a-z]+\d{4}[a-z_]+$", label_candidate):
+                if looks_like_paper_label(label_candidate):
                     logger.info(
                         "Metadata-only flexible parse: label='%s', metadata=%s chars",
                         label_candidate,
@@ -952,7 +958,7 @@ def parse_markdown_sections(
     # Check if first non-empty line is a bare label (no # prefix)
     lines = before_summary.split("\n")
     first_line = lines[0].strip().strip("`") if lines else ""
-    if re.match(r"^[a-z]+\d{4}[a-z_]+$", first_line):
+    if looks_like_paper_label(first_line):
         metadata_text = "\n".join(lines[1:]).strip()
         # Strip leading "# metadata" heading if present
         metadata_text = re.sub(
@@ -974,8 +980,8 @@ def parse_markdown_sections(
     label_match = label_pattern.search(before_summary)
     if label_match:
         label_candidate = label_match.group(1).strip().strip("`")
-        # Accept if it looks like authorYearTopic (lowercase with digits)
-        if re.match(r"^[a-z]+\d{4}[a-z_]+$", label_candidate):
+        # Accept safe legacy lowercase and Hybrid PascalCase author/year labels.
+        if looks_like_paper_label(label_candidate):
             metadata_text = before_summary[label_match.end() :].strip()
             # Strip leading "# metadata" heading if present (common in Gemini output)
             metadata_text = re.sub(
@@ -1059,6 +1065,8 @@ def parse_api_response(
 
     try:
         parsed = json.loads(json_content)
+        if isinstance(parsed, dict) and "paper_label" in parsed:
+            parsed["paper_label"] = require_safe_paper_label(parsed["paper_label"])
         logger.debug(f"Successfully parsed JSON response")
         return parsed
     except json.JSONDecodeError as e:

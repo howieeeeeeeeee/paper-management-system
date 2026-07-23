@@ -67,6 +67,38 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
    Use the paper-organizer skill to onboard this project using onboarding_questionnaire.md.
    ```
 
+The recommended label format is readable Hybrid PascalCase, such as
+`Melitz2003HeterogeneousFirms`, `AnDu2026MoralAlignment`, and
+`Huynh_etal2026LLMCooperation`. It preserves familiar acronyms and affects new
+papers only; existing labels remain supported.
+
+### Changing an existing library's label style
+
+Renaming existing paper folders is optional and separate from onboarding. The
+paper-organizer includes an `update-label-format` toolkit that prepares a
+reviewed mapping, updates links across the whole Obsidian vault, and verifies
+the result without merging or deleting papers. For example:
+
+```text
+Use the paper-organizer update-label-format toolkit to help me redesign and
+migrate my existing paper labels.
+
+Show me naming options first. My preferred direction is:
+- One author: Melitz2003HeterogeneousFirms
+- Two authors: AnDu2026MoralAlignment
+- Three or more: Huynh_etal2026LLMCooperation
+
+Preserve familiar acronyms, transliterate accents to ASCII, keep intentional
+legacy labels unchanged, and use metadata to recover topic word boundaries.
+After I choose the final rule, review every proposed mapping and bibliographic
+collision before changing files. Update exact references across my configured
+Obsidian vault, verify the migration, and keep the temporary review and backup
+files until I explicitly say “all pass.”
+```
+
+The reusable prompt template lives at
+`.claude/skills/paper-organizer/update-label-format/handoff_instruction.md`.
+
 ## Daily Workflow
 
 Put new PDFs in `to_be_organized/`, then ask:

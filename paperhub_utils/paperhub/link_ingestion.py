@@ -14,6 +14,11 @@ from urllib.parse import urlsplit, urlunsplit
 import yaml
 
 from paperhub.config import DEFAULT_ORGANIZED_DIR, MY_RESEARCH_INTERESTS
+from paperhub.paper_labels import (
+    format_hybrid_paper_label,
+    is_safe_paper_label,
+    require_safe_paper_label,
+)
 from paperhub.prompt.builder import MODE_LINK_METADATA, build_prompt
 
 
@@ -184,6 +189,17 @@ def _parse_link_response(content: str) -> dict[str, str]:
     try:
         return parse_api_response(content, "metadata-only")
     except ValueError:
+        exact_match = re.match(
+            r"\s*#\s+paper_label\s*\n([^\n]+)\s*\n"
+            r"#\s+metadata\s*\n(.*)\Z",
+            content,
+            flags=re.IGNORECASE | re.DOTALL | re.MULTILINE,
+        )
+        if exact_match:
+            return {
+                "paper_label": exact_match.group(1).strip().strip("`"),
+                "metadata": exact_match.group(2).strip(),
+            }
         match = re.match(
             r"\s*#\s+(?!paper_label\s*$)([^\n]+)\s*\n"
             r"#\s+metadata\s*\n(.*)\Z",
@@ -199,8 +215,10 @@ def _parse_link_response(content: str) -> dict[str, str]:
 
 
 def _clean_label(label: str, fallback: str) -> str:
-    cleaned = re.sub(r"[^a-z0-9_]", "", str(label).strip().lower())
-    return cleaned if cleaned else fallback
+    candidate = str(label).strip()
+    if is_safe_paper_label(candidate):
+        return candidate
+    return require_safe_paper_label(str(fallback).strip())
 
 
 def _yaml_scalar(value: Any) -> str:
@@ -294,7 +312,18 @@ def organize_link_response(
         }
 
     parsed = _parse_link_response(content)
-    fallback = str(source.get("fallback_label") or "")
+    fallback = ""
+    verified = source.get("metadata")
+    if isinstance(verified, dict):
+        try:
+            fallback = format_hybrid_paper_label(
+                verified.get("authors") or [],
+                verified.get("year"),
+                verified.get("title") or "",
+            )
+        except ValueError:
+            pass
+    fallback = fallback or str(source.get("fallback_label") or "")
     if not fallback:
         fallback = f"unresolved{hashlib.sha256(canonical_url.encode()).hexdigest()[:8]}"
     label = _clean_label(parsed.get("paper_label", ""), fallback)

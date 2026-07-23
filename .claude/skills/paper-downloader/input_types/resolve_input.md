@@ -20,19 +20,31 @@ Trigger when the user says "papers to find", "the list", "the backlog", "batch",
 or points at that file.
 
 1. Read `to_be_organized/papers to find.md`.
-2. Extract entries: each useful line matches `^\s*-\s*\[\[([^\]]+)\]\]` — the capture group is a **paper label** like `enkeetal2025behavioralattenuation`. Ignore the trailing `- reason` text (it's a human note, but you may use it as a tie-breaker).
+2. Extract entries: each useful line matches `^\s*-\s*\[\[([^\]]+)\]\]` — the capture group is a **paper label** such as `Enke_etal2025BehavioralAttenuation` or the legacy `enkeetal2025behavioralattenuation`. Ignore the trailing `- reason` text (it's a human note, but you may use it as a tie-breaker).
 3. Expand each label into a query (below), confirm low-confidence matches, then fetch each in the chosen mode. Continue on error — one failure must not abort the batch. Summarize per-label outcomes at the end.
 
 ### Label expansion
 
-A label matches `^([a-z]+?)(etal)?(\d{4})([a-z_]+)$`:
+Support both current Hybrid PascalCase labels and existing lowercase labels:
 
-- **author run** = the leading lowercase letters (a surname, or several surnames concatenated). The literal `etal` token means "et al." — drop it.
-- **year** = the four digits.
-- **topic** = the trailing `[a-z_]+`, split on `_` into keywords.
+- Current format: `^([A-Z][A-Za-z]*?)(_etal)?(\d{4})([A-Z][A-Za-z0-9]*)$`.
+  The author run uses PascalCase, `_etal` marks three or more authors, and the
+  topic uses PascalCase with possible uppercase acronym runs.
+- Legacy format: `^([a-z]+?)(etal)?(\d{4})([a-z_]+)$`. The literal `etal`
+  token marks three or more authors and the topic may use underscores.
+
+For the current format, remove `_etal`, split the topic at PascalCase and acronym
+boundaries, and take the first PascalCase surname component as the author hint.
+For legacy labels, remove `etal` and split the topic on underscores; when the
+lowercase topic has no boundary, use it as one approximate search term. In both
+formats, the four digits are the year.
 
 Build the search as `--title "<topic words>" --author "<first surname>" --year <year>`.
-Example: `enkeetal2025behavioralattenuation` → `--title "behavioral attenuation" --author enke --year 2025`.
+Examples:
+
+- `Enke_etal2025BehavioralAttenuation` → `--title "behavioral attenuation" --author Enke --year 2025`.
+- `Huynh_etal2026LLMCooperation` → `--title "LLM cooperation" --author Huynh --year 2026`.
+- `enkeetal2025behavioral_attenuation` → `--title "behavioral attenuation" --author enke --year 2025`.
 
 This is heuristic. **Always show the top candidate (title / authors / year) and confirm** before downloading in batch, unless the user explicitly said "just grab them all". Surname runs for multi-author labels are imperfect; lean on the topic words + year for matching and use the reason note to disambiguate.
 

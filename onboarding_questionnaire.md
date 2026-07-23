@@ -168,6 +168,7 @@ decision_making
 
 Paper labels become folder names, metadata-note names, and Obsidian link targets. Choose one required format:
 
+- [ ] Hybrid PascalCase with preserved acronyms (recommended): `Melitz2003HeterogeneousFirms`, `AnDu2026MoralAlignment`, `Huynh_etal2026LLMCooperation`.
 - [ ] Compact author-year-title keywords: `melitz2003heterogeneousfirms`, `cardkrueger1994minimumwage`, `autoretal2020importcompetition`.
 - [ ] First-author plus `etal` for multi-author papers: `melitz2003heterogeneous`, `cardetal1994minimum`, `autoretal2020trade`.
 - [ ] Author-year only: `melitz2003`, `cardkrueger1994`, `autoretal2020`.
@@ -175,6 +176,13 @@ Paper labels become folder names, metadata-note names, and Obsidian link targets
 - [ ] Zotero-style capitalized: `Melitz2003Heterogeneous`, `CardKrueger1994Minimum`, `AutorEtAl2020Trade`.
 - [ ] Keep the current `paperhub_utils/prompts/shared/paper_label.txt` rules.
 - [ ] Custom, described below.
+
+The recommended format uses the first two surnames for a two-author paper, the
+first surname plus lowercase `_etal` for three or more authors, and uppercase
+forms for familiar acronyms such as `AI`, `LLM`, and `RCT`. It transliterates
+accents to ASCII for filenames. Your choice controls labels for future papers;
+PaperHub continues to recognize existing labels and does not rename them
+automatically.
 
 For a custom format, describe the pattern and include examples for papers with one author, two authors, and three or more authors.
 

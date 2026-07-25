@@ -1,6 +1,6 @@
 ---
 name: paper-finder
-description: Locate papers ALREADY IN this library from a vague or partial memory. Triggers when the user half-remembers a paper and wants to know which one it is - "which paper was it that...", "I vaguely remember a paper about...", "can't remember the paper that showed...", "do I already have a paper on...", or "search/find in my library", including "but not the X ones" to steer away from a neighboring literature. Searches every visible Markdown note inside each valid paper folder, aggregates matches by paper label, and presents metadata, AI-summary, and matched-note evidence. NOT for downloading new papers (paper-downloader) or organizing/summarizing them (paper-organizer).
+description: Locate papers ALREADY IN this library from a vague or partial memory. Triggers when the user half-remembers a paper and wants to know which one it is - "which paper was it that...", "I vaguely remember a paper about...", "can't remember the paper that showed...", "do I already have a paper on...", or "search/find in my library", including "but not the X ones" to steer away from a neighboring literature. Searches every visible Markdown note inside each valid paper folder, aggregates matches by paper label, and presents metadata, AI-summary, and matched-note evidence. NOT for acquiring new papers or organizing/summarizing them (paper-organizer).
 ---
 
 # Paper Finder (library recall)

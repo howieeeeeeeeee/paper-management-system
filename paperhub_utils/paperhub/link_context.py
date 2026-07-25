@@ -23,7 +23,7 @@ from uuid import uuid4
 import requests
 
 from paperhub.config import PAPERHUB_ROOT
-from scripts.paper_fetcher import (
+from paperhub.metadata_resolution import (
     CONTACT_EMAIL,
     PaperMetadata,
     build_session,

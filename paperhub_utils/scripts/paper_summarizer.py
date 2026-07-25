@@ -1545,7 +1545,7 @@ SIDECAR_SUFFIXES = (".citation.md",)
 def find_sidecar_for_pdf(pdf_path: Path) -> Path | None:
     """Return a citation sidecar sharing the PDF's stem in the same directory.
 
-    The paper-downloader skill drops a ``{stem}.citation.md`` next to each downloaded
+    An acquisition workflow may place a ``{stem}.citation.md`` next to a downloaded
     PDF; this pairs them so the citation can be used as authoritative context.
     """
     for suffix in SIDECAR_SUFFIXES:

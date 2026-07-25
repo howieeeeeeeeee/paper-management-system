@@ -1,8 +1,23 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.23.1",
+  "latest_version": "2026.07.25.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.25.1": {
+      "date": "2026-07-25",
+      "title": "Remove the Standalone Paper Downloader",
+      "update_kind": "structural + content",
+      "summary": "Removes the paper-downloader skill and its browser/download playbooks while preserving PaperHub's existing public-link metadata and PDF organization flows.",
+      "how_to_apply": "Update the managed .agents and .claude skill trees, utility modules, tests, manifest, and changelog together. Remove both paper-downloader skill directories and paperhub_utils/scripts/paper_fetcher.py. Public-link ingestion now imports its metadata model and citation resolvers from paperhub_utils/paperhub/metadata_resolution.py. No paper-library or configuration migration is required.",
+      "changed": [
+        "Paper Finder no longer routes new-paper acquisition requests to a removed skill.",
+        "Shared citation-sidecar documentation no longer claims ownership by paper-downloader.",
+        "Public-link metadata lookup now uses a focused importable module with no downloader CLI, file-writing, cookie, or browser-fallback behavior."
+      ],
+      "removed": [
+        "The paper-downloader router, input resolver, download modes, browser fallback instructions, fetcher contract, organizer handoff playbook, and scripts.paper_fetcher command."
+      ]
+    },
     "2026.07.23.1": {
       "date": "2026-07-23",
       "title": "Readable Hybrid PascalCase Paper Labels",

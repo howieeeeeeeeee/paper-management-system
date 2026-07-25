@@ -98,7 +98,7 @@ Phase 4 — update future label behavior:
 18. Update `paperhub_utils/prompts/shared/paper_label.txt` to express the chosen
     convention with one-, two-, and multi-author examples.
 19. Add or update a shared safe-label/formatting helper. Update PDF, CLI,
-    link-ingestion, response-parser, and paper-downloader paths so the chosen
+    link-ingestion, acquisition-utility, and response-parser paths so the chosen
     casing and acronyms survive while legacy labels remain accepted.
 20. Make the chosen convention the first recommended onboarding option with a
     stable style ID. Update coding-agent instructions, tests, the beginner

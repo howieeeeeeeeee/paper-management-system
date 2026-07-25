@@ -14,7 +14,7 @@ from paperhub.link_context import (
     public_google_drive_download_url,
     validate_public_url,
 )
-from scripts.paper_fetcher import PaperMetadata
+from paperhub.metadata_resolution import PaperMetadata
 
 
 class LinkContextTests(unittest.TestCase):

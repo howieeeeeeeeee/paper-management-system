@@ -6,6 +6,8 @@ Run these prompts from the repository root. Use `to_be_organized/` for new PDFs 
 
 - [paper-organizer](skills/paper-organizer.md): organize PDFs or public paper links, create metadata notes, and add or refresh `ai_summary.md` when a PDF is available.
 - [paper-finder](skills/paper-finder.md): retrieve an existing paper from a vague memory, claim, author, tag, or snippet.
+- [citation-resolver](skills/citation-resolver.md): audit citation coverage and explicitly create or repair per-paper citation records.
+- [bibliography-builder](skills/bibliography-builder.md): export selected papers to BibTeX or a formatted Markdown reference list.
 - [ask-knowledge-base](skills/ask-knowledge-base.md): answer questions across visible Markdown notes in the Obsidian vault, with an opt-in mode for skipping generated paper metadata/summaries.
 - [paperhub-obsidian](obsidian/paperhub-obsidian.md): create or edit Obsidian Markdown, Bases, Canvas maps, and optional live-vault workflows.
 - [update-paperhub-utils](skills/update-paperhub-utils.md): refresh skills and utility code while preserving local papers and config.
@@ -22,6 +24,14 @@ Run these prompts from the repository root. Use `to_be_organized/` for new PDFs 
 
 ```text
 /paper-finder : which paper was it where dictators avoided knowing the recipient's payoff?
+```
+
+```text
+/citation-resolver : audit citation coverage for papers tagged experiments.
+```
+
+```text
+/bibliography-builder : build references.bib from papers tagged experiments.
 ```
 
 ```text

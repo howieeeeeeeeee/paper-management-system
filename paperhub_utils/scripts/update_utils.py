@@ -24,6 +24,12 @@ from typing import Any
 
 DEFAULT_SOURCE_URL = "https://github.com/howieeeeeeeeee/paper-management-system"
 DEFAULT_VERSION = "2026.07.06.2"
+CURRENT_CONFIG_SCHEMA = 4
+CITATION_CONFIG_DEFAULTS = {
+    "resolve_after_organize": False,
+    "current_agent_search_missing_link": True,
+    "preferred_style": "chicago-author-date",
+}
 STATE_PATH = Path("paperhub_utils/config/utility_state.json")
 CONFIG_PATH = Path("paperhub_utils/config/config.json")
 REPORT_DIR = Path("paperhub_utils/output/update_reports")
@@ -465,6 +471,17 @@ def update_config_version(
 ) -> None:
     config_path = local_root / CONFIG_PATH
     config = load_json(config_path, {"schema_version": 1})
+    try:
+        current_schema = int(config.get("schema_version", 1))
+    except (TypeError, ValueError):
+        current_schema = 1
+    config["schema_version"] = max(current_schema, CURRENT_CONFIG_SCHEMA)
+    citation_config = config.get("citations")
+    if not isinstance(citation_config, dict):
+        citation_config = {}
+    for key, default in CITATION_CONFIG_DEFAULTS.items():
+        citation_config.setdefault(key, default)
+    config["citations"] = citation_config
     utility_config = config.get("paperhub_utils")
     if not isinstance(utility_config, dict):
         utility_config = {}

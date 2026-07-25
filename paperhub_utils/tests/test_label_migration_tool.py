@@ -56,6 +56,19 @@ created: 2026-01-01
                 "[[foo2020topic|Back to Metadata]]\n",
                 encoding="utf-8",
             )
+            (source / "citation.csl.json").write_text(
+                json.dumps(
+                    {
+                        "id": "foo2020topic",
+                        "type": "article-journal",
+                        "title": "Topic Paper",
+                        "note": "Do not replace foo2020topic inside unrelated values.",
+                    },
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
             pdf = source / "paper.pdf"
             pdf.write_bytes(b"unchanged-pdf")
             external = vault / "Topic.canvas"
@@ -107,6 +120,14 @@ created: 2026-01-01
             self.assertTrue((target / "Foo2020Topic.md").is_file())
             self.assertEqual((target / "paper.pdf").read_bytes(), b"unchanged-pdf")
             self.assertIn("Foo2020Topic", (target / "ai_summary.md").read_text(encoding="utf-8"))
+            migrated_citation = json.loads(
+                (target / "citation.csl.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(migrated_citation["id"], "Foo2020Topic")
+            self.assertEqual(
+                migrated_citation["note"],
+                "Do not replace foo2020topic inside unrelated values.",
+            )
             self.assertIn("Foo2020Topic", external.read_text(encoding="utf-8"))
             self.assertEqual(TOOL.verify_command(paths, True)["status"], "pass")
 

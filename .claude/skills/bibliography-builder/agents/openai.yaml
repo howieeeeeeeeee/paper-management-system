@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bibliography Builder"
+  short_description: "Build BibTeX, reference lists, or footnotes"
+  default_prompt: "Use $bibliography-builder to build references from selected PaperHub papers or add them to a target Markdown note."

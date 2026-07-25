@@ -144,7 +144,7 @@ Run all scripts from `paperhub_utils/`:
    If nothing changed, report: `Tag updates: all N tags reused from registry, no changes.`
 
 7. **Tags land in the same commit as the papers.** Do not commit here. The single commit for
-   the batch is made by the **`versioning-with-git`** step in `shared/post_ai.md` §4, whose
+   the batch is made by the **`versioning-with-git`** step in `shared/post_ai.md` §5, whose
    `git add -A` captures `tags/` and `organized/` together in the out-of-iCloud backup repo. Pass
    the tag-update counts into that commit body if you like:
 

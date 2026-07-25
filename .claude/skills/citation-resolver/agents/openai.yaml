@@ -1,0 +1,4 @@
+interface:
+  display_name: "Citation Resolver"
+  short_description: "Audit and resolve per-paper citation data"
+  default_prompt: "Use $citation-resolver to audit citation coverage for selected PaperHub papers."

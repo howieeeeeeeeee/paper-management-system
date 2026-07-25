@@ -38,7 +38,7 @@ Do not guess the user's API key, external-engine availability, starter taxonomy,
 8. Before doing work, verify any step marked `done` against the filesystem/config. If the artifact is missing or the config no longer matches, set that step back to `pending` with a short note.
 9. Summarize what is already done and what remains before continuing.
 10. When starting a step, mark it `in_progress`. When it finishes, update it to `done`, `skipped`, or `blocked`, set `completed_at` for finished/skipped steps, update relevant `context` fields, and save the JSON immediately.
-11. If a step changes a real project setting, update `paperhub_utils/config/config.json` too. For example, Git preferences belong in JSON under the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`); `paperhub_utils/paperhub/config.py` exposes them as `USE_GIT`, `SYNC_TO_REMOTE_GIT`, and `GIT_BACKUP_ABS_PATH` for Python code.
+11. If a step changes a real project setting, update `paperhub_utils/config/config.json` too. For example, Git preferences belong in JSON under the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`); `paperhub_utils/paperhub/config.py` exposes them as `USE_GIT`, `SYNC_TO_REMOTE_GIT`, and `GIT_BACKUP_ABS_PATH` for Python code. Preserve an existing `citations` block; if it is absent, silently seed the schema-4 citation defaults from `paperhub.config.DEFAULT_CITATION_CONFIG` without asking onboarding questions.
 
 Do not use `onboarding.json` as the only source of truth. It is a progress ledger; always verify important setup artifacts.
 

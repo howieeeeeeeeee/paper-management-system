@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "available_engines": [
     "coding-agent"
   ],
@@ -7,6 +7,11 @@
     "use_git": true,
     "sync_to_remote": false,
     "backup_abs_path": null
+  },
+  "citations": {
+    "resolve_after_organize": false,
+    "current_agent_search_missing_link": true,
+    "preferred_style": "chicago-author-date"
   },
   "metadata_only_page_limit": 2,
   "agy_cli_model": "Gemini 3.1 Pro (High)",

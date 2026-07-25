@@ -16,6 +16,18 @@ This folder contains the scripts, prompts, and config used by PaperHub skills. M
 - `scripts/paper_search.py`: searches all visible Markdown inside each valid paper folder under `organized/`, aggregates evidence by paper label, and returns bounded context for `paper-finder`.
 - `scripts/knowledge_base_search.py`: searches visible Markdown notes in the configured Obsidian vault for `ask-knowledge-base`; pass `--ignore-papers` to skip standard PaperHub metadata notes and generated paper summaries.
 
+## Citation Helpers
+
+- `scripts/paper_select.py`: converts explicit labels and exact Boolean tag
+  conditions into a stable selection manifest.
+- `scripts/citation_resolver.py`: performs a network-free citation audit or an
+  explicit best-effort resolution into per-paper `citation.csl.json`.
+- `scripts/bibliography_builder.py`: creates an atomic BibTeX database or an
+  explicitly requested, best-effort formatted Markdown reference list.
+- `paperhub/metadata_notes.py`, `paperhub/citation_resolution.py`, and
+  `paperhub/bibliography.py`: shared reading, validation, resolution, and export
+  logic used by the two citation skills.
+
 ## Update Boundary
 
 PaperHub treats this folder as two kinds of content:

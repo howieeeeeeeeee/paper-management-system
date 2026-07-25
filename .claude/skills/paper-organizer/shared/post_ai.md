@@ -41,11 +41,45 @@ Token-light: use shell tests and `rg`, not full file reads.
 
 Always report any auto-fixes in the completion report.
 
-## 3. Tag flow handoff
+## 3. Optional citation resolution
+
+Read `CITATION_RESOLVE_AFTER_ORGANIZE` from `paperhub.config`. When it is false,
+skip this section completely so the default organizer behavior is unchanged.
+
+When it is true, run this hook once for each newly organized metadata-only,
+full, or link-metadata paper after validation/auto-fix and before tag updates.
+Do not run it for `enrich`.
+
+- Existing usable metadata link: run deterministic resolution once.
+- Blank link with the current coding agent: when
+  `CITATION_CURRENT_AGENT_SEARCH_MISSING_LINK` is true, search once by title,
+  author, and year, then pass one candidate through the resolver's identity
+  validation.
+- Blank link with OpenRouter, Agy CLI, or Codex CLI processing: skip; external
+  paper-processing engines never browse or search for a link.
+- Blank link with search disabled: skip.
+
+Use the canonical resolver in best-effort mode:
+
+```bash
+cd paperhub_utils
+uv run python -m scripts.citation_resolver resolve \
+  --label "{paper_label}" \
+  --best-effort \
+  [--candidate-links-file /tmp/paperhub_candidate_link.json]
+```
+
+This hook is optional and gets one attempt only. Never retry, switch models,
+enter the failed-paper recovery flow, roll back a valid paper, or block tags and
+versioning because citation resolution failed. When enabled, retain one compact
+completion line such as `Citation: resolved`, `Citation: skipped — no link
+available`, or `Citation: failed — identity mismatch`.
+
+## 4. Tag flow handoff
 
 After auto-fix, ALWAYS run the post-summary tag flow once for the batch (see `tags/post_summary_update.md`). Capture: count of new tags added (with type), count of merges, count of tags reused unchanged.
 
-## 4. Version (git commit via the backup repo)
+## 5. Version (git commit via the backup repo)
 
 The vault has **no** `.git` (it lives in an iCloud folder). Do not run `git` inside the vault.
 Instead, run the **`versioning-with-git` skill** — it mirrors the vault into the out-of-iCloud
@@ -72,14 +106,14 @@ and skips cleanly when versioning is off or the backup folder is unset.
 **Skip this step if:** the user explicitly said no commit. (Everything else — `USE_GIT` false,
 no backup path, git unavailable — the versioning skill handles and reports.)
 
-## 5. Report
+## 6. Report
 
 Use the per-mode completion-report template in `modes/{mode}.md`. Always include:
 
 - Token usage when available (Agy CLI and the standard Codex CLI flow: token counts unavailable, `cost: N/A`; Coding Agent: no token info).
 - **Tag updates line/section** — count + list of newly added tags (with type), count + list of merges (`new_variant -> existing_canonical`), count of tags reused unchanged. If nothing changed: `Tag updates: all N tags reused from registry, no changes.`
 
-## 6. Handle partial failures
+## 7. Handle partial failures
 
 For batches, check the script's `failed` count. If > 0, surface to the user via `AskUserQuestion`:
 

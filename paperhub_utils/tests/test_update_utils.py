@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,7 @@ from scripts.update_utils import (
     load_changelog,
     record_current_state,
     sha256_file,
+    update_config_version,
     version_key,
 )
 
@@ -110,6 +112,25 @@ class UpdateUtilsTests(unittest.TestCase):
             )
             self.assertIn('"use_git": false', config)
             self.assertIn('"installed_version": "2099.01.01"', config)
+
+    def test_schema_four_migration_seeds_citations_without_overwriting_values(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "paperhub_utils/config/config.json",
+                '{"schema_version": 3, "citations": {'
+                '"resolve_after_organize": true, "preferred_style": "apa"}}\n',
+            )
+
+            update_config_version(root)
+
+            config = json.loads(
+                (root / "paperhub_utils/config/config.json").read_text(encoding="utf-8")
+            )
+        self.assertEqual(config["schema_version"], 4)
+        self.assertTrue(config["citations"]["resolve_after_organize"])
+        self.assertEqual(config["citations"]["preferred_style"], "apa")
+        self.assertTrue(config["citations"]["current_agent_search_missing_link"])
 
     def test_version_key_orders_same_day_iterations(self) -> None:
         self.assertLess(version_key("2026.07.05"), version_key("2026.07.05.1"))

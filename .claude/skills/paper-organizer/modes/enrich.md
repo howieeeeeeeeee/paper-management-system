@@ -25,7 +25,7 @@ If the user mentions multiple folders, batch them in a single call (OpenRouter) 
    then add reciprocal navigation: `Link to AI Summary` at the bottom of the
    metadata note and `Back to Metadata` at the top of the summary body.
 8. Run the standard post-summary tag flow (see `tags/post_summary_update.md`).
-9. Version via the `versioning-with-git` skill (see `shared/post_ai.md` §4) with message `feat(papers): enrich {folder}` (or `enrich {N} folders`).
+9. Version via the `versioning-with-git` skill (see `shared/post_ai.md` §5) with message `feat(papers): enrich {folder}` (or `enrich {N} folders`).
 
 ## Existing-summary handling (AskUserQuestion flow)
 

@@ -31,6 +31,7 @@ SCHEMA_VERSION = 1
 SAFE_LABEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_]*$")
 YEAR_RE = re.compile(r"(?<!\d)((?:18|19|20|21)\d{2})(?!\d)")
 TEXT_SUFFIXES = {".md", ".canvas", ".base"}
+CITATION_FILENAME = "citation.csl.json"
 EXCLUDED_DIR_NAMES = {
     ".cache",
     ".caches",
@@ -490,7 +491,10 @@ def active_text_files(paths: Paths) -> Iterator[Path]:
         directory = Path(dirpath)
         for filename in filenames:
             path = directory / filename
-            if path.suffix.casefold() in TEXT_SUFFIXES and path.is_file():
+            if (
+                path.suffix.casefold() in TEXT_SUFFIXES
+                or path.name.casefold() == CITATION_FILENAME
+            ) and path.is_file():
                 yield path
 
 
@@ -521,6 +525,11 @@ def canvas_invariant(loaded: Any) -> dict[str, Any]:
 
 def parse_structured(path: Path, text: str) -> dict[str, Any] | None:
     suffix = path.suffix.casefold()
+    if path.name.casefold() == CITATION_FILENAME:
+        loaded = json.loads(text)
+        if not isinstance(loaded, dict) or not isinstance(loaded.get("id"), str):
+            raise MigrationError("citation.csl.json must be an object with a string id")
+        return {"citation_id": loaded["id"]}
     if suffix == ".canvas":
         return canvas_invariant(json.loads(text))
     if suffix == ".base":
@@ -543,7 +552,33 @@ def scan_references(
     invalid: list[str] = []
     for path in active_text_files(paths):
         text = path.read_text(encoding="utf-8")
-        new_text, counts = replacer.replace(text)
+        if path.name.casefold() == CITATION_FILENAME:
+            matching_row = next(
+                (
+                    row
+                    for row in rows
+                    if path
+                    == paths.paperhub / str(row["source_folder_rel"]) / CITATION_FILENAME
+                ),
+                None,
+            )
+            if matching_row is None:
+                continue
+            try:
+                citation = json.loads(text)
+            except json.JSONDecodeError as exc:
+                invalid.append(f"{path}: {exc}")
+                continue
+            if not isinstance(citation, dict) or citation.get("id") != matching_row["old_label"]:
+                invalid.append(
+                    f"{path}: citation id must equal {matching_row['old_label']!r}"
+                )
+                continue
+            citation["id"] = matching_row["new_label"]
+            new_text = json.dumps(citation, ensure_ascii=False, indent=2) + "\n"
+            counts = Counter({str(matching_row["old_label"]): 1})
+        else:
+            new_text, counts = replacer.replace(text)
         if new_text == text:
             continue
         try:
@@ -724,7 +759,11 @@ def non_text_snapshot(paths: Paths, rows: Sequence[Mapping[str, Any]], *, target
         folder_rel = row["target_folder_rel"] if targets else row["source_folder_rel"]
         folder = paths.paperhub / str(folder_rel)
         for path in sorted(folder.rglob("*"), key=lambda item: item.as_posix()):
-            if path.is_file() and path.suffix.casefold() not in TEXT_SUFFIXES:
+            if (
+                path.is_file()
+                and path.suffix.casefold() not in TEXT_SUFFIXES
+                and path.name.casefold() != CITATION_FILENAME
+            ):
                 result.append(
                     {
                         "old_label": row["old_label"],
@@ -814,7 +853,27 @@ def old_reference_files(paths: Paths, rows: Sequence[Mapping[str, Any]]) -> list
     replacer = Replacer(rows, paths)
     found = []
     for path in active_text_files(paths):
-        _, counts = replacer.replace(path.read_text(encoding="utf-8"))
+        text = path.read_text(encoding="utf-8")
+        if path.name.casefold() == CITATION_FILENAME:
+            try:
+                loaded = json.loads(text)
+            except json.JSONDecodeError:
+                found.append(f"{relative(path, paths.vault)}: invalid citation JSON")
+                continue
+            expected = next(
+                (
+                    row
+                    for row in rows
+                    if path
+                    == paths.paperhub / str(row["target_folder_rel"]) / CITATION_FILENAME
+                ),
+                None,
+            )
+            counts = Counter()
+            if expected is not None and loaded.get("id") != expected["new_label"]:
+                counts[str(expected["old_label"])] += 1
+        else:
+            _, counts = replacer.replace(text)
         if counts:
             found.append(f"{relative(path, paths.vault)}: {sum(counts.values())}")
     return found

@@ -38,6 +38,49 @@ def _config_int(config: dict, key: str, default: int) -> int:
     return max(0, value)
 
 
+DEFAULT_CITATION_CONFIG = {
+    "resolve_after_organize": False,
+    "current_agent_search_missing_link": True,
+    "preferred_style": "chicago-author-date",
+}
+
+
+def _config_citation_bool(config: dict, key: str, default: bool) -> bool:
+    value = config.get(key, default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+    return default
+
+
+def _config_citations(value: object) -> dict:
+    """Return citation settings with safe defaults for missing or malformed values."""
+    raw = value if isinstance(value, dict) else {}
+    style = raw.get("preferred_style")
+    return {
+        "resolve_after_organize": _config_citation_bool(
+            raw,
+            "resolve_after_organize",
+            DEFAULT_CITATION_CONFIG["resolve_after_organize"],
+        ),
+        "current_agent_search_missing_link": _config_citation_bool(
+            raw,
+            "current_agent_search_missing_link",
+            DEFAULT_CITATION_CONFIG["current_agent_search_missing_link"],
+        ),
+        "preferred_style": (
+            style.strip()
+            if isinstance(style, str) and style.strip()
+            else DEFAULT_CITATION_CONFIG["preferred_style"]
+        ),
+    }
+
+
 SUPPORTED_ENGINE_IDS = ("coding-agent", "codex-cli", "agy-cli", "openrouter")
 CURRENT_AGENT_ENGINE_ID = "coding-agent"
 _ENGINE_ID_ALIASES = {
@@ -67,6 +110,12 @@ def _config_available_engines(value: object) -> tuple[str, ...]:
 
 USER_CONFIG = _load_user_config()
 AVAILABLE_ENGINES = _config_available_engines(USER_CONFIG.get("available_engines"))
+CITATION_CONFIG = _config_citations(USER_CONFIG.get("citations"))
+CITATION_RESOLVE_AFTER_ORGANIZE = CITATION_CONFIG["resolve_after_organize"]
+CITATION_CURRENT_AGENT_SEARCH_MISSING_LINK = CITATION_CONFIG[
+    "current_agent_search_missing_link"
+]
+CITATION_PREFERRED_STYLE = CITATION_CONFIG["preferred_style"]
 TAG_PROMPT_CONFIG = USER_CONFIG.get("tag_prompt", {})
 if not isinstance(TAG_PROMPT_CONFIG, dict):
     TAG_PROMPT_CONFIG = {}

@@ -1,8 +1,30 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.25.1",
+  "latest_version": "2026.07.25.2",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.25.2": {
+      "date": "2026-07-25",
+      "title": "Citation Information and Bibliography Export",
+      "update_kind": "structural + content",
+      "summary": "Adds read-only citation coverage audits, explicit per-paper CSL-JSON citation information, and stable BibTeX or best-effort formatted Markdown exports for selected PaperHub papers.",
+      "how_to_apply": "Update the managed .agents and .claude skill trees, utility modules, tests, dependencies, quick starts, manifest, and changelog together. Config schema 4 adds a citations block. The updater seeds missing citation keys without overwriting existing preferences; organizer citation post-processing remains disabled by default. Existing paper folders require no bulk migration: citation.csl.json files are created only when explicitly requested or when a user later enables the optional organizer hook.",
+      "added": [
+        "citation-resolver skill with strictly read-only audit mode, explicit best-effort apply mode, identity-validated blank-link filling, and atomic per-paper citation.csl.json writes.",
+        "bibliography-builder skill with a citation preflight checkpoint, stable references.bib output, optional partial builds, duplicate-DOI warnings, and explicitly requested best-effort references.md output.",
+        "Deterministic paper selection, metadata-note editing, citation resolution, CSL validation, BibTeX conversion, CLI entry points, optional citeproc formatting dependencies, and focused tests."
+      ],
+      "changed": [
+        "Config schema 4 adds citation defaults while preserving user values and asking no new onboarding questions.",
+        "Crossref DOI type names are normalized to standard CSL equivalents while all rich authoritative response fields are preserved.",
+        "Citation Resolver now documents an explicit user-approved fallback for raw PDFs and blocked nonblank links: verify an authoritative DOI or official landing page, preserve existing PDFs, and use official RIS or BibTeX exports to recover a URL and confirm identity.",
+        "Bibliography Builder now includes a routed agent-handoff workflow for adding references to target Markdown notes and a dependency-free structured reference-data export for reliable staging.",
+        "README now introduces the per-paper folder structure and a daily project-tag bibliography workflow, including agent-assisted numbered footnotes in a target Markdown draft.",
+        "Paper Organizer has a disabled-by-default, one-attempt citation hook that never blocks organization and excludes enrich mode.",
+        "Paper-label migration updates only the id field in citation.csl.json through targeted JSON parsing.",
+        "Public-template sanitization forces automatic post-organization citation resolution back to false."
+      ]
+    },
     "2026.07.25.1": {
       "date": "2026-07-25",
       "title": "Remove the Standalone Paper Downloader",

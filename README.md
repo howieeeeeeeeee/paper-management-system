@@ -89,14 +89,13 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
 
 ## Daily Workflow
 
-At the beginning of each session, open a terminal, change to your PaperHub folder, and launch your coding agent:
+At the beginning of each session, work from your PaperHub folder. You can open a terminal and change to it:
 
 ```bash
 cd "/absolute/path/to/your/PaperHub"
-codex
 ```
 
-Replace `codex` with the launch command for your coding agent if you use a different one.
+Alternatively, launch your coding agent app and open the PaperHub folder as its working folder.
 
 Put new PDFs in `to_be_organized/`, then ask:
 

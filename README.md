@@ -2,19 +2,6 @@
 
 PaperHub is a coding-agent-powered paper management system for Obsidian. Drop PDFs into a local inbox or provide public paper links, ask your agent to run the PaperHub skills, and get a searchable library where every paper has a stable label, metadata note, optional public PDF, optional AI summary, and Obsidian Base dashboard entry.
 
-## Contents
-
-- [[#Claim(s)]]
-- [[#Quick Start]]
-- [[#Daily Workflow]]
-  - [[#Daily Management Flow]]
-  - [[#Knowledge Retrieval]]
-  - [[#Bibliography Export]]
-- [[#Obsidian Base]]
-- [[#Obsidian Authoring Skill]]
-- [[#Updating Utilities and Skills]]
-- [[#Useful Files]]
-
 A typical paper is stored as one self-contained folder:
 
 ```text

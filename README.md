@@ -158,6 +158,12 @@ To build a BibTeX database for a project:
 /bibliography-builder : build references.bib from papers tagged project_KMC and save it to <absolute path to the project folder>.
 ```
 
+To add papers to an existing BibTeX file:
+
+```text
+/bibliography-builder : add papers tagged project_KMC to <absolute path to existing references.bib>. Keep existing entries and skip duplicates.
+```
+
 The builder shows a preflight summary before it writes output or omits any papers. You can instead request a human-readable `references.md`; formatted output is best effort, while BibTeX is the primary export.
 
 To work with the agent to add citation information as numbered footnotes to a Markdown draft:

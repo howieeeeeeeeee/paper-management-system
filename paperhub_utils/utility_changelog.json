@@ -1,8 +1,19 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.25.2",
+  "latest_version": "2026.07.26.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.26.1": {
+      "date": "2026-07-26",
+      "title": "Append to Existing BibTeX Files",
+      "update_kind": "content",
+      "summary": "Bibliography Builder can now add selected PaperHub references to an existing BibTeX file without replacing its current content.",
+      "how_to_apply": "Update the managed bibliography-builder skill trees, README, manifest, and changelog together. No script, configuration, or paper-library migration is required: the agent stages generated entries separately, skips confirmed duplicates, stops on identity conflicts, and appends only new entries while preserving existing content.",
+      "changed": [
+        "Bibliography Builder now routes add, append, and merge requests through a duplicate-safe agent workflow that preserves existing entries, comments, string definitions, preambles, order, and formatting.",
+        "README now includes a concise example for adding project-tagged papers to an existing references.bib."
+      ]
+    },
     "2026.07.25.2": {
       "date": "2026-07-25",
       "title": "Citation Information and Bibliography Export",

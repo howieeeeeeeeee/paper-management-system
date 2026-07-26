@@ -2,6 +2,19 @@
 
 PaperHub is a coding-agent-powered paper management system for Obsidian. Drop PDFs into a local inbox or provide public paper links, ask your agent to run the PaperHub skills, and get a searchable library where every paper has a stable label, metadata note, optional public PDF, optional AI summary, and Obsidian Base dashboard entry.
 
+## Contents
+
+- [[#Claim(s)]]
+- [[#Quick Start]]
+- [[#Daily Workflow]]
+  - [[#Daily Management Flow]]
+  - [[#Knowledge Retrieval]]
+  - [[#Bibliography Export]]
+- [[#Obsidian Base]]
+- [[#Obsidian Authoring Skill]]
+- [[#Updating Utilities and Skills]]
+- [[#Useful Files]]
+
 A typical paper is stored as one self-contained folder:
 
 ```text
@@ -97,6 +110,8 @@ cd "/absolute/path/to/your/PaperHub"
 
 Alternatively, launch your coding agent app and open the PaperHub folder as its working folder.
 
+### Daily Management Flow
+
 Put new PDFs in `to_be_organized/`, then ask:
 
 ```text
@@ -124,6 +139,8 @@ in `to_be_organized/papers to find.md` using Codex CLI.
 
 You can provide either a direct link to a PDF or a link to the paper's webpage.
 
+### Knowledge Retrieval
+
 For retrieval:
 
 ```text
@@ -143,6 +160,10 @@ To search notes while skipping generated paper metadata and AI summaries:
 ```text
 /ask-knowledge-base : search my notes about confirmation bias and large language models, without papers.
 ```
+
+PaperHub and the skills in this folder are useful beyond paper management. You can ask your coding agent to search, synthesize, draft, edit, or create an Obsidian Canvas from Markdown notes anywhere in the same vault; paste the full path from your computer's system root to the relevant file or folder (for example, `/Users/your-name/Documents/My Obsidian Vault/Research/`) so the agent knows what material to use.
+
+### Bibliography Export
 
 For citations, begin with a read-only coverage check:
 
@@ -174,8 +195,6 @@ To work with the agent to add citation information as numbered footnotes to a Ma
 
 Bibliography Builder generates the reference files, while the agent reads the draft, matches each paper to the relevant text, and works with you to add the footnotes.
 
-PaperHub and the skills in this folder are useful beyond paper management. You can ask your coding agent to search, synthesize, draft, edit, or create an Obsidian Canvas from Markdown notes anywhere in the same vault; paste the full path from your computer's system root to the relevant file or folder (for example, `/Users/your-name/Documents/My Obsidian Vault/Research/`) so the agent knows what material to use.
-
 ## Obsidian Base
 
 Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for reading status, tags, interest, and topic views.
@@ -197,7 +216,7 @@ Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps,
 /paperhub-obsidian : add a view to the existing SamplePaperBoard.base that shows only papers tagged `repeated_games`.
 ```
 
-## Updating Utilities and Skills 
+## Updating Utilities and Skills
 
 PaperHub keeps improving — new skills, engines, and workflow features ship over time. Rather than re-cloning, run the local `update-paperhub-utils` skill to sync the latest skills and utilities into your own project, so new features land on your local copy while your papers and settings stay untouched.
 

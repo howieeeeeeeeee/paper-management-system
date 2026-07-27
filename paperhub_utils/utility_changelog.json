@@ -1,8 +1,20 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.26.1",
+  "latest_version": "2026.07.26.2",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.26.2": {
+      "date": "2026-07-26",
+      "title": "Obsidian-Safe Summary Visuals",
+      "update_kind": "content",
+      "summary": "Adds restrained visual and math-rendering defaults for full and enriched AI summaries in Obsidian.",
+      "how_to_apply": "Update the managed summary and enrich prompt fragments, manifest, and changelog together. No configuration, command, dependency, or existing-paper migration is required; future full-summary and enrich runs use the new defaults.",
+      "changed": [
+        "AI summaries now use Obsidian-compatible dollar-sign math delimiters and avoid MathJax notation inside raw HTML.",
+        "Helpful HTML tables, experiment flows, and subject-view schematics default to grayscale, fixed or equal-width alignment, compact sizing, and explicit separation between actual subject-visible information and analyst annotations.",
+        "Enrich runs revise inherited visuals that conflict with the shared Obsidian rendering and subject-view accuracy rules."
+      ]
+    },
     "2026.07.26.1": {
       "date": "2026-07-26",
       "title": "Append to Existing BibTeX Files",

@@ -19,4 +19,4 @@ SECONDARY — metadata patching:
 - Tags: lowercase, underscore-separated, no spaces; 3-5 total combining field + methodology + specific subtopic; use the canonical tags listed in the standard tag guidelines.
 - If KEYS_TO_FILL is empty AND EMIT_ABSTRACT is false, emit only `# metadata_patch` (with the heading and an empty body) plus `# ai_summary` when requested — the metadata is already complete.
 
-PRIMARY — the # ai_summary section is the main deliverable. Spend most of your effort there.
+PRIMARY — the # ai_summary section is the main deliverable. Spend most of your effort there. When polishing an existing summary, revise any inherited HTML visual that conflicts with the grayscale, alignment, subject-view accuracy, or Obsidian math-rendering rules in the # ai_summary prompt below.

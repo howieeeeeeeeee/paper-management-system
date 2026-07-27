@@ -9,6 +9,8 @@ Use the deterministic citation utilities under `paperhub_utils/`. One paper's
 canonical citation is `organized/{PaperLabel}/citation.csl.json`; legacy
 `*.citation.md` files remain separate inputs.
 
+Treat `citation_exist: true` in the canonical metadata note as a derived confirmation that `citation.csl.json` exists and passes Citation Resolver validation. Write or repair this property only during an explicit resolve or backfill operation, including for a valid citation file that the operation skips; never write it during an audit, infer it from a metadata link alone, or set it to `false` automatically.
+
 ## Select papers
 
 Translate natural-language conditions into exact labels and tag predicates.
@@ -58,6 +60,8 @@ Never continue from audit to resolution without an explicit apply request.
 Before applying, rerun selection and audit so stale manifests are not trusted.
 Existing valid citation files are skipped unless the user explicitly requests
 refresh behavior.
+
+After the resolver finishes, set `citation_exist: true` for every selected paper whose final `citation.csl.json` validates, including `resolved` and `skipped_valid` results. Preserve all other frontmatter and write metadata notes atomically.
 
 For labels with blank links:
 
@@ -117,7 +121,7 @@ thresholds automatically.
 
 After any files change, run `versioning-with-git` unless the user explicitly
 declined a commit. Report created/repaired files, blank links filled, unresolved
-labels, and the backup result.
+labels, metadata flags added or repaired, and the backup result.
 
 ## Safety
 
@@ -126,6 +130,7 @@ labels, and the backup result.
   requires explicit user approval.
 - Never destroy an invalid citation file unless replacement data has already
   resolved and validated.
+- Never mark `citation_exist: true` unless the matching `citation.csl.json` is valid.
 - Treat `citation.csl.json` as one CSL object, not a one-item array.
 - Keep organizer post-processing best-effort; citation failure never invalidates
   an otherwise organized paper.

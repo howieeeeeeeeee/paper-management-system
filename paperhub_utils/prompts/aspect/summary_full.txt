@@ -4,16 +4,25 @@ Write a detailed, free-form summary of this paper. Structure it however makes se
 **Use LaTeX notation:**
 - Inline math: `$formula$` (e.g., `$y = \beta_0 + \beta_1 x + \epsilon$`)
 - Block math: `$$formula$$` (e.g., `$$\int_0^1 f(x) dx$$`)
+- These are Obsidian Markdown notes: never use `\(...\)` or `\[...\]` delimiters.
+
+**Obsidian HTML visuals:**
+- Add a visual only when it materially clarifies the design, timing, treatment comparison, mechanism, or subject experience. Keep it small and close to the relevant explanation.
+- For experimental papers, consider a compact schematic of what a subject sees or does. If the PDF does not reproduce the literal interface, label the visual as a schematic and distinguish explanatory annotations from elements actually shown to subjects.
+- Use a plain grayscale palette only. Do not use colored borders, backgrounds, arrows, or treatment coding.
+- Align repeated boxes and columns cleanly: use a fixed-layout HTML table or a CSS grid with equal column widths, consistent padding, equal/minimum heights, and top-aligned text. Avoid auto-sized flex boxes when they produce uneven rows.
+- Raw HTML does not reliably render MathJax in Obsidian. Inside HTML, use Unicode symbols such as `θ`, `b₁`, and `b₂`, or plain text. Put substantive equations outside the HTML using `$...$` or `$$...$$`.
+- Do not imply that a subject saw omitted, hidden, or counterfactual information. If a visual reconstructs unseen information for the reader, separate it from the subject-view panel and label it explicitly.
 
 **What to cover (adapt emphasis to the paper type):**
 - **Research question**: What does this paper ask or set out to do?
 - **Methodology/Model**: Describe in enough detail that a reader can understand the approach without reading the paper. For theoretical papers, spell out the model setup, key assumptions, mechanism, and solution concept. Show the math and the equations. For empirical papers, cover the data, identification strategy, and key specifications. Include math notation where it clarifies.
 - **Main findings**: Primary results with magnitudes/effect sizes when available. Secondary findings if important.
 - **Robustness**: Brief note on robustness checks if applicable.
-- **Experimental design**: If the paper runs experiments, describe the design (type, participants, treatments, procedure, key results) in detail. Include where subjects are recruited, payment structure, and feedback design. Indicate if the experiment is asynchronous or synchronous. If helpful for clarity, use a Mermaid chart to illustrate the experiment's flow, treatments, or structure. Skip if not applicable.
+- **Experimental design**: If the paper runs experiments, describe the design (type, participants, treatments, procedure, key results) in detail. Include where subjects are recruited, payment structure, and feedback design. Indicate if the experiment is asynchronous or synchronous. If helpful, add a compact grayscale HTML flow or subject-view schematic using the rendering rules above. Skip the visual when prose is clearer.
 - **Literature context**: What does it build on? How does it differ?
 - **Policy/practical implications**: Only if explicitly discussed in the paper.
-- **Key tables/figures**: Show the 1-2 most important, with page numbers. Use a Markdown table when it has clear, regular rows and columns with no multi-level headers or merged cells. For complicated tables (for example, multi-column headers, merged cells, or irregular structure), embed raw HTML `<table>` markup directly inside the Markdown `ai_summary.md` file—not in a separate HTML document—so Obsidian renders them correctly.
+- **Key tables/figures**: Show the 1-2 most important, with page numbers. Use a Markdown table when it has clear, regular rows and columns with no multi-level headers or merged cells. For complicated tables (for example, multi-column headers, merged cells, or irregular structure), embed a grayscale raw HTML `<table>` directly inside `ai_summary.md`—not in a separate HTML document—and keep its columns aligned with `table-layout: fixed` when practical.
 - **Notable quotes**: 1-2 max, only if genuinely insightful.
 - **Technical notes**: Noteworthy econometric specs, computational approaches, or data construction details.
 

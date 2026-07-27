@@ -11,3 +11,4 @@ deterministic selection and `paperhub_utils/scripts/citation_resolver.py` for
 read-only audit or explicit best-effort resolution. Never turn an audit into an
 apply operation, replace a nonblank metadata link without showing a verified
 replacement and obtaining explicit user approval, or bypass access controls.
+During an explicit resolve or backfill operation, set `citation_exist: true` in the canonical metadata note only after `citation.csl.json` passes validation; never write this property during an audit or infer it from a link alone.

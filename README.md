@@ -54,7 +54,7 @@ flowchart TD
 
 **Prerequisites:** Install [Obsidian](https://obsidian.md/) and have access to one coding agent, such as Codex, Claude Code, OpenCode, or a similar tool. Both desktop apps and command-line interfaces work.
 
-Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) for this one-time setup. Routine paper runs can use a faster or cheaper model (I use haiku, and it works smoothly).
+Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) for this one-time setup. Routine paper runs can use a faster or cheaper model. I use Haiku for lighter runs and Codex CLI as my main Paper Organizer; both work smoothly.
 
 1. Clone the template anywhere inside your Obsidian vault (the folder that contains `.obsidian/`). The simplest layout puts it at the vault root:
 
@@ -229,7 +229,7 @@ Here are the recent changes:
 - **July 25–26, 2026:** Added `citation-resolver` and `bibliography-builder`, safer BibTeX updates.
 - **July 20–23, 2026:** Added `paperhub-obsidian` | simpler multi-engine onboarding.
 - **July 2026:** Added `paper-finder` and `ask-knowledge-base` for knowledge retrieval.
-- **From May 2026:** Began turning my internal paper system into an open-source project, rolled out `paper_organizer`, added support for multiple AI engines, and expanded intake from PDFs to public links.
+- **Since late 2025:** I have used this workflow for my own papers. In May 2026, I began open-sourcing it, adding `paper_organizer`, multiple AI engines, and public-link intake.
 
 ## Claim(s)
 
@@ -237,7 +237,7 @@ As an economics PhD student, I am still building up my research skill set. I do 
 
 The main purpose of this tool is management, not summarization. The AI-augmented summary feature is meant to help users quickly skim the main idea of a new paper and decide whether it is worth reading deeply. There have been times when I remembered only a small part of a paper I had encountered but could not fully recall what it was. The `paper-finder` skill is designed to help with exactly that. There are also times when I want to save a paper for later but cannot read it immediately. This management system, built with Obsidian Bases and the `paper-organizer` skill, is my project-management-style solution to that pain point.
 
-Ultimately, I envision PaperHub becoming my main paper database: a place where the papers I collect, read, and cite can stay connected throughout my research. I am now practicing a workflow in which I work with an agent to turn the papers already in the library into project-specific bibliographies. The `citation-resolver` skill helps complete and verify the standardized citation information for each paper, and `bibliography-builder` turns selected papers—whether chosen directly, by tags, or from a draft—into BibTeX and reference files that the agent can adapt for the work at hand.
+PaperHub is becoming my main paper database, keeping the papers I collect, read, and cite connected. I use `citation-resolver` to complete citation records and `bibliography-builder` to build project-specific BibTeX and reference files.
 
 I strongly suggest being aware of copyright before sending any downloaded PDF to AI. Open-access PDFs may be appropriate to use, but being able to download a PDF does not necessarily mean that you have the right to share it with an external AI service. When you are unsure, use the link metadata-only workflow instead.
 

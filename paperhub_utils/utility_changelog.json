@@ -1,8 +1,22 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.27.3",
+  "latest_version": "2026.07.27.4",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.27.4": {
+      "date": "2026-07-27",
+      "title": "External CLI Run-Integrity Gates",
+      "update_kind": "content",
+      "summary": "Adds validation gates so a paper summary generated from a different PDF, or a run where the external CLI never started, is rejected instead of silently organized.",
+      "how_to_apply": "No configuration or migration is required. The new checks run automatically when applying an external CLI response for a PDF.",
+      "changed": [
+        "Applying an external CLI response now verifies that the title in the response appears in the PDF it is being filed with, and refuses the paper when it does not. The check runs after the CLI has returned, reads the PDF only locally, and never changes what the CLI receives.",
+        "A Codex CLI run whose error output is empty is now treated as a failure, because a real run always writes progress output and an empty file indicates the run never happened.",
+        "The check is skipped rather than failed when a PDF has no extractable text layer, so scanned PDFs are unaffected.",
+        "The paper-organizer instructions now require proving an external CLI run actually happened before applying its response: fresh per-batch artifact paths, per-call exit codes rather than a wrapper's, and prompts passed as arguments instead of inside a shell string.",
+        "The instructions now state that a failing validation guard must never be satisfied by creating, blanking, or editing the artifact it checks."
+      ]
+    },
     "2026.07.27.3": {
       "date": "2026-07-27",
       "title": "Quick Start Prerequisites",

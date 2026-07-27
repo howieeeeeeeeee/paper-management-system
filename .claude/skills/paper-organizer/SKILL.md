@@ -183,6 +183,8 @@ for the folder and canonical metadata filename.
   If public metadata is incomplete, the invoking coding agent may browse and
   append verified facts plus source URLs under `Coding-Agent Additions`.
 - **Handle partial failures via `AskUserQuestion`** — never decide unilaterally, never auto-switch models.
+- **Never satisfy a failing validation guard by creating, blanking, or editing the artifact it checks.** A guard that fires means the engine did not run as assumed; re-run it or fail the paper. Silencing it organizes the wrong paper under a plausible-looking name.
+- **For external CLI engines, prove the run happened before applying its response.** Use fresh per-batch artifact paths (never fixed `/tmp` names that a previous session may have left behind), check each call's own exit code rather than a wrapper's, and never build the prompt inside a shell string — backticks and `$` in the prompt can kill the command before the engine starts.
 - **ONLY use models from `paperhub.config`'s `MODEL_LIST`** for `openrouter`. For `agy-cli`, use `AGY_CLI_MODEL_LIST`; the selected model is persisted to Agy settings by `--prepare-cli-input`. For `codex-cli`, use `CODEX_CLI_MODEL_REASONING_PAIRS`; the selected model is passed per run with `codex exec --model`, and the thinking level is passed per run with `-c model_reasoning_effort=...`.
 - Metadata files MUST always include `contributions:` (empty YAML field) and `## Abstract` (verbatim from PDF when present).
 

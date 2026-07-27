@@ -136,6 +136,13 @@ def validate_codex_cli_run(
             problems.append(f"Codex stderr file not found: {stderr_path}")
         else:
             text = stderr_path.read_text(encoding="utf-8", errors="replace")
+            if not text.strip():
+                problems.append(
+                    f"Codex stderr is empty: {stderr_path}. A real Codex run always "
+                    "writes progress output, so this indicates Codex never ran and the "
+                    "response file may be stale. Do not create or blank a stderr file "
+                    "to satisfy this check - re-run Codex instead."
+                )
             problems.extend(_scan_text_for_markers(text, "Codex stderr"))
 
     return problems

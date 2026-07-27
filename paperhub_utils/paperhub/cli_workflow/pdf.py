@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -58,6 +59,60 @@ def create_first_pages_pdf(
         pages_sent=pages_sent,
         total_pages=total_pages,
         page_limit=page_limit,
+    )
+
+
+def _normalize_words(text: str) -> str:
+    return re.sub(r"[^a-z0-9 ]+", " ", text.lower())
+
+
+def title_mismatch_problem(
+    response_text: str,
+    pdf_path: Path,
+    *,
+    pages: int = 2,
+    threshold: float = 0.6,
+) -> str | None:
+    """Return a problem string when a response's title is absent from the PDF.
+
+    Guards against applying a response that was generated for a different paper
+    (for example a stale artifact file left over from an earlier run). Returns
+    None when the check passes or cannot be performed, so PDFs without an
+    extractable text layer are never rejected on this basis.
+    """
+    match = re.search(r'^title:\s*"?(.+?)"?\s*$', response_text, re.MULTILINE)
+    if not match:
+        return None
+
+    title = match.group(1).strip()
+    words = [w for w in _normalize_words(title).split() if len(w) > 3]
+    if not words:
+        return None
+
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(str(pdf_path))
+        extracted = " ".join(
+            (reader.pages[i].extract_text() or "")
+            for i in range(min(pages, len(reader.pages)))
+        )
+    except Exception:
+        return None
+
+    haystack = _normalize_words(extracted)
+    if len(haystack.split()) < 20:
+        return None
+
+    hits = sum(1 for w in words if w in haystack)
+    ratio = hits / len(words)
+    if ratio >= threshold:
+        return None
+    return (
+        f"Response title does not match the PDF (only {ratio:.0%} of title words "
+        f"found in the first {pages} pages of {pdf_path.name}). "
+        f"Response title: {title!r}. "
+        "The response was probably generated from a different PDF or is a stale artifact."
     )
 
 

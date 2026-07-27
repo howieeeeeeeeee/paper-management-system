@@ -102,6 +102,7 @@ from paperhub.cli_workflow.pdf import (
     create_first_pages_pdf,
     ensure_safe_cli_cleanup_path,
     repo_relative_path,
+    title_mismatch_problem,
 )
 from paperhub.cli_workflow.utils import (
     parse_metadata_first_markdown,
@@ -2420,6 +2421,11 @@ def main():
                 content = extract_codex_response_block(raw_content)
         elif external_cli_engine != "coding-agent":
             parser.error(f"Unknown external CLI engine: {external_cli_engine}")
+
+        if not cli_problems and external_cli_engine != "coding-agent":
+            mismatch = title_mismatch_problem(content, pdf_path)
+            if mismatch:
+                cli_problems = [mismatch]
 
         if cli_problems:
             result = {

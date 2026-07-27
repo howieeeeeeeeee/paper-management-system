@@ -15,6 +15,17 @@ Token-light: use shell tests and `rg`, not full file reads.
 | 5 | No markup artifacts | `rg -l 'cite_start\|cite_end\|<ref>\|</ref>' "{output_dir}"` |
 | 6 | Valid YAML frontmatter | parses; has `title`, `authors`, `year`, `tags`, `contributions` (empty); body has `## Abstract`; tags have no spaces |
 | 7 | Reciprocal navigation (when `ai_summary.md` exists) | metadata ends with `[[ai_summary\|Link to AI Summary]]`; summary's first visible line is `[[{paper_label}\|Back to Metadata]]` |
+| 8 | Metadata describes the right paper | the written `title:` matches the PDF it was filed with |
+
+Check 8 catches a whole class of silent corruption: applying a response that was
+generated from a different PDF. For external CLI engines the apply step enforces
+it automatically (`title_mismatch_problem`). It is worth a glance regardless —
+a folder whose metadata describes a different paper than its PDF is far more
+damaging than a formatting slip, because nothing downstream will flag it.
+
+**Never suppress a validation failure by editing, creating, or blanking the
+artifact that failed the check.** A guard that fires means the engine did not do
+what the workflow assumed; fix the run, not the evidence.
 
 ## 2. Auto-fix issues
 

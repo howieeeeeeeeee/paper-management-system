@@ -113,8 +113,23 @@ Hard-fatal — do **not** organize output:
 
 - Codex stdout is missing `PAPERHUB_RESPONSE_BEGIN` or `PAPERHUB_RESPONSE_END`, or the response block is empty.
 - Codex stderr indicates authentication, rate-limit, permission, or file-read failures.
+- Codex stderr is **empty**. A real run always writes progress output, so an empty stderr means Codex never ran and the response file is stale.
+- The title in the response does not appear in the PDF, which means the response came from a different paper.
 
-The `--from-response --external-cli-engine codex-cli` command enforces this via `validate_codex_cli_run` in `cli_workflow/codex.py`.
+The `--from-response --external-cli-engine codex-cli` command enforces these via `validate_codex_cli_run` in `cli_workflow/codex.py` and `title_mismatch_problem` in `cli_workflow/pdf.py`. The title check reads the PDF locally **after** Codex has already returned; it never preprocesses the PDF or changes what Codex receives, which is still the absolute PDF path.
+
+**Never satisfy a guard by creating, blanking, or substituting an artifact file.** If `--from-response` reports a missing or empty stderr, Codex did not run — re-run it. Treating the guard as an obstacle silently organizes the wrong paper.
+
+## Run Integrity (required before applying any response)
+
+The generation step and the apply step are separate commands, so a failed generation can leave an old response file in place and the apply step will happily consume it. Guard against that:
+
+1. **Use a fresh, unique artifact directory per batch** (for example `mktemp -d`), never fixed paths like `/tmp/paperhub_codex_output_1.txt`. Reused names are how a stale file from a previous session gets applied to a new PDF.
+2. **Check each Codex call's own exit code.** A wrapper such as `for ... & done; wait` returns 0 even when every job inside it failed, so it proves nothing.
+3. **Confirm the response file was written by this run** — non-empty, and newer than the prepared JSON.
+4. **Never pass the prompt through a shell string.** The prompt contains backticks and `$`, which break shell quoting and can kill the command before Codex starts. Write the prompt to a file and read it in the language driving the call, or pass it as a direct argument in an argument list (for example `subprocess.run([...])`), not inside a generated `.sh` file.
+
+If any check fails, treat the paper as failed and follow **Error Handling** below.
 
 ## Reasoning And Yolo Settings
 
@@ -130,6 +145,12 @@ limit concurrently using the same resolved model/reasoning pair and distinct
 output/stderr paths. Default to four workers and allow 1-8. Wait for every
 scheduled generation call, then apply responses sequentially so output folders
 and duplicate checks cannot race.
+
+Batches make the stale-artifact risk worse, because one broken job is easy to
+miss among several that look fine. Apply the **Run Integrity** checks per paper
+and report each paper's own result (exit code, bytes written, sentinels found)
+before applying anything. Never apply a batch on the strength of the wrapper
+command's exit code alone.
 
 ## Error Handling
 

@@ -2,7 +2,7 @@
 
 PaperHub is a coding-agent-powered paper management system for Obsidian. Drop PDFs into a local inbox or provide public paper links, ask your agent to run the PaperHub skills, and get a searchable library where every paper has a stable label, metadata note, optional public PDF, optional AI summary, and Obsidian Base dashboard entry.
 
-**ToC:** [Quick Start](#quick-start) | [Daily Workflow](#daily-workflow) | [Use Cases](#use-case-worth-noticing) | [Claims](#claims)
+**ToC:** [Quick Start](#quick-start) | [Daily Workflow](#daily-workflow) | [Use Cases](#use-cases) | [Claims](#claims)
 
 A typical paper is stored as one self-contained folder:
 
@@ -48,7 +48,7 @@ flowchart TD
 
 - `citation-resolver`: Resolve citations for existing papers or automatically attempt them for new papers.
 - `bibliography-builder`: Build or safely extend `.bib` files from the paper's metadata tags.
-- Reducing your switching cost: [Import an existing project collection](quick_start/import-project-literature.md).
+- Reducing your switching cost: [Import an existing project collection](quick_start/usecases/import-project-literature.md).
 
 ## Quick Start
 
@@ -180,9 +180,10 @@ To work with the agent to add citation information as numbered footnotes to a Ma
 
 Bibliography Builder generates the reference files, while the agent reads the draft, matches each paper to the relevant text, and works with you to add the footnotes.
 
-### Use Case Worth Noticing
+### Use Cases
 
-- [Import a paper folder or BibTeX file](quick_start/import-project-literature.md): reuse existing records, batch-import the rest, tag them with `proj_xxx`, resolve citations, and keep the project's `.bib` updated.
+- [Review a familiar topic from papers already in PaperHub](quick_start/usecases/review-a-familiar-topic.md): create or update a research note when you have read many related papers and need a quick refresher. This is not intended for learning a new topic.
+- [Import a paper folder or BibTeX file](quick_start/usecases/import-project-literature.md): reuse existing records, batch-import the rest, tag them with `proj_xxx`, resolve citations, and keep the project's `.bib` updated.
 
 ## Obsidian Base
 

@@ -2,9 +2,10 @@
 
 Run these prompts from the repository root. Use `to_be_organized/` for new PDFs or link-inbox notes and `organized/<folder>/` for existing paper folders.
 
-## Skill Quick Starts
+## Workflow and Skill Guides
 
-- [Import an existing project literature collection](import-project-literature.md): turn a paper folder or BibTeX file into a tagged, citation-ready PaperHub batch, then keep its bibliography current.
+- [Review a familiar topic from your PaperHub](usecases/review-a-familiar-topic.md): retrieve and synthesize papers you have already read when you need a quick refresher, not an introduction to a new topic.
+- [Import an existing project literature collection](usecases/import-project-literature.md): turn a paper folder or BibTeX file into a tagged, citation-ready PaperHub batch, then keep its bibliography current.
 - [paper-organizer](skills/paper-organizer.md): organize PDFs or public paper links, create metadata notes, and add or refresh `ai_summary.md` when a PDF is available.
 - [paper-finder](skills/paper-finder.md): retrieve an existing paper from a vague memory, claim, author, tag, or snippet.
 - [citation-resolver](skills/citation-resolver.md): audit citation coverage and explicitly create or repair per-paper citation records.

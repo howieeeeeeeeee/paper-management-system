@@ -1,4 +1,4 @@
-# Import an Existing Project Literature Collection
+# Import an Existing Project Literature Collection into PaperHub
 
 Use this workflow when a project already has a folder of papers, a BibTeX file, or both. PaperHub can turn that collection into a searchable, citation-ready batch without generating AI summaries. A project tag such as `proj_xxx` keeps the imported papers together for browsing and later bibliography updates.
 

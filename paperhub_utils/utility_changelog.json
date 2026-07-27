@@ -1,8 +1,18 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.27.2",
+  "latest_version": "2026.07.27.3",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.27.3": {
+      "date": "2026-07-27",
+      "title": "Quick Start Prerequisites",
+      "update_kind": "content",
+      "summary": "Clarifies the software needed to start PaperHub and where to complete onboarding.",
+      "how_to_apply": "Update README.md, the utility manifest, and this changelog together. No configuration, command, dependency, or existing-library migration is required.",
+      "changed": [
+        "The Quick Start now asks users to install Obsidian, have one coding-agent app or command-line interface available, and open Obsidian to complete the onboarding questionnaire."
+      ]
+    },
     "2026.07.27.2": {
       "date": "2026-07-27",
       "title": "Obsidian HTML Visual Subskill",

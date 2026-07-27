@@ -52,6 +52,8 @@ flowchart TD
 
 ## Quick Start
 
+**Prerequisites:** Install [Obsidian](https://obsidian.md/) and have access to one coding agent, such as Codex, Claude Code, OpenCode, or a similar tool. Both desktop apps and command-line interfaces work.
+
 Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) for this one-time setup. Routine paper runs can use a faster or cheaper model (I use haiku, and it works smoothly).
 
 1. Clone the template anywhere inside your Obsidian vault (the folder that contains `.obsidian/`). The simplest layout puts it at the vault root:
@@ -71,7 +73,7 @@ Use the best model available (OpenAI SOTA GPT or Claude Opus w/ xhigh effort) fo
    rm -rf .git
    ```
 
-2. Fill [onboarding_questionnaire.md](onboarding_questionnaire.md), then set its frontmatter status to:
+2. Open Obsidian and fill in [onboarding_questionnaire.md](onboarding_questionnaire.md), then set its frontmatter status to:
 
    ```yaml
    status: ready_for_agent

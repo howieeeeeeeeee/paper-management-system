@@ -2,7 +2,7 @@
 
 PaperHub is a coding-agent-powered paper management system for Obsidian. Drop PDFs into a local inbox or provide public paper links, ask your agent to run the PaperHub skills, and get a searchable library where every paper has a stable label, metadata note, optional public PDF, optional AI summary, and Obsidian Base dashboard entry.
 
-**ToC:** [Quick Start](#quick-start) | [Daily Workflow](#daily-workflow) | [Use Cases](#use-cases) | [Claims](#claims)
+**ToC:** [Quick Start](#quick-start) | [Daily Workflow](#daily-workflow) | [Use Cases](#use-cases) | [Changelog](#changelog) | [Claims](#claims)
 
 A typical paper is stored as one self-contained folder:
 
@@ -95,7 +95,7 @@ cd "/absolute/path/to/your/PaperHub"
 
 Alternatively, launch your coding agent app and open the PaperHub folder as its working folder.
 
-### Daily Management Flow
+### 1. Daily Management Flow
 
 Put new PDFs in `to_be_organized/`, then ask:
 
@@ -124,7 +124,8 @@ in `to_be_organized/papers to find.md` using Codex CLI.
 
 You can provide either a direct link to a PDF or a link to the paper's webpage.
 
-### Knowledge Retrieval
+### 2. Knowledge Retrieval
+Knowledge retrieval requires the coding agent's own ability to summarize the information from the interaction with the knowledge base, so models with better intelligence are recommended here.
 
 For retrieval:
 
@@ -148,7 +149,7 @@ To search notes while skipping generated paper metadata and AI summaries:
 
 PaperHub and the skills in this folder are useful beyond paper management. You can ask your coding agent to search, synthesize, draft, edit, or create an Obsidian Canvas from Markdown notes anywhere in the same vault; paste the full path from your computer's system root to the relevant file or folder (for example, `/Users/your-name/Documents/My Obsidian Vault/Research/`) so the agent knows what material to use.
 
-### Bibliography Export
+### 3. Bibliography Export
 
 For citations, begin with a read-only coverage check:
 
@@ -220,6 +221,15 @@ Use the best model available (SOTA GPT w/ xhigh thinking or Opus w/ xhigh thinki
 ```
 
 The updater focuses on skills and utility code while preserving local papers, tags, API keys, runtime config, Obsidian state, generated outputs, and customized prompts.
+
+### Changelog
+
+Here are the recent changes:
+- **July 27, 2026:** Added use cases: summary sharing and project import | add simple Obsidian HTML visuals instruction to `paperhub-obsidian`.
+- **July 25–26, 2026:** Added `citation-resolver` and `bibliography-builder`, safer BibTeX updates.
+- **July 20–23, 2026:** Added `paperhub-obsidian` | simpler multi-engine onboarding.
+- **July 2026:** Added `paper-finder` and `ask-knowledge-base` for knowledge retrieval.
+- **From May 2026:** Began turning my internal paper system into an open-source project, rolled out `paper_organizer`, added support for multiple AI engines, and expanded intake from PDFs to public links.
 
 ## Claim(s)
 

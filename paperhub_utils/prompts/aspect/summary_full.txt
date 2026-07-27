@@ -8,11 +8,11 @@ Write a detailed, free-form summary of this paper. Structure it however makes se
 
 **Obsidian HTML visuals:**
 - Add a visual only when it materially clarifies the design, timing, treatment comparison, mechanism, or subject experience. Keep it small and close to the relevant explanation.
-- For experimental papers, consider a compact schematic of what a subject sees or does. If the PDF does not reproduce the literal interface, label the visual as a schematic and distinguish explanatory annotations from elements actually shown to subjects.
+- For experimental papers, consider a compact schematic of what a subject sees or does. For a reconstruction, use only a short label such as "Schematic." Do not add a standalone interface-fidelity disclaimer unless the distinction is essential. Distinguish explanatory annotations from elements actually shown to subjects.
 - Use a plain grayscale palette only. Do not use colored borders, backgrounds, arrows, or treatment coding.
 - Align repeated boxes and columns cleanly: use a fixed-layout HTML table or a CSS grid with equal column widths, consistent padding, equal/minimum heights, and top-aligned text. Avoid auto-sized flex boxes when they produce uneven rows.
 - Raw HTML does not reliably render MathJax in Obsidian. Inside HTML, use Unicode symbols such as `θ`, `b₁`, and `b₂`, or plain text. Put substantive equations outside the HTML using `$...$` or `$$...$$`.
-- Do not imply that a subject saw omitted, hidden, or counterfactual information. If a visual reconstructs unseen information for the reader, separate it from the subject-view panel and label it explicitly.
+- Do not imply that a subject saw omitted, hidden, or counterfactual information. Keep reconstructed reader-only information outside the subject-view panel and label it briefly, for example "Reader explanation."
 
 **What to cover (adapt emphasis to the paper type):**
 - **Research question**: What does this paper ask or set out to do?

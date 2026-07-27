@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian HTML Visuals"
+  short_description: "Simple theme-safe HTML layouts for Obsidian"
+  default_prompt: "Use $obsidian-html-visuals to create a simple theme-compatible HTML visual in an Obsidian note."

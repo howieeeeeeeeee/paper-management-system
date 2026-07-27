@@ -2,6 +2,8 @@
 
 PaperHub is a coding-agent-powered paper management system for Obsidian. Drop PDFs into a local inbox or provide public paper links, ask your agent to run the PaperHub skills, and get a searchable library where every paper has a stable label, metadata note, optional public PDF, optional AI summary, and Obsidian Base dashboard entry.
 
+**ToC:** [Quick Start](#quick-start) | [Daily Workflow](#daily-workflow) | [Use Cases](#use-case-worth-noticing) | [Claims](#claims)
+
 A typical paper is stored as one self-contained folder:
 
 ```text
@@ -19,7 +21,7 @@ The metadata note uses the same stable label as its folder. A retained PDF may k
 It is built for AI-assisted knowledge work:
 
 - `paper-organizer` turns PDFs or public paper links into one folder per paper with metadata and an optional `ai_summary.md`.
-- `paper-finder` retrieves papers already stored in your PaperHub library using vague memories, keywords, authors, tags, or snippets from the Markdown notes associated with each paper.
+- `paper-finder` retrieves papers already stored in your PaperHub library using your vague memories, keywords, authors, tags.
 - `citation-resolver` checks citation coverage and, when asked to proceed, completes standardized citation information for selected papers.
 - `bibliography-builder` exports selected papers to a BibTeX `references.bib` file or an explicitly requested formatted reference list.
 - `ask-knowledge-base` answers questions across visible Markdown notes in the Obsidian vault, citing notes with wikilinks; it can skip generated paper metadata/summaries when you ask for non-paper notes.
@@ -42,17 +44,11 @@ flowchart TD
     E --> G[Read AI summary when useful]
 ```
 
-## Claim(s)
+## New Features
 
-As an economics PhD student, I am still building up my research skill set. I do not think AI, or any automatic tool, can completely replace the process of reading the literature and building knowledge throughout the research lifecycle. I truly believe that the mental connections we form among papers while engaging with the literature cannot be outsourced to an external tool.
-
-The main purpose of this tool is management, not summarization. The AI-augmented summary feature is meant to help users quickly skim the main idea of a new paper and decide whether it is worth reading deeply. There have been times when I remembered only a small part of a paper I had encountered but could not fully recall what it was. The `paper-finder` skill is designed to help with exactly that. There are also times when I want to save a paper for later but cannot read it immediately. This management system, built with Obsidian Bases and the `paper-organizer` skill, is my project-management-style solution to that pain point.
-
-Ultimately, I envision PaperHub becoming my main paper database: a place where the papers I collect, read, and cite can stay connected throughout my research. I am now practicing a workflow in which I work with an agent to turn the papers already in the library into project-specific bibliographies. The `citation-resolver` skill helps complete and verify the standardized citation information for each paper, and `bibliography-builder` turns selected papers—whether chosen directly, by tags, or from a draft—into BibTeX and reference files that the agent can adapt for the work at hand.
-
-I strongly suggest being aware of copyright before sending any downloaded PDF to AI. Open-access PDFs may be appropriate to use, but being able to download a PDF does not necessarily mean that you have the right to share it with an external AI service. When you are unsure, use the link metadata-only workflow instead.
-
-For deep reading a PDF, I strongly recommend the Obsidian plugin [PDF++](https://github.com/RyotaUshio/obsidian-pdf-plus).
+- `citation-resolver`: Resolve citations for existing papers or automatically attempt them for new papers.
+- `bibliography-builder`: Build or safely extend `.bib` files from the paper's metadata tags.
+- Reducing your switching cost: [Import an existing project collection](quick_start/import-project-literature.md).
 
 ## Quick Start
 
@@ -182,15 +178,22 @@ To work with the agent to add citation information as numbered footnotes to a Ma
 
 Bibliography Builder generates the reference files, while the agent reads the draft, matches each paper to the relevant text, and works with you to add the footnotes.
 
+### Use Case Worth Noticing
+
+- [Import a paper folder or BibTeX file](quick_start/import-project-literature.md): reuse existing records, batch-import the rest, tag them with `proj_xxx`, resolve citations, and keep the project's `.bib` updated.
+
 ## Obsidian Base
 
 Use [SamplePaperBoard.base](SamplePaperBoard.base) as the main entry point for reading status, tags, interest, and topic views.
 
 
-![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/base-screenshot-2.png)
-![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/base-screenshot-1.png)
+For example, here I exclude papers whose status is `archived`, `done`, or `reflecting`.
+![Backlog view excluding archived, done, and reflecting papers](./quick_start/obsidian/base-screenshot-2.png)
 
-![Obsidian Base / Paperbase screenshot](./quick_start/obsidian/base-screenshot-3.png)
+Here I filter for papers whose tags include `repeated_games`.
+![View filtered by the `repeated_games` tag](./quick_start/obsidian/base-screenshot-3.png)
+
+
 ## Obsidian Authoring Skill
 
 Use `paperhub-obsidian` to create or edit Obsidian Markdown, Bases, Canvas maps, or live-vault workflows. It routes each task to the relevant open-source [`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) reference while preserving PaperHub's paper workflows and safeguards. See the short [Obsidian skill guide](quick_start/obsidian/paperhub-obsidian.md).
@@ -214,6 +217,19 @@ Use the best model available (SOTA GPT w/ xhigh thinking or Opus w/ xhigh thinki
 ```
 
 The updater focuses on skills and utility code while preserving local papers, tags, API keys, runtime config, Obsidian state, generated outputs, and customized prompts.
+
+## Claim(s)
+
+As an economics PhD student, I am still building up my research skill set. I do not think AI, or any automatic tool, can completely replace the process of reading the literature and building knowledge throughout the research lifecycle. I truly believe that the mental connections we form among papers while engaging with the literature cannot be outsourced to an external tool.
+
+The main purpose of this tool is management, not summarization. The AI-augmented summary feature is meant to help users quickly skim the main idea of a new paper and decide whether it is worth reading deeply. There have been times when I remembered only a small part of a paper I had encountered but could not fully recall what it was. The `paper-finder` skill is designed to help with exactly that. There are also times when I want to save a paper for later but cannot read it immediately. This management system, built with Obsidian Bases and the `paper-organizer` skill, is my project-management-style solution to that pain point.
+
+Ultimately, I envision PaperHub becoming my main paper database: a place where the papers I collect, read, and cite can stay connected throughout my research. I am now practicing a workflow in which I work with an agent to turn the papers already in the library into project-specific bibliographies. The `citation-resolver` skill helps complete and verify the standardized citation information for each paper, and `bibliography-builder` turns selected papers—whether chosen directly, by tags, or from a draft—into BibTeX and reference files that the agent can adapt for the work at hand.
+
+I strongly suggest being aware of copyright before sending any downloaded PDF to AI. Open-access PDFs may be appropriate to use, but being able to download a PDF does not necessarily mean that you have the right to share it with an external AI service. When you are unsure, use the link metadata-only workflow instead.
+
+For deep reading a PDF, I strongly recommend the Obsidian plugin [PDF++](https://github.com/RyotaUshio/obsidian-pdf-plus).
+
 
 ## Useful Files
 

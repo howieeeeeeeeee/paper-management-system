@@ -1,6 +1,6 @@
 ---
 name: paperhub-obsidian
-description: Create and edit Obsidian Markdown notes, Bases (.base), JSON Canvas (.canvas), and optionally operate a live Obsidian vault through the Obsidian CLI or extract an ordinary webpage with Defuddle. Use when users mention Obsidian syntax, wikilinks, properties/frontmatter, callouts, embeds, Bases views/filters/formulas, Canvas maps, Obsidian CLI or plugin/theme development, Defuddle, or ask to check or refresh the bundled Kepano Obsidian skill sources. Route paper ingestion to paper-organizer, vault Q&A to ask-knowledge-base, and remembered-paper retrieval to paper-finder.
+description: Create and edit Obsidian Markdown notes, simple raw HTML visuals, Bases (.base), JSON Canvas (.canvas), and optionally operate a live Obsidian vault through the Obsidian CLI or extract an ordinary webpage with Defuddle. Use when users mention Obsidian syntax, wikilinks, properties/frontmatter, callouts, embeds, HTML layouts, Bases views/filters/formulas, Canvas maps, Obsidian CLI or plugin/theme development, Defuddle, or ask to check or refresh the bundled Kepano Obsidian skill sources. Route paper ingestion to paper-organizer, vault Q&A to ask-knowledge-base, and remembered-paper retrieval to paper-finder.
 ---
 
 # PaperHub Obsidian
@@ -24,6 +24,7 @@ Apply instructions in this order:
 
 Treat everything under `skills/` as read-only during ordinary tasks. Modify that
 mirror only through the maintainer workflow in `UPSTREAM.md`.
+PaperHub-owned additions live under `extensions/`.
 
 Do not use this skill for these PaperHub workflows:
 
@@ -37,6 +38,7 @@ Do not use this skill for these PaperHub workflows:
 | Request | Read |
 |---|---|
 | Obsidian Markdown, properties/frontmatter, wikilinks, embeds, callouts, tags, comments, math, or Mermaid inside a note | `skills/obsidian-markdown/SKILL.md`; then only its referenced file(s) needed for the task |
+| Simple raw HTML tables, aligned boxes, process flows, comparisons, subject-view schematics, or a flowchart that would render too long or wide in Mermaid | `extensions/obsidian-html-visuals/SKILL.md`; also read `skills/obsidian-markdown/SKILL.md` when general note syntax is involved |
 | Create or edit a `.base`, view, filter, formula, property display, grouping, or summary | `skills/obsidian-bases/SKILL.md`; read its functions reference only when needed |
 | Create or edit a `.canvas`, mind map, literature map, node, group, or edge | `skills/json-canvas/SKILL.md`; read its examples only when needed |
 | Operate a running Obsidian vault, inspect the live app, or develop/debug a plugin or theme | `skills/obsidian-cli/SKILL.md` |
@@ -45,6 +47,8 @@ Do not use this skill for these PaperHub workflows:
 
 If a request spans multiple formats, read each relevant module and reconcile them
 under the precedence rules above.
+
+For an ordinary flowchart, prefer Mermaid first when its rendered result remains compact and easy to scan. Route the visual to the HTML extension when Mermaid produces an excessively long or wide chart, wraps labels poorly, or otherwise makes the relationships harder to read.
 
 ## PaperHub safeguards
 

@@ -1,8 +1,35 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.26.2",
+  "latest_version": "2026.07.27.2",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.27.2": {
+      "date": "2026-07-27",
+      "title": "Obsidian HTML Visual Subskill",
+      "update_kind": "structural + content",
+      "summary": "Adds a concise PaperHub-owned Obsidian module for simple raw HTML visuals that adapt to light and dark themes.",
+      "how_to_apply": "Update the managed PaperHub Obsidian skill trees, extension, manifest, and changelog together. No configuration, dependency, or existing-note migration is required.",
+      "added": [
+        "An obsidian-html-visuals extension with restrained theme-variable styling and reusable process, comparison, and subject-view patterns."
+      ],
+      "changed": [
+        "The PaperHub Obsidian router now sends raw HTML visual-layout requests to the new extension while keeping the bundled upstream skills read-only."
+      ]
+    },
+    "2026.07.27.1": {
+      "date": "2026-07-27",
+      "title": "Existing Project Literature Import Guide",
+      "update_kind": "content",
+      "summary": "Adds a reusable workflow for importing an existing paper folder or BibTeX collection as a tagged, citation-ready PaperHub batch and maintaining its bibliography.",
+      "how_to_apply": "Update README.md, the quick-start use-case index, the project literature import guide, and this changelog together. No configuration, command, dependency, or existing-paper migration is required.",
+      "added": [
+        "A copy-ready batch prompt that discovers and verifies links, checks the existing library first, imports only new papers in link-metadata mode, applies a project tag and done status, resolves citation records, and marks a checklist only after verification.",
+        "Manual Obsidian view instructions and a duplicate-safe prompt for adding all papers with a project tag to an existing BibTeX file."
+      ],
+      "changed": [
+        "README now highlights citation resolution, bibliography building, and the existing-project import workflow, with compact platform-specific contents navigation for GitHub and Obsidian."
+      ]
+    },
     "2026.07.26.2": {
       "date": "2026-07-26",
       "title": "Obsidian-Safe Summary Visuals",
@@ -11,8 +38,7 @@
       "how_to_apply": "Update the managed summary and enrich prompt fragments, manifest, and changelog together. No configuration, command, dependency, or existing-paper migration is required; future full-summary and enrich runs use the new defaults.",
       "changed": [
         "AI summaries now use Obsidian-compatible dollar-sign math delimiters and avoid MathJax notation inside raw HTML.",
-        "Helpful HTML tables, experiment flows, and subject-view schematics default to grayscale, fixed or equal-width alignment, compact sizing, and explicit separation between actual subject-visible information and analyst annotations.",
-        "Enrich runs revise inherited visuals that conflict with the shared Obsidian rendering and subject-view accuracy rules."
+        "Helpful HTML tables, experiment flows, and subject-view schematics default to grayscale, fixed or equal-width alignment, compact sizing, and explicit separation between actual subject-visible information and analyst annotations."
       ]
     },
     "2026.07.26.1": {

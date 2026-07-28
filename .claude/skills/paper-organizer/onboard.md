@@ -63,7 +63,7 @@ Do not use `onboarding.json` as the only source of truth. It is a progress ledge
    - Persist both resolved values into `paperhub_utils/config/config.json` under the `obsidian` block (`vault_abs_path`, `vault_relative_paper_library_path`) — `scripts/knowledge_base_search.py` reads `vault_abs_path` to search the whole vault and silently falls back to the paper-library root when it is null. Mirror `context.obsidian_vault_abs_path` and `context.vault_relative_paper_library_path` in `onboarding.json`. If the library is not inside a vault, leave both as `null`.
 5. Confirm these folders exist or create them if missing: `to_be_organized/`, `organized/`, and `tags/`.
 6. Read `paperhub_utils/config/config.json` for `available_engines`, the `git` block (`use_git`, `sync_to_remote`, `backup_abs_path`), `metadata_only_page_limit`, `tag_prompt`, and `obsidian`.
-7. Read `paperhub_utils/paperhub/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `AVAILABLE_ENGINES`, `SUPPORTED_ENGINE_IDS`, `USE_GIT`, `SYNC_TO_REMOTE_GIT`, `GIT_BACKUP_ABS_PATH`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS`.
+7. Read `paperhub_utils/paperhub/config.py` for exported script constants: `PAPERHUB_ROOT`, `TO_BE_ORGANIZED_DIR`, `DEFAULT_ORGANIZED_DIR`, `DEFAULT_TAGS_DIR`, `SAMPLE_BOARD_PATH`, `USER_CONFIG_PATH`, `ONBOARDING_STATE_PATH`, `AVAILABLE_ENGINES`, `SUPPORTED_ENGINE_IDS`, `USE_GIT`, `SYNC_TO_REMOTE_GIT`, `GIT_BACKUP_ABS_PATH`, `METADATA_ONLY_PAGE_LIMIT`, `INCLUDE_TAG_CONTEXT_IN_PROMPT`, `TAG_PROMPT_TOP_FIELD`, `TAG_PROMPT_TOP_TOPIC`, `TAG_PROMPT_TOP_METHODOLOGY`, `TAG_PROMPT_TOP_META`, `MODEL_LIST`, `AGY_CLI_MODEL`, `CODEX_CLI_MODEL`, `CODEX_CLI_REASONING_EFFORT`, `CODEX_CLI_MODEL_REASONING_PAIRS`, `CODEX_CLI_YOLO`, and `MY_RESEARCH_INTERESTS` (loaded from the protected `config/research_interests.md`, not stored in `config.py`).
 8. **Make sure `uv` is here.** Every other step in this skill calls `uv run python ...`; if `uv` is not on `PATH`, nothing else works — even when `paperhub_utils/.venv/` already exists from a previous machine. This check is non-optional.
 
    ```bash
@@ -212,9 +212,15 @@ After the tag flow finishes, update the `initialize_tag_system` step in `paperhu
 
 ## 4. Capture research interests
 
+Research interests live in **`paperhub_utils/config/research_interests.md`** — a
+plain Markdown file, not Python. That path is protected from utility updates, so
+the text survives every future update. Never write research interests into
+`paperhub_utils/paperhub/config.py`; that module is update-managed and only
+*reads* the file.
+
 1. Prefer the questionnaire's "Research Interests" section.
-2. If it is filled, overwrite `MY_RESEARCH_INTERESTS` in `paperhub_utils/paperhub/config.py` with that text as a triple-quoted string, preserving newlines.
-3. If the questionnaire explicitly leaves research interests blank or the user asks to skip, set `MY_RESEARCH_INTERESTS = ""`.
+2. If it is filled, write that text to `paperhub_utils/config/research_interests.md`, preserving newlines and Markdown structure.
+3. If the questionnaire explicitly leaves research interests blank or the user asks to skip, leave the file absent or empty.
 4. If no questionnaire answer exists and the setup status is pending, use `AskUserQuestion`:
 
    > Set your research interests now? The AI uses them to generate connections between each paper and your work in the metadata file.
@@ -223,7 +229,7 @@ After the tag flow finishes, update the `initialize_tag_system` step in `paperhu
    - **Yes, I'll describe them**: user supplies text; encourage fields, key topics, and methodologies.
    - **Skip, leave empty**.
 
-5. Verify the change from the utilities directory:
+5. Verify the change from the utilities directory (this reads the Markdown file through `paperhub.config`, confirming both the file and the loader):
 
    ```bash
    uv run python -c "import paperhub.config as cfg; print(repr(cfg.MY_RESEARCH_INTERESTS)[:200])"

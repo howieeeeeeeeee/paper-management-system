@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026.07.28.1",
+  "version": "2026.07.28.2",
   "source_url": "https://github.com/howieeeeeeeeee/paper-management-system",
   "path_policy": {
     "replaceable_utility_code": [
@@ -58,6 +58,7 @@
     "to_be_organized/**",
     "paperhub_utils/config/.env",
     "paperhub_utils/config/config.json",
+    "paperhub_utils/config/research_interests.md",
     "paperhub_utils/config/onboarding.json",
     "paperhub_utils/config/utility_state.json",
     "paperhub_utils/.env",

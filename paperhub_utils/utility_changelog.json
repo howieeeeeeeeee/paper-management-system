@@ -1,8 +1,25 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.28.1",
+  "latest_version": "2026.07.28.2",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.28.2": {
+      "date": "2026-07-28",
+      "title": "Working Updates: Fixed Update Targeting, Protected Research Interests, Guided Flow",
+      "update_kind": "structural + content",
+      "summary": "Fixes a bug that stopped the updater from finding your files at all, so updates now actually apply. Your research interests also move to a file the updater can never overwrite, and the update adapts to how much you have customized: an untouched copy updates without questions, while edited files are brought to you for a decision instead of being skipped forever.",
+      "how_to_apply": "Run the update as usual; it now targets the right folders. If an earlier attempt left a nested paperhub_utils/paperhub_utils/ folder behind, delete it - it contains only stray copies and nothing references it. Research interests move from paperhub_utils/paperhub/config.py to the new paperhub_utils/config/research_interests.md, which is protected from future updates. The move is automatic: applying this update copies your existing text into the new file before anything is replaced, and does nothing if you had none. Nothing else to do. If you later want to change your interests, edit that Markdown file directly rather than the Python file. To run the tests you now install the runner once with 'uv sync --extra dev' from paperhub_utils/.",
+      "changed": [
+        "Fixed the updater looking for your files one folder too deep. It treated the utilities folder as the project root, so nearly every managed file appeared to be missing: an update would have copied a fresh duplicate tree inside paperhub_utils/ while leaving your real skills and scripts untouched, never found your recorded version, and overwritten the utilities README with the project README. Updates now compare against the correct files.",
+        "Research interests moved out of update-managed code into the protected file paperhub_utils/config/research_interests.md. Previously they sat inside a file the updater replaces, so every update silently reset them to blank.",
+        "Applying an update now rescues research interests from the old location automatically, before any file is replaced, and reports where they were saved. It recognizes every shape the interests could have been stored in, including a hand-written one-line value, so the text is carried over whether it was set during onboarding or edited by hand. It never overwrites an existing interests file and never creates one when there was nothing to save.",
+        "The update check now reports a verdict describing how far your copy has diverged: clean, prompts only, framework modified, or no baseline recorded. An untouched copy is applied with no questions at all.",
+        "A missing install record is no longer treated as if nothing had been customized. Because a local edit cannot be told apart from simply running an older release, those files are now confirmed once as a group instead of being replaced silently.",
+        "Locally edited skill and utility files are no longer skipped silently. The update now brings each one to you with a clear choice: take the upstream version, keep yours, or have the differences integrated after you approve the merged result. A skipped file would otherwise stay skipped and drift further with every release.",
+        "Updates now end with a short walkthrough of what the update gained you, phrased as things you can do rather than files that changed, plus a pointer to the refreshed README for the current feature list.",
+        "Onboarding writes research interests to the new Markdown file, and the documented verification command still confirms the value loads correctly."
+      ]
+    },
     "2026.07.28.1": {
       "date": "2026-07-28",
       "title": "Citation Flag Automation, Agy Run-Integrity Gates, And Repo Cleanup",

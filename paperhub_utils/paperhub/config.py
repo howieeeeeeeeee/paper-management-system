@@ -288,4 +288,19 @@ DEFAULT_OUTPUT_DIR = str(DEFAULT_ORGANIZED_DIR)
 # Your Research Interests
 # This will be used by the AI to generate connections between papers and your work.
 # Be specific about your research topics, methodologies, and questions of interest.
-MY_RESEARCH_INTERESTS = ""
+#
+# The text lives in config/research_interests.md, NOT in this file. That path is
+# protected from utility updates; this module is not. Keeping the text here would
+# mean every update overwrote it.
+RESEARCH_INTERESTS_PATH = CONFIG_DIR / "research_interests.md"
+
+
+def _load_research_interests() -> str:
+    """Return the user's research interests, or "" when unset."""
+    try:
+        return RESEARCH_INTERESTS_PATH.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+MY_RESEARCH_INTERESTS = _load_research_interests()

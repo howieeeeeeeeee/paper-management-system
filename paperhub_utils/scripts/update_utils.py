@@ -135,9 +135,52 @@ class UpdatePlan:
             out[decision.action] = out.get(decision.action, 0) + 1
         return out
 
+    def verdict(self) -> str:
+        """Summarize how much of this copy the user has diverged from upstream.
+
+        Drives how much the updater needs to ask:
+
+        ``clean``             nothing locally modified — apply everything silently.
+        ``prompts-only``      only prompt files diverge — merge those, rest is safe.
+        ``framework-modified`` skills or utility code diverge — needs decisions.
+        ``no-baseline``       no recorded install state, so local edits are
+                              indistinguishable from upstream drift. Treated as
+                              modified: without this, every differing file would
+                              silently fall through to ``replace``.
+        """
+        actions = {decision.action for decision in self.decisions}
+        if any(
+            decision.installed_sha256 is None
+            and decision.action not in {"add", "unchanged"}
+            for decision in self.decisions
+        ):
+            return "no-baseline"
+        if actions & {"needs_review"}:
+            return "framework-modified"
+        if actions & {"needs_agent_merge", "preserve_local"}:
+            return "prompts-only"
+        return "clean"
+
+    def needs_decisions(self) -> list[FileDecision]:
+        """Files the agent must resolve with the user before recording the update."""
+        return [
+            decision
+            for decision in self.decisions
+            if decision.action in {"needs_agent_merge", "needs_review"}
+        ]
+
 
 def repo_root_from_script() -> Path:
-    return Path(__file__).resolve().parents[1]
+    """Return the PROJECT root, the base every path constant is relative to.
+
+    This file is ``<project>/paperhub_utils/scripts/update_utils.py``, so the
+    project root is two levels up. Returning ``parents[1]`` (``paperhub_utils/``)
+    makes every managed path resolve one level too deep — managed files look
+    missing, so they are "added" into a nested ``paperhub_utils/paperhub_utils/``
+    tree, the install state is never found, and ``README.md`` resolves onto
+    ``paperhub_utils/README.md`` and overwrites it.
+    """
+    return Path(__file__).resolve().parents[2]
 
 
 def utc_now() -> str:
@@ -409,6 +452,58 @@ def backup_local_file(local_root: Path, rel_path: str, backup_root: Path) -> Non
     shutil.copy2(source, destination)
 
 
+RESEARCH_INTERESTS_REL = "paperhub_utils/config/research_interests.md"
+# Onboarding documented a triple-quoted block, but hand-edited copies may hold a
+# plain one-line string. Try the triple forms first so a `"""` is never matched
+# as an empty `"` pair; the single-line body must not cross a newline.
+LEGACY_INTERESTS_RE = re.compile(
+    r"^MY_RESEARCH_INTERESTS[ \t]*=[ \t]*"
+    r"(?:"
+    r"(?P<triple>\"\"\"|''')(?P<triple_body>.*?)(?P=triple)"
+    r"|"
+    r"(?P<quote>[\"'])(?P<line_body>(?:[^\\\n]|\\.)*?)(?P=quote)"
+    r")",
+    re.MULTILINE | re.DOTALL,
+)
+
+
+def _legacy_interests_body(text: str) -> str:
+    match = LEGACY_INTERESTS_RE.search(text)
+    if not match:
+        return ""
+    body = match.group("triple_body")
+    if body is None:
+        body = match.group("line_body") or ""
+    return body.strip()
+
+
+def migrate_research_interests(local_root: Path) -> dict[str, Any]:
+    """Rescue research interests from the pre-2026.07.28 location.
+
+    They used to live inline in ``paperhub/config.py``, which is update-managed,
+    so applying an update would overwrite them. Extract any local value into the
+    protected ``config/research_interests.md`` *before* config.py is replaced.
+    No-ops once the protected file exists, so it is safe to call every run.
+    """
+    target = local_root / RESEARCH_INTERESTS_REL
+    if target.exists():
+        return {"migrated": False, "reason": "protected file already present"}
+
+    config_py = local_root / "paperhub_utils/paperhub/config.py"
+    try:
+        text = config_py.read_text(encoding="utf-8")
+    except OSError:
+        return {"migrated": False, "reason": "no local config.py to migrate from"}
+
+    body = _legacy_interests_body(text)
+    if not body:
+        return {"migrated": False, "reason": "no inline research interests found"}
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(body + "\n", encoding="utf-8")
+    return {"migrated": True, "path": RESEARCH_INTERESTS_REL, "characters": len(body)}
+
+
 def apply_update_plan(
     local_root: Path,
     upstream_root: Path,
@@ -418,6 +513,9 @@ def apply_update_plan(
     backup_root = local_root / BACKUP_DIR / timestamp
     applied: list[str] = []
     skipped: list[str] = []
+
+    # Must run before any file is replaced.
+    research_interests = migrate_research_interests(local_root)
 
     for decision in plan.decisions:
         if decision.action not in {"add", "replace"}:
@@ -436,6 +534,7 @@ def apply_update_plan(
         "applied": applied,
         "skipped": skipped,
         "backup_dir": str(backup_root.relative_to(local_root)) if applied else None,
+        "research_interests_migration": research_interests,
     }
     return result
 
@@ -520,6 +619,7 @@ def plan_to_json(plan: UpdatePlan, result: dict[str, Any] | None = None) -> str:
         "installed_version": plan.installed_version,
         "generated_at": plan.generated_at,
         "changelog_entries": plan.changelog_entries,
+        "verdict": plan.verdict(),
         "counts": plan.counts(),
         "decisions": [asdict(decision) for decision in plan.decisions],
         "result": result,
@@ -527,10 +627,28 @@ def plan_to_json(plan: UpdatePlan, result: dict[str, Any] | None = None) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
 
 
+VERDICT_GUIDANCE = {
+    "clean": "No local modifications. Safe to apply everything without asking.",
+    "prompts-only": "Only prompt files diverge. Merge those; everything else is safe.",
+    "framework-modified": (
+        "Skills or utility code were edited locally. Resolve each file with the user "
+        "before recording the update."
+    ),
+    "no-baseline": (
+        "No recorded install state, so local edits cannot be told apart from upstream "
+        "drift. Treat every differing file as locally modified and confirm before "
+        "replacing it."
+    ),
+}
+
+
 def print_human_summary(plan: UpdatePlan, result: dict[str, Any] | None = None) -> None:
     print(f"PaperHub utility update: {plan.version}")
     print(f"Installed version: {plan.installed_version or 'unknown'}")
     print(f"Source: {plan.source_url}")
+    verdict = plan.verdict()
+    print(f"\nVerdict: {verdict}")
+    print(f"  {VERDICT_GUIDANCE[verdict]}")
     if plan.changelog_entries:
         print("\nRelevant changelog entries:")
         for entry in plan.changelog_entries:
@@ -560,7 +678,10 @@ def print_human_summary(plan: UpdatePlan, result: dict[str, Any] | None = None) 
         if result.get("backup_dir"):
             print(f"  backup: {result['backup_dir']}")
         if result.get("skipped"):
-            print(f"  skipped: {len(result['skipped'])}")
+            print(f"  skipped: {len(result['skipped'])} (must be resolved before recording)")
+        migration = result.get("research_interests_migration") or {}
+        if migration.get("migrated"):
+            print(f"  research interests rescued to: {migration['path']}")
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:

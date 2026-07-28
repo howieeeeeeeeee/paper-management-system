@@ -162,6 +162,44 @@ class AgyWorkflowTests(unittest.TestCase):
         self.assertTrue(any("invalid tool call error" in p for p in problems))
         self.assertTrue(any(AGY_RESPONSE_BEGIN in p for p in problems))
 
+    def test_all_empty_diagnostic_streams_flag_a_stale_response(self) -> None:
+        """Every stream empty means Agy never ran, so the response is stale."""
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "agy.log"
+            stderr = Path(tmp) / "agy_stderr.txt"
+            log.write_text("", encoding="utf-8")
+            stderr.write_text("   \n", encoding="utf-8")
+            stdout = (
+                f"{AGY_RESPONSE_BEGIN}\n"
+                "# paper_label\nsample2026paper\n"
+                f"{AGY_RESPONSE_END}\n"
+            )
+
+            problems = validate_agy_cli_run(
+                stdout_text=stdout, stderr_path=stderr, log_path=log
+            )
+
+        self.assertTrue(any("streams are empty" in p for p in problems))
+
+    def test_empty_stderr_alone_is_not_fatal_when_the_log_has_output(self) -> None:
+        """Agy often leaves stderr empty while logging normally."""
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "agy.log"
+            stderr = Path(tmp) / "agy_stderr.txt"
+            log.write_text("text_drip: Drip stopped: charIdx=10\n", encoding="utf-8")
+            stderr.write_text("", encoding="utf-8")
+            stdout = (
+                f"{AGY_RESPONSE_BEGIN}\n"
+                "# paper_label\nsample2026paper\n"
+                f"{AGY_RESPONSE_END}\n"
+            )
+
+            problems = validate_agy_cli_run(
+                stdout_text=stdout, stderr_path=stderr, log_path=log
+            )
+
+        self.assertEqual(problems, [])
+
     def test_hard_fatal_marker_fatal_even_with_valid_response(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             log = Path(tmp) / "agy.log"

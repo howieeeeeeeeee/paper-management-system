@@ -14,14 +14,26 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class CitationOrganizerIntegrationTests(unittest.TestCase):
-    def test_default_is_disabled_and_personal_config_uses_schema_four(self) -> None:
+    def test_config_uses_schema_four_with_a_well_formed_citations_block(self) -> None:
+        """Check config *shape*, never the user's chosen values.
+
+        ``resolve_after_organize`` is a per-user setting whose whole purpose is
+        to be turned on, so asserting a particular value here would fail for
+        exactly the adopters who use the feature.
+        """
         config = json.loads(
             (ROOT / "paperhub_utils/config/config.json").read_text(encoding="utf-8")
         )
         self.assertEqual(config["schema_version"], 4)
-        self.assertFalse(config["citations"]["resolve_after_organize"])
-        self.assertFalse(CITATION_RESOLVE_AFTER_ORGANIZE)
-        self.assertTrue(CITATION_CURRENT_AGENT_SEARCH_MISSING_LINK)
+        citations = config["citations"]
+        self.assertIsInstance(citations["resolve_after_organize"], bool)
+        self.assertIsInstance(citations["current_agent_search_missing_link"], bool)
+        self.assertIsInstance(citations["preferred_style"], str)
+        self.assertIsInstance(CITATION_RESOLVE_AFTER_ORGANIZE, bool)
+        self.assertIsInstance(CITATION_CURRENT_AGENT_SEARCH_MISSING_LINK, bool)
+        self.assertEqual(
+            CITATION_RESOLVE_AFTER_ORGANIZE, citations["resolve_after_organize"]
+        )
 
     def test_hook_is_best_effort_excludes_enrich_and_limits_external_engines(self) -> None:
         text = (

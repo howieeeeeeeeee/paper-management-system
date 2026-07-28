@@ -29,6 +29,10 @@ LINK_LINE_RE = re.compile(
     r"^(?P<prefix>link[ \t]*:[ \t]*)(?P<value>.*?)(?P<newline>\r?\n|$)",
     re.IGNORECASE,
 )
+CITATION_EXIST_LINE_RE = re.compile(
+    r"^(?P<prefix>citation_exist[ \t]*:[ \t]*)(?P<value>.*?)(?P<newline>\r?\n|$)",
+    re.IGNORECASE,
+)
 BLANK_YAML_VALUES = {"", '""', "''", "~", "null"}
 
 
@@ -217,6 +221,60 @@ def fill_blank_link(note: MetadataNote, link: str) -> bool:
         raise MetadataNoteError(f"Refusing to replace nonblank link for {note.label}")
     suffix = f" #{comment}" if separator else ""
     lines[index] = f"{match.group('prefix')}{link}{suffix}{match.group('newline')}"
+    atomic_write_text(note.path, "".join(lines))
+    return True
+
+
+def _frontmatter_bounds(note: MetadataNote, lines: list[str]) -> tuple[int, int]:
+    delimiters = [
+        index for index, line in enumerate(lines) if re.fullmatch(r"---[ \t]*(?:\r?\n)?", line)
+    ]
+    if len(delimiters) < 2 or delimiters[0] != 0:
+        raise MetadataNoteError(f"Malformed frontmatter delimiters: {note.path}")
+    return delimiters[0], delimiters[1]
+
+
+def set_citation_exist(note: MetadataNote) -> bool:
+    """Mark ``citation_exist: true`` in one note, preserving all other text.
+
+    Returns True when the note was rewritten, False when it already said
+    ``true``. Only ever writes ``true`` — clearing the flag is deliberately not
+    supported, so a failed or skipped resolution can never downgrade a note.
+    """
+    if note.parse_error:
+        raise MetadataNoteError(f"Malformed metadata for {note.label}: {note.parse_error}")
+
+    lines = note.text.splitlines(keepends=True)
+    start, end = _frontmatter_bounds(note, lines)
+
+    matches = [
+        index
+        for index in range(start + 1, end)
+        if CITATION_EXIST_LINE_RE.match(lines[index])
+    ]
+    if len(matches) > 1:
+        raise MetadataNoteError(f"Expected at most one citation_exist field in {note.path}")
+
+    if matches:
+        index = matches[0]
+        match = CITATION_EXIST_LINE_RE.match(lines[index])
+        assert match is not None
+        if match.group("value").strip().casefold() == "true":
+            return False
+        lines[index] = f"{match.group('prefix')}true{match.group('newline')}"
+        atomic_write_text(note.path, "".join(lines))
+        return True
+
+    # Insert after ``link:`` to match the established note layout; fall back to
+    # the end of the frontmatter block when no link field is present.
+    insert_at = end
+    for index in range(start + 1, end):
+        if LINK_LINE_RE.match(lines[index]):
+            insert_at = index + 1
+            break
+
+    newline = "\r\n" if lines[start].endswith("\r\n") else "\n"
+    lines.insert(insert_at, f"citation_exist: true{newline}")
     atomic_write_text(note.path, "".join(lines))
     return True
 

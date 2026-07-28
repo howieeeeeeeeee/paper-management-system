@@ -540,7 +540,9 @@ tags:
                 "PAPERHUB_RESPONSE_END\n",
                 encoding="utf-8",
             )
-            stderr.write_text("", encoding="utf-8")
+            # Non-empty: an empty stderr is the "Codex never ran" staleness
+            # signal, which validate_codex_cli_run treats as hard-fatal.
+            stderr.write_text("codex: workspace ready\n", encoding="utf-8")
             return 0, response, stderr, 0.01
 
         with tempfile.TemporaryDirectory() as tmp:

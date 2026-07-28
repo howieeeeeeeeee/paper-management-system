@@ -53,6 +53,20 @@ Pass repeated `--link-context` values to `scripts.paper_organizer` with
 parallel pure-link generation. Public PDFs are returned as routed results and
 processed separately in same-mode PDF batches.
 
+## Tests
+
+The test runner is an optional dependency, so install it once with the `dev`
+extra and then run the suite from this folder:
+
+```bash
+uv sync --extra dev
+uv run python -m pytest -q
+```
+
+Tests must assert on code and config *shape*, never on a user's chosen settings
+— asserting a particular value of a per-user flag makes the suite fail for
+exactly the people who use that feature.
+
 ## Prompt Files
 
 PDF modes (`full`, `metadata-only`, `enrich`) compose their prompt from the

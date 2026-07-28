@@ -1,7 +1,7 @@
 [project]
 name = "paperhub-utils"
 version = "0.1.0"
-description = "Add your description here"
+description = "Scripts behind PaperHub: organize research PDFs and links into Obsidian paper folders, resolve citations, and maintain the tag registry."
 requires-python = ">=3.11"
 dependencies = [
     "bibtexparser>=1.4.4,<2",
@@ -18,4 +18,7 @@ dependencies = [
 formatted-citations = [
     "citeproc-py>=0.9.3,<0.10",
     "citeproc-py-styles>=0.1.5,<0.2",
+]
+dev = [
+    "pytest>=8",
 ]

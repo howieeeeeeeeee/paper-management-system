@@ -9,7 +9,7 @@ Use the deterministic citation utilities under `paperhub_utils/`. One paper's
 canonical citation is `organized/{PaperLabel}/citation.csl.json`; legacy
 `*.citation.md` files remain separate inputs.
 
-Treat `citation_exist: true` in the canonical metadata note as a derived confirmation that `citation.csl.json` exists and passes Citation Resolver validation. Write or repair this property only during an explicit resolve or backfill operation, including for a valid citation file that the operation skips; never write it during an audit, infer it from a metadata link alone, or set it to `false` automatically.
+Treat `citation_exist: true` in the canonical metadata note as a derived confirmation that `citation.csl.json` exists and passes Citation Resolver validation. **The `resolve` command writes this property itself** on `resolved` and `skipped_valid` results, and reports `citation_exist_written` per paper. Never hand-edit it: `audit` is read-only and must not touch it, the flag is never inferred from a metadata link alone, and it is never set to `false` automatically.
 
 ## Select papers
 
@@ -61,7 +61,7 @@ Before applying, rerun selection and audit so stale manifests are not trusted.
 Existing valid citation files are skipped unless the user explicitly requests
 refresh behavior.
 
-After the resolver finishes, set `citation_exist: true` for every selected paper whose final `citation.csl.json` validates, including `resolved` and `skipped_valid` results. Preserve all other frontmatter and write metadata notes atomically.
+The resolver sets `citation_exist: true` for every selected paper whose final `citation.csl.json` validates — `resolved` and `skipped_valid` alike — preserving all other frontmatter and writing atomically. Report the per-paper `citation_exist_written` values; surface any `citation_exist_warning` as a diagnostic rather than fixing the note by hand.
 
 For labels with blank links:
 
@@ -130,7 +130,7 @@ labels, metadata flags added or repaired, and the backup result.
   requires explicit user approval.
 - Never destroy an invalid citation file unless replacement data has already
   resolved and validated.
-- Never mark `citation_exist: true` unless the matching `citation.csl.json` is valid.
+- Never mark `citation_exist: true` by hand; the resolver writes it only when the matching `citation.csl.json` is valid.
 - Treat `citation.csl.json` as one CSL object, not a one-item array.
 - Keep organizer post-processing best-effort; citation failure never invalidates
   an otherwise organized paper.

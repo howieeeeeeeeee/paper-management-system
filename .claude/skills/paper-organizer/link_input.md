@@ -122,13 +122,17 @@ uv run python -m scripts.paper_organizer \
 This is a plain text OpenRouter request. The payload must not contain `tools`,
 `plugins`, or an online model suffix.
 
-For manual Agy or Codex calls, prepare one offline prompt:
+For manual Agy or Codex calls, allocate a fresh artifact directory first — the
+same stale-response hazard as the PDF path applies here, so never reuse fixed
+`/tmp` names (see the Run Integrity section in `engines/agy_cli.md` and
+`engines/codex_cli.md`). Then prepare one offline prompt:
 
 ```bash
+WORK=$(mktemp -d)
 uv run python -m scripts.paper_organizer \
   --prepare-link-input \
   --external-cli-engine agy-cli \
-  --link-context "CONTEXT_PATH" > /tmp/paperhub_link_agy.json
+  --link-context "CONTEXT_PATH" > "$WORK/input.json"
 ```
 
 Read `prompt_path`, then call Agy with the returned model via per-run `--model`,
@@ -140,10 +144,12 @@ uv run python -m scripts.paper_organizer \
   --from-link-response \
   --external-cli-engine agy-cli \
   --link-context "CONTEXT_PATH" \
-  --response-file /tmp/paperhub_link_agy_output.txt \
-  --agy-stderr-file /tmp/paperhub_link_agy_stderr.txt \
-  --agy-log-file /tmp/paperhub_link_agy.log \
+  --response-file "$WORK/output.txt" \
+  --agy-stderr-file "$WORK/stderr.txt" \
+  --agy-log-file "$WORK/agy.log" \
   --model-label "MODEL_LABEL"
+
+rm -rf "$WORK"
 ```
 
 Prepare the prompt with `--external-cli-engine codex-cli`, then call `codex exec`

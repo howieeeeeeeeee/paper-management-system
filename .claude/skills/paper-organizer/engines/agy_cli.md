@@ -40,12 +40,20 @@ Use the same Agy call shape for all three modes: read `prompt_path`, `pdf_for_ai
 cd paperhub_utils
 PAPERHUB_ROOT=$(cd .. && pwd)
 
+# 0. Fresh per-run artifact directory. Never reuse fixed names — see Run
+#    Integrity below. Every artifact path derives from $WORK.
+WORK=$(mktemp -d)
+AGY_INPUT="$WORK/input.json"
+AGY_OUTPUT="$WORK/output.txt"
+AGY_STDERR="$WORK/stderr.txt"
+AGY_LOG="$WORK/agy.log"
+
 # 1. Prepare prompt/PDF and persist the configured Agy model.
 uv run python -m scripts.paper_organizer --prepare-cli-input \
   --external-cli-engine agy-cli \
   --pdf-path-arg "$PAPERHUB_ROOT/to_be_organized/paper.pdf" \
   --summary-mode full \
-  > /tmp/paperhub_agy_input.json
+  > "$AGY_INPUT"
 ```
 
 Use `--summary-mode metadata-only` for metadata-only mode. Do not change the Agy call shape.
@@ -54,11 +62,9 @@ Add `--agy-model "MODEL LABEL"` only when the user explicitly requests a differe
 
 ```bash
 # 2. Call Agy (still in paperhub_utils/).
-PROMPT=$(python3 -c "import json; print(open(json.load(open('/tmp/paperhub_agy_input.json'))['prompt_path']).read())")
-PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['pdf_for_ai_agy_path'])")
-AGY_LOG="/tmp/paperhub_agy.log"
-AGY_STDERR="/tmp/paperhub_agy_stderr.txt"
-AGY_OUTPUT="/tmp/paperhub_agy_output.txt"
+read_field() { python3 -c "import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])" "$AGY_INPUT" "$1"; }
+PROMPT=$(python3 -c "import json,sys; print(open(json.load(open(sys.argv[1]))['prompt_path']).read())" "$AGY_INPUT")
+PDF_PATH=$(read_field pdf_for_ai_agy_path)
 
 agy --log-file "${AGY_LOG}" \
   --print-timeout 10m \
@@ -78,9 +84,12 @@ ${PROMPT}" \
 
 ```bash
 # 3. Organize from raw Agy output (still in paperhub_utils/).
-ORIGINAL_PDF=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['original_pdf_path'])")
-SUMMARY_MODE=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['summary_mode'])")
-MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['agy_model_label'])")
+#    Confirm this run wrote the response before applying it.
+[ -s "$AGY_OUTPUT" ] && [ "$AGY_OUTPUT" -nt "$AGY_INPUT" ] || echo "STALE OR EMPTY - do not apply"
+
+ORIGINAL_PDF=$(read_field original_pdf_path)
+SUMMARY_MODE=$(read_field summary_mode)
+MODEL_LABEL=$(read_field agy_model_label)
 
 uv run python -m scripts.paper_organizer --from-response \
   --external-cli-engine agy-cli \
@@ -93,9 +102,10 @@ uv run python -m scripts.paper_organizer --from-response \
 ```
 
 ```bash
-# 4. Clean up prepared prompt/temp PDF.
-CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_agy_input.json'))['cleanup_dir'])")
+# 4. Clean up prepared prompt/temp PDF, then the artifact directory.
+CLEANUP_DIR=$(read_field cleanup_dir)
 uv run python -m scripts.paper_organizer --cleanup-cli-input "${CLEANUP_DIR}"
+rm -rf "$WORK"
 ```
 
 ## Validation Guards
@@ -106,12 +116,26 @@ Hard-fatal — do **not** organize output:
 - Agy stdout is missing `PAPERHUB_RESPONSE_BEGIN` or `PAPERHUB_RESPONSE_END`, or the response block is empty.
 - Agy stderr/log contains file-read or workspace failures.
 - Agy stderr/log contains web-search markers.
+- **Every** provided diagnostic stream is empty. A real run always writes progress output to at least one stream, so all-empty means Agy never ran and the response file is stale. Agy may legitimately leave stderr empty while logging normally, so a single empty stream is not fatal on its own.
 
 Recoverable — tolerated when a valid, non-empty sentinel response was produced:
 
 - `invalid tool call error` / `Model output error` in the log. Some Agy print-mode runs emit spurious agentic tool-call steps (e.g. `echo`-ing a status line), and Agy's arg-marshalling can make them fail, but the model usually recovers and still returns a complete response. These markers are only fatal when no valid response exists.
 
 The `--from-response --external-cli-engine agy-cli` command enforces this split via `validate_agy_cli_run` in `cli_workflow/agy.py` (`AGY_CLI_HARD_FATAL_MARKERS` vs `AGY_CLI_RECOVERABLE_MARKERS`).
+
+**Never satisfy a guard by creating, blanking, or substituting an artifact file.** If `--from-response` reports empty diagnostics, Agy did not run — re-run it. Treating the guard as an obstacle silently organizes the wrong paper.
+
+## Run Integrity (required before applying any response)
+
+The generation step and the apply step are separate commands, so a failed generation can leave an old response file in place and the apply step will happily consume it. Guard against that:
+
+1. **Use a fresh, unique artifact directory per batch** (for example `mktemp -d`), never fixed paths like `/tmp/paperhub_agy_output_1.txt`. Reused names are how a stale file from a previous session gets applied to a new PDF.
+2. **Check each Agy call's own exit code.** A wrapper such as `for ... & done; wait` returns 0 even when every job inside it failed, so it proves nothing.
+3. **Confirm the response file was written by this run** — non-empty, and newer than the prepared JSON.
+4. **Never pass the prompt through a shell string.** The prompt contains backticks and `$`, which break shell quoting and can kill the command before Agy starts. Write the prompt to a file and read it in the language driving the call, or pass it as a direct argument in an argument list (for example `subprocess.run([...])`), not inside a generated `.sh` file.
+
+If any check fails, treat the paper as failed and follow **Error Handling** below.
 
 ## Batches
 
@@ -125,11 +149,7 @@ settings behavior; managed pure-link batches instead pass the model per run with
 
 1. **Preconditions:** All papers must use the same Agy model; verify `agy_model_label` is identical across all prepared JSONs. Default to four workers and allow 1-8.
 2. **Working directory:** Stay in `paperhub_utils/` throughout. Set `PAPERHUB_ROOT=$(cd .. && pwd)` once at the start.
-3. **File isolation:** Each paper needs distinct temp files:
-   - `prepare_N.json` (prepared input)
-   - `/tmp/paperhub_agy_output_N.txt` (Agy stdout)
-   - `/tmp/paperhub_agy_stderr_N.txt` (Agy stderr)
-   - `/tmp/paperhub_agy_log_N.log` (Agy log file)
+3. **File isolation:** Allocate one `WORK=$(mktemp -d)` for the batch and give each paper its own subdirectory (`WORK/paper_N/`) holding `input.json`, `output.txt`, `stderr.txt`, and `agy.log`. Never use fixed names such as `/tmp/paperhub_agy_output_N.txt` — a leftover file from an earlier session will be applied to the wrong paper.
 4. **Agy calls:** Use `agy --add-dir "$PAPERHUB_ROOT"` (variable ensures portability across machines).
 5. **Wait synchronization:** Use `wait` to block until all background Agy processes complete before starting response processing phase.
 6. **Error handling:** If any Agy call fails, report which paper(s) failed and ask user whether to retry, abandon, or switch models — never auto-recover.

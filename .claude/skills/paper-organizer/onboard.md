@@ -314,8 +314,8 @@ Obsidian `file.inFolder(...)` filters must use vault-relative paths, not absolut
 Run these checks from the utilities directory:
 
 ```bash
-uv run python -m py_compile paperhub/config.py paperhub/prompt/builder.py scripts/paper_summarizer.py scripts/enrich.py
-uv run python -c "from prompt.builder import render_tag_context_section; print(render_tag_context_section())"
+uv run python -m py_compile paperhub/config.py paperhub/prompt/builder.py scripts/paper_organizer.py scripts/paper_summarizer.py scripts/enrich.py
+uv run python -c "from paperhub.prompt.builder import render_tag_context_section; print(render_tag_context_section())"
 ```
 
 The tag context output may be empty only if tag prompt context is disabled or the registry is intentionally minimal.

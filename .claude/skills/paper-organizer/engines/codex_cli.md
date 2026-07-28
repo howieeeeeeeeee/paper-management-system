@@ -42,12 +42,19 @@ Use the same Codex call shape for all three modes: read `prompt_path`, `pdf_for_
 cd paperhub_utils
 PAPERHUB_ROOT=$(cd .. && pwd)
 
+# 0. Fresh per-run artifact directory. Never reuse fixed names — see Run
+#    Integrity below. Every artifact path derives from $WORK.
+WORK=$(mktemp -d)
+CODEX_INPUT="$WORK/input.json"
+CODEX_OUTPUT="$WORK/output.txt"
+CODEX_STDERR="$WORK/stderr.txt"
+
 # 1. Prepare prompt/PDF and resolve the configured Codex model/reasoning pair.
 uv run python -m scripts.paper_organizer --prepare-cli-input \
   --external-cli-engine codex-cli \
   --pdf-path-arg "$PAPERHUB_ROOT/to_be_organized/paper.pdf" \
   --summary-mode full \
-  > /tmp/paperhub_codex_input.json
+  > "$CODEX_INPUT"
 ```
 
 Use `--summary-mode metadata-only` for metadata-only mode.
@@ -56,12 +63,11 @@ Add `--codex-model "MODEL_ID"` and/or `--codex-reasoning-effort "EFFORT"` only w
 
 ```bash
 # 2. Call Codex (still in paperhub_utils/).
-PROMPT=$(python3 -c "import json; print(open(json.load(open('/tmp/paperhub_codex_input.json'))['prompt_path']).read())")
-PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_codex_input.json'))['pdf_for_ai_codex_path'])")
-CODEX_MODEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_codex_input.json'))['codex_cli_model'])")
-CODEX_REASONING_EFFORT=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_codex_input.json'))['codex_cli_reasoning_effort'])")
-CODEX_OUTPUT="/tmp/paperhub_codex_output.txt"
-CODEX_STDERR="/tmp/paperhub_codex_stderr.txt"
+read_field() { python3 -c "import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])" "$CODEX_INPUT" "$1"; }
+PROMPT=$(python3 -c "import json,sys; print(open(json.load(open(sys.argv[1]))['prompt_path']).read())" "$CODEX_INPUT")
+PDF_PATH=$(read_field pdf_for_ai_codex_path)
+CODEX_MODEL=$(read_field codex_cli_model)
+CODEX_REASONING_EFFORT=$(read_field codex_cli_reasoning_effort)
 
 codex exec \
   --cd "$PAPERHUB_ROOT" \
@@ -88,9 +94,12 @@ ${PROMPT}" \
 
 ```bash
 # 3. Organize from raw Codex output (still in paperhub_utils/).
-ORIGINAL_PDF=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_codex_input.json'))['original_pdf_path'])")
-SUMMARY_MODE=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_codex_input.json'))['summary_mode'])")
-MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_codex_input.json'))['codex_model_label'])")
+#    Confirm this run wrote the response before applying it.
+[ -s "$CODEX_OUTPUT" ] && [ "$CODEX_OUTPUT" -nt "$CODEX_INPUT" ] || echo "STALE OR EMPTY - do not apply"
+
+ORIGINAL_PDF=$(read_field original_pdf_path)
+SUMMARY_MODE=$(read_field summary_mode)
+MODEL_LABEL=$(read_field codex_model_label)
 
 uv run python -m scripts.paper_organizer --from-response \
   --external-cli-engine codex-cli \
@@ -102,9 +111,10 @@ uv run python -m scripts.paper_organizer --from-response \
 ```
 
 ```bash
-# 4. Clean up prepared prompt/temp PDF.
-CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_codex_input.json'))['cleanup_dir'])")
+# 4. Clean up prepared prompt/temp PDF, then the artifact directory.
+CLEANUP_DIR=$(read_field cleanup_dir)
 uv run python -m scripts.paper_organizer --cleanup-cli-input "${CLEANUP_DIR}"
+rm -rf "$WORK"
 ```
 
 ## Validation Guards

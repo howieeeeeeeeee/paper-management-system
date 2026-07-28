@@ -154,6 +154,8 @@ def validate_agy_cli_run(
             else:
                 problems.append("Agy response block is empty")
 
+    checked_streams = 0
+    empty_streams: list[str] = []
     for label, path in (("Agy stderr", stderr_path), ("Agy log", log_path)):
         if path is None:
             continue
@@ -161,9 +163,24 @@ def validate_agy_cli_run(
             problems.append(f"{label} file not found: {path}")
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
+        checked_streams += 1
+        if not text.strip():
+            empty_streams.append(label)
         problems.extend(_scan_text_for_markers(text, label, AGY_CLI_HARD_FATAL_MARKERS))
         recoverable_problems.extend(
             _scan_text_for_markers(text, label, AGY_CLI_RECOVERABLE_MARKERS)
+        )
+
+    # A real Agy run always writes progress output to at least one stream. Agy
+    # may legitimately leave stderr empty while logging normally, so only treat
+    # *every* provided stream being empty as evidence the run never happened and
+    # the response file is stale from an earlier session.
+    if checked_streams and len(empty_streams) == checked_streams:
+        problems.append(
+            f"All Agy diagnostic streams are empty ({', '.join(empty_streams)}). A real "
+            "Agy run always writes progress output, so this indicates Agy never ran and "
+            "the response file may be stale. Do not create or blank a diagnostic file to "
+            "satisfy this check - re-run Agy instead."
         )
 
     if not has_valid_response:

@@ -29,6 +29,7 @@ from paperhub.metadata_notes import (
     is_syntactically_usable_public_link,
     load_citation_sidecar,
     read_metadata_note,
+    set_citation_exist,
 )
 from paperhub.metadata_resolution import (
     CONTACT_EMAIL,
@@ -452,7 +453,44 @@ def _resolve_link(
     return csl, source_url, identity
 
 
+#: Result statuses whose ``citation.csl.json`` is known-valid afterwards, and so
+#: earn the derived ``citation_exist: true`` metadata flag.
+CITATION_EXIST_STATUSES = frozenset({"resolved", "skipped_valid"})
+
+
 def resolve_one(
+    label: str,
+    *,
+    candidate_link: str | None = None,
+    organized_dir: Path = DEFAULT_ORGANIZED_DIR,
+    session: requests.Session | None = None,
+    refresh: bool = False,
+) -> dict[str, Any]:
+    """Resolve one paper's citation and stamp the derived ``citation_exist`` flag.
+
+    The flag is written here rather than by the calling skill so that every
+    entry point — the citation-resolver skill and the paper-organizer post-AI
+    hook alike — leaves identical metadata. Stamping never turns a successful
+    resolution into a failure; a write problem is reported alongside the result.
+    """
+    result = _resolve_one(
+        label,
+        candidate_link=candidate_link,
+        organized_dir=organized_dir,
+        session=session,
+        refresh=refresh,
+    )
+    if result.get("status") in CITATION_EXIST_STATUSES:
+        try:
+            note = read_metadata_note(label, organized_dir)
+            result["citation_exist_written"] = set_citation_exist(note)
+        except (MetadataNoteError, OSError) as exc:
+            result["citation_exist_written"] = False
+            result["citation_exist_warning"] = f"{type(exc).__name__}: {exc}"
+    return result
+
+
+def _resolve_one(
     label: str,
     *,
     candidate_link: str | None = None,

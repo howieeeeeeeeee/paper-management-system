@@ -13,6 +13,7 @@ from paperhub.metadata_notes import (
     fill_blank_link,
     is_syntactically_usable_public_link,
     read_metadata_note,
+    set_citation_exist,
 )
 
 
@@ -81,6 +82,67 @@ class MetadataNotesTests(unittest.TestCase):
                 "link:   # intentionally blank",
                 "link:   https://doi.org/10.1234/example # intentionally blank",
             ),
+        )
+
+    def test_citation_exist_is_inserted_after_link_and_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            organized = Path(temporary) / "organized"
+            path = write_note(
+                organized,
+                "Smith2025Paper",
+                link_line="link: https://doi.org/10.1234/example",
+            )
+            before = path.read_text(encoding="utf-8")
+
+            note = read_metadata_note("Smith2025Paper", organized)
+            first = set_citation_exist(note)
+            after = path.read_text(encoding="utf-8")
+
+            # A second pass must not duplicate the field or rewrite the note.
+            second = set_citation_exist(read_metadata_note("Smith2025Paper", organized))
+            settled = path.read_text(encoding="utf-8")
+
+        self.assertTrue(first)
+        self.assertFalse(second)
+        self.assertEqual(after, settled)
+        self.assertEqual(
+            after,
+            before.replace(
+                "link: https://doi.org/10.1234/example",
+                "link: https://doi.org/10.1234/example\ncitation_exist: true",
+            ),
+        )
+        self.assertIn("Body stays unchanged.", after)
+
+    def test_citation_exist_upgrades_a_false_flag_and_tolerates_missing_link(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            organized = Path(temporary) / "organized"
+            path = write_note(
+                organized,
+                "Smith2025Paper",
+                link_line="link: https://doi.org/10.1234/example\ncitation_exist: false",
+            )
+
+            changed = set_citation_exist(read_metadata_note("Smith2025Paper", organized))
+            after = path.read_text(encoding="utf-8")
+
+            # No link field at all: the flag lands inside the frontmatter block.
+            other = organized / "Jones2025Paper"
+            other.mkdir(parents=True)
+            note_path = other / "Jones2025Paper.md"
+            note_path.write_text(
+                "---\ntitle: No Link\nyear: 2025\n---\n\n## Abstract\nText.\n",
+                encoding="utf-8",
+            )
+            set_citation_exist(read_metadata_note("Jones2025Paper", organized))
+            fallback = note_path.read_text(encoding="utf-8")
+
+        self.assertTrue(changed)
+        self.assertIn("citation_exist: true", after)
+        self.assertNotIn("citation_exist: false", after)
+        self.assertEqual(
+            fallback,
+            "---\ntitle: No Link\nyear: 2025\ncitation_exist: true\n---\n\n## Abstract\nText.\n",
         )
 
     def test_nonblank_link_and_unsafe_labels_are_rejected(self) -> None:

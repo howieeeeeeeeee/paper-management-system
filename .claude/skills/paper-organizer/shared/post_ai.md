@@ -92,6 +92,10 @@ uv run python -m scripts.citation_resolver resolve \
   [--candidate-links-file /tmp/paperhub_candidate_link.json]
 ```
 
+The resolver writes the derived `citation_exist: true` metadata flag itself on
+`resolved` and `skipped_valid`, so this hook and the `citation-resolver` skill
+leave identical metadata. Do not hand-edit that property.
+
 This hook gets one attempt only. Never retry, switch models, enter the
 failed-paper recovery flow, roll back a valid paper, or block tags and
 versioning because citation resolution failed. When enabled, always report one

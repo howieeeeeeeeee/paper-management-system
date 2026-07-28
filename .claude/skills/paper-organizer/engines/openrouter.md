@@ -1,12 +1,27 @@
 # Workflow: OpenRouter Script
 
-This document covers the **default** paper summarization workflow using `scripts.paper_organizer` via the OpenRouter API. Read this file when the user does not request Agy CLI or the current coding agent.
+This document covers the paper summarization workflow using `scripts.paper_organizer` via the OpenRouter API. Read this file when the user does not request Codex CLI, Agy CLI, or the current coding agent.
+
+## Availability (check before using this engine)
+
+OpenRouter is the default **only when it is enabled**. Read `AVAILABLE_ENGINES` from `paperhub.config` (backed by `available_engines` in `paperhub_utils/config/config.json`) and follow the engine availability gate in `SKILL.md`:
+
+- `openrouter` listed → use this workflow as the default.
+- `openrouter` **not** listed → fall back to `coding-agent` and read `engines/coding_agent.md`. The current coding agent is always available, so it is the safe fallback whenever no external engine is enabled.
+- The user explicitly asked for OpenRouter but it is not listed → tell them it is not enabled, show the enabled choices, and verify that `OPENROUTER_API_KEY` loads (without printing it) before appending `openrouter` to `available_engines`.
+
+Never silently switch to another external engine because OpenRouter is missing or fails.
 
 ## Script Location
 
+**Entry point:** `scripts.paper_organizer` — always invoke this module.
+
 ```
-paperhub_utils/scripts/paper_summarizer.py
+paperhub_utils/scripts/paper_organizer.py     # canonical entry point
+paperhub_utils/scripts/paper_summarizer.py    # implementation it re-exports
 ```
+
+`paper_organizer.py` re-exports the older `paper_summarizer.py` implementation as its compatibility surface, so most of the logic below still lives in `paper_summarizer.py`. Read that file when tracing behavior; invoke `scripts.paper_organizer` when running anything.
 
 **Working directory:** `paperhub_utils/` (has uv environment)
 

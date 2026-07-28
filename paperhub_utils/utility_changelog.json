@@ -1,8 +1,26 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.27.4",
+  "latest_version": "2026.07.28.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.28.1": {
+      "date": "2026-07-28",
+      "title": "Citation Flag Automation, Agy Run-Integrity Gates, And Repo Cleanup",
+      "update_kind": "structural + content",
+      "summary": "The citation flag in a paper's note is now written by the resolver itself instead of by hand, so every route leaves identical metadata. Agy CLI gains the stale-run protection Codex already had, two unused files are removed, and the onboarding verification commands are corrected so they actually run.",
+      "how_to_apply": "No configuration change is required and existing papers are untouched. Two unused files are removed for you: scripts/batch_agy_parallel.sh and scripts/main.py. If you had copied or edited either one, keep your own copy before updating. To run the test suite you now install the test runner once with 'uv sync --extra dev' from paperhub_utils/, then run 'uv run python -m pytest -q'.",
+      "changed": [
+        "Resolving a citation now writes the derived citation_exist flag into the paper's note automatically, for both newly resolved papers and papers whose existing citation file was already valid. Previously this flag was written only when the citation-resolver workflow was used, so papers whose citations were resolved right after organizing silently ended up without it.",
+        "The resolver reports per paper whether the flag was written, and a problem writing it is reported alongside the result instead of turning a successful resolution into a failure.",
+        "An Agy CLI run whose diagnostic output is entirely empty is now treated as a failure, because a real run always writes progress output and an empty result means the run never happened. A single empty stream is still accepted, since Agy often writes nothing to one stream while logging normally.",
+        "The Agy CLI instructions gain the same run-integrity requirements Codex already had: fresh per-run working directories, per-call exit codes rather than a wrapper's, and never passing the prompt inside a shell string.",
+        "The worked examples for both external CLI engines now create a fresh temporary working directory per run instead of reusing fixed file names, matching the rule those same documents state. Reused names were how a leftover file from an earlier session could be applied to the wrong paper.",
+        "The OpenRouter instructions now name the correct entry point, list Codex CLI among the engines that route elsewhere, and explain that the current coding agent is the fallback when no external engine is enabled.",
+        "Removed scripts/batch_agy_parallel.sh, which contained hard-coded paper filenames from a past session and was referenced by no instructions, and scripts/main.py, an unused placeholder.",
+        "Corrected the onboarding verification commands, which previously used an import path that always failed and skipped the organizer entry point they were meant to check.",
+        "The test suite runs clean again, and the test runner is now a declared optional dependency. Tests no longer assert on personal settings, which had made the suite fail for anyone who enabled automatic citation resolution."
+      ]
+    },
     "2026.07.27.4": {
       "date": "2026-07-27",
       "title": "External CLI Run-Integrity Gates",

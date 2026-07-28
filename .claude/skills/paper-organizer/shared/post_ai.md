@@ -52,7 +52,13 @@ what the workflow assumed; fix the run, not the evidence.
 
 Always report any auto-fixes in the completion report.
 
-## 3. Optional citation resolution
+## 3. Citation resolution (config-gated, not agent discretion)
+
+"Optional" here means **gated by config**, not left to the agent's judgement.
+When the flag is on, this step is a required part of the flow. Nothing in
+`scripts.paper_organizer` runs it — the sidecar `citation.csl.json` is written
+**only** if the agent runs the resolver command below. Skipping it silently
+produces a paper folder with no citation sidecar and no error anywhere.
 
 Read `CITATION_RESOLVE_AFTER_ORGANIZE` from `paperhub.config`. When it is false,
 skip this section completely so the default organizer behavior is unchanged.
@@ -61,7 +67,13 @@ When it is true, run this hook once for each newly organized metadata-only,
 full, or link-metadata paper after validation/auto-fix and before tag updates.
 Do not run it for `enrich`.
 
-- Existing usable metadata link: run deterministic resolution once.
+Pick the branch by **whether the metadata `link:` is blank**, and only then by
+engine. The engine-based skips below apply to blank links **only**; they never
+apply to a paper that already has a usable link.
+
+- **Link present and usable (any engine, including OpenRouter, Agy CLI, and
+  Codex CLI): run deterministic resolution once.** This is the common case — an
+  external engine having processed the PDF is *not* a reason to skip.
 - Blank link with the current coding agent: when
   `CITATION_CURRENT_AGENT_SEARCH_MISSING_LINK` is true, search once by title,
   author, and year, then pass one candidate through the resolver's identity
@@ -80,11 +92,12 @@ uv run python -m scripts.citation_resolver resolve \
   [--candidate-links-file /tmp/paperhub_candidate_link.json]
 ```
 
-This hook is optional and gets one attempt only. Never retry, switch models,
-enter the failed-paper recovery flow, roll back a valid paper, or block tags and
-versioning because citation resolution failed. When enabled, retain one compact
-completion line such as `Citation: resolved`, `Citation: skipped — no link
-available`, or `Citation: failed — identity mismatch`.
+This hook gets one attempt only. Never retry, switch models, enter the
+failed-paper recovery flow, roll back a valid paper, or block tags and
+versioning because citation resolution failed. When enabled, always report one
+compact completion line — `Citation: resolved`, `Citation: skipped — no link
+available`, or `Citation: failed — identity mismatch`. The per-mode report
+templates carry that line; if you cannot fill it in, you did not run this step.
 
 ## 4. Tag flow handoff
 

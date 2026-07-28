@@ -46,12 +46,18 @@ Location: organized/melitz2003trade/
 Files created:
    - melitz2003trade.md (AI-generated metadata)
    - ai_summary.md (AI-generated summary)
+   - citation.csl.json (resolved citation sidecar)
    - melitz_2003.pdf (original paper)
 Versioned: committed "feat(papers): add melitz2003trade" to backup repo (pushed)
 Model used: <model name>
 Token usage: X prompt + Y completion = Z total
+Citation: resolved
 Tag updates: 2 new (international_trade [field], heterogeneous_firms [topic]); 1 merged (melitz_model -> melitz_framework)
 ```
+
+The `Citation:` line is required whenever `CITATION_RESOLVE_AFTER_ORGANIZE` is
+on (see `shared/post_ai.md` §3). List `citation.csl.json` under files created
+only when resolution actually wrote it.
 
 ## Completion report (batch)
 
@@ -62,6 +68,7 @@ Summary (3/3 succeeded):
 | melitz2003trade | 48,000 | 8,000      | 56,000 | $0.23  |
 ...
 Versioned: committed "feat(papers): add 3 papers" to backup repo (pushed)
+Citations: 3 resolved, 0 skipped, 0 failed
 
 Tag updates this batch:
   - 4 new tags added: international_trade (field), heterogeneous_firms (topic), structural (methodology), econ559 (meta)

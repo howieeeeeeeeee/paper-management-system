@@ -89,8 +89,10 @@ PAPERHUB_RESPONSE_BEGIN
 PAPERHUB_RESPONSE_END
 
 ${PROMPT}" \
-  2>"${CODEX_STDERR}" > "${CODEX_OUTPUT}"
+  < /dev/null 2>"${CODEX_STDERR}" > "${CODEX_OUTPUT}"
 ```
+
+`< /dev/null` is required, not cosmetic — see Run Integrity item 5.
 
 ```bash
 # 3. Organize from raw Codex output (still in paperhub_utils/).
@@ -126,6 +128,10 @@ Hard-fatal — do **not** organize output:
 - Codex stderr is **empty**. A real run always writes progress output, so an empty stderr means Codex never ran and the response file is stale.
 - The title in the response does not appear in the PDF, which means the response came from a different paper.
 
+Not fatal, and not a model failure — diagnose before retrying:
+
+- Codex stderr is only `Reading additional input from stdin...` (or ends there) with empty stdout, and the process never exits. Stdin was left open; Codex is waiting to append it to the prompt. Kill it and re-run the **same** model with `< /dev/null` (Run Integrity item 5). Do not switch models or engines, and do not enter the failed-paper recovery flow — nothing was wrong with the request.
+
 The `--from-response --external-cli-engine codex-cli` command enforces these via `validate_codex_cli_run` in `cli_workflow/codex.py` and `title_mismatch_problem` in `cli_workflow/pdf.py`. The title check reads the PDF locally **after** Codex has already returned; it never preprocesses the PDF or changes what Codex receives, which is still the absolute PDF path.
 
 **Never satisfy a guard by creating, blanking, or substituting an artifact file.** If `--from-response` reports a missing or empty stderr, Codex did not run — re-run it. Treating the guard as an obstacle silently organizes the wrong paper.
@@ -138,6 +144,7 @@ The generation step and the apply step are separate commands, so a failed genera
 2. **Check each Codex call's own exit code.** A wrapper such as `for ... & done; wait` returns 0 even when every job inside it failed, so it proves nothing.
 3. **Confirm the response file was written by this run** — non-empty, and newer than the prepared JSON.
 4. **Never pass the prompt through a shell string.** The prompt contains backticks and `$`, which break shell quoting and can kill the command before Codex starts. Write the prompt to a file and read it in the language driving the call, or pass it as a direct argument in an argument list (for example `subprocess.run([...])`), not inside a generated `.sh` file.
+5. **Always redirect stdin from `/dev/null`.** Per `codex exec --help`, when a prompt argument is given *and* stdin is piped, Codex appends stdin to the prompt as a `<stdin>` block — so it blocks until stdin reaches EOF. Agent tool calls, background jobs, and CI steps hand the child an open stdin that never closes, so the run hangs indefinitely instead of failing fast. Adding `< /dev/null` closes it. Do **not** "fix" this by piping the prompt in (`echo "$PROMPT" | codex exec`): that works only by accident, violates item 4, and `echo` mangles backslashes in some shells.
 
 If any check fails, treat the paper as failed and follow **Error Handling** below.
 

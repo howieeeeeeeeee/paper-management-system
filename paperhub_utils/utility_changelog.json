@@ -1,8 +1,20 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.28.2",
+  "latest_version": "2026.07.29.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.07.29.1": {
+      "date": "2026-07-29",
+      "title": "Codex CLI: Fixed Runs That Hung Forever Instead of Finishing",
+      "update_kind": "content",
+      "summary": "Fixes Codex CLI paper runs that could hang indefinitely without ever producing a summary. The run appeared to be working - no error, no timeout - but Codex was actually stuck waiting for input that never arrived. This affected both summarizing new papers and enriching existing folders. Enrich runs also stop reusing the same temporary filenames, which could cause a leftover result from an earlier run to be applied to the wrong paper.",
+      "how_to_apply": "Nothing to do. The corrected instructions apply to your next Codex CLI run. If you have previously seen a Codex run sit with no output for a long time and gave up on it, that was this bug, and it should not recur.",
+      "changed": [
+        "Fixed Codex CLI runs hanging forever when started by an agent, a background job, or any non-interactive process. Codex was waiting to read extra input that these environments never close, so it never began working on the paper. Runs now start immediately.",
+        "Added a matching troubleshooting note so a hang of this kind is recognized as an input problem and simply re-run, rather than being mistaken for a bad model and retried with a different one.",
+        "Fixed the enrich workflow reusing fixed temporary filenames. A leftover file from a previous run could be applied to the wrong paper folder, silently filing one paper's summary under another. Each run now uses its own private working directory and verifies the result belongs to that run before applying it."
+      ]
+    },
     "2026.07.28.2": {
       "date": "2026-07-28",
       "title": "Working Updates: Fixed Update Targeting, Protected Research Interests, Guided Flow",

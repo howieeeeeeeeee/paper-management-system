@@ -97,23 +97,30 @@ Same handshake pattern as `engines/agy_cli.md` — process **one folder at a tim
 This is the third Agy-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_organizer`, but it uses the same Agy `--add-dir`, absolute `@PDF`, sentinel, stderr/log, and model-label pattern.
 
 ```bash
+# 0. Fresh per-run artifact directory. Never reuse fixed /tmp names — a stale
+#    file from a previous session will be applied to the wrong folder. See
+#    engines/codex_cli.md → Run Integrity.
+WORK=$(mktemp -d)
+AGY_INPUT="$WORK/input.json"
+AGY_LOG="$WORK/agy.log"
+AGY_STDERR="$WORK/stderr.txt"
+AGY_OUTPUT="$WORK/output.txt"
+
 # 1. Prepare prompt + PDF path and persist the Agy model.
 cd paperhub_utils
 uv run python -m scripts.enrich --engine agy-cli --prepare-cli-input --folder ACF2015 \
   [--instruction "..."] \
   [--use-past-summary] \
   [--no-summary] \
-  > /tmp/paperhub_enrich_input.json
+  > "$AGY_INPUT"
 
 # 2. Call Agy from the repo root with an absolute @PDF path.
 cd ..
-PROMPT=$(python3 -c "import json; print(open(json.load(open('/tmp/paperhub_enrich_input.json'))['prompt_path']).read())")
-PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['pdf_for_ai_agy_path'])")
-PAPERHUB_ROOT=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['paperhub_root'])")
-MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['agy_model_label'])")
-AGY_LOG="/tmp/paperhub_enrich_agy.log"
-AGY_STDERR="/tmp/paperhub_enrich_agy_stderr.txt"
-AGY_OUTPUT="/tmp/paperhub_enrich_agy_output.txt"
+read_field() { python3 -c "import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])" "$AGY_INPUT" "$1"; }
+PROMPT=$(python3 -c "import json,sys; print(open(json.load(open(sys.argv[1]))['prompt_path']).read())" "$AGY_INPUT")
+PDF_PATH=$(read_field pdf_for_ai_agy_path)
+PAPERHUB_ROOT=$(read_field paperhub_root)
+MODEL_LABEL=$(read_field agy_model_label)
 
 agy --log-file "${AGY_LOG}" \
   --print-timeout 10m \
@@ -131,6 +138,9 @@ ${PROMPT}" \
   2>"${AGY_STDERR}" > "${AGY_OUTPUT}"
 
 # 3. Apply raw Agy output. The script extracts the sentinel block.
+#    Confirm this run wrote the response before applying it.
+[ -s "$AGY_OUTPUT" ] && [ "$AGY_OUTPUT" -nt "$AGY_INPUT" ] || echo "STALE OR EMPTY - do not apply"
+
 cd paperhub_utils
 uv run python -m scripts.enrich --engine agy-cli --from-response --folder ACF2015 \
   --response-file "${AGY_OUTPUT}" \
@@ -139,9 +149,15 @@ uv run python -m scripts.enrich --engine agy-cli --from-response --folder ACF201
   --agy-log-file "${AGY_LOG}"
 
 # 4. Cleanup
-CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_input.json'))['cleanup_dir'])")
+CLEANUP_DIR=$(read_field cleanup_dir)
 uv run python -m scripts.enrich --cleanup-cli-input "${CLEANUP_DIR}"
+rm -rf "$WORK"
 ```
+
+Agy takes its prompt via `--print` and has no stdin fallback, so it does **not**
+need the `< /dev/null` guard that Codex requires (verified: `agy --print`
+returns normally with stdin left open). The fresh `$WORK` directory is still
+required — that hazard is engine-independent.
 
 The past-summary text (when `--use-past-summary` is passed) is baked into the prepared prompt during step 1, so step 3 (`--from-response`) does not need any extra flag.
 
@@ -154,6 +170,14 @@ Same handshake pattern as `engines/codex_cli.md` — process **one folder at a t
 This is the third Codex-supported mode: unlike `full` and `metadata-only`, it uses `scripts.enrich` instead of `scripts.paper_organizer`, but it uses the same `codex exec`, sentinel, stderr, and model-label pattern.
 
 ```bash
+# 0. Fresh per-run artifact directory. Never reuse fixed /tmp names — a stale
+#    file from a previous session will be applied to the wrong folder. See
+#    engines/codex_cli.md → Run Integrity.
+WORK=$(mktemp -d)
+CODEX_INPUT="$WORK/input.json"
+CODEX_OUTPUT="$WORK/output.txt"
+CODEX_STDERR="$WORK/stderr.txt"
+
 # 1. Prepare prompt + PDF path and resolve the Codex model/reasoning pair.
 cd paperhub_utils
 PAPERHUB_ROOT=$(cd .. && pwd)
@@ -161,16 +185,15 @@ uv run python -m scripts.enrich --engine codex-cli --prepare-cli-input --folder 
   [--instruction "..."] \
   [--use-past-summary] \
   [--no-summary] \
-  > /tmp/paperhub_enrich_codex_input.json
+  > "$CODEX_INPUT"
 
 # 2. Call Codex with local yolo/full access from the PaperHub root.
-PROMPT=$(python3 -c "import json; print(open(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['prompt_path']).read())")
-PDF_PATH=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['pdf_for_ai_codex_path'])")
-CODEX_MODEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['codex_cli_model'])")
-CODEX_REASONING_EFFORT=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['codex_cli_reasoning_effort'])")
-MODEL_LABEL=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['codex_model_label'])")
-CODEX_STDERR="/tmp/paperhub_enrich_codex_stderr.txt"
-CODEX_OUTPUT="/tmp/paperhub_enrich_codex_output.txt"
+read_field() { python3 -c "import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])" "$CODEX_INPUT" "$1"; }
+PROMPT=$(python3 -c "import json,sys; print(open(json.load(open(sys.argv[1]))['prompt_path']).read())" "$CODEX_INPUT")
+PDF_PATH=$(read_field pdf_for_ai_codex_path)
+CODEX_MODEL=$(read_field codex_cli_model)
+CODEX_REASONING_EFFORT=$(read_field codex_cli_reasoning_effort)
+MODEL_LABEL=$(read_field codex_model_label)
 
 codex exec \
   --cd "$PAPERHUB_ROOT" \
@@ -192,18 +215,25 @@ PAPERHUB_RESPONSE_BEGIN
 PAPERHUB_RESPONSE_END
 
 ${PROMPT}" \
-  2>"${CODEX_STDERR}" > "${CODEX_OUTPUT}"
+  < /dev/null 2>"${CODEX_STDERR}" > "${CODEX_OUTPUT}"
 
 # 3. Apply raw Codex output. The script extracts the sentinel block.
+#    Confirm this run wrote the response before applying it.
+[ -s "$CODEX_OUTPUT" ] && [ "$CODEX_OUTPUT" -nt "$CODEX_INPUT" ] || echo "STALE OR EMPTY - do not apply"
+
 uv run python -m scripts.enrich --engine codex-cli --from-response --folder ACF2015 \
   --response-file "${CODEX_OUTPUT}" \
   --model-label "${MODEL_LABEL}" \
   --codex-stderr-file "${CODEX_STDERR}"
 
 # 4. Cleanup
-CLEANUP_DIR=$(python3 -c "import json; print(json.load(open('/tmp/paperhub_enrich_codex_input.json'))['cleanup_dir'])")
+CLEANUP_DIR=$(read_field cleanup_dir)
 uv run python -m scripts.enrich --cleanup-cli-input "${CLEANUP_DIR}"
+rm -rf "$WORK"
 ```
+
+`< /dev/null` and the fresh `$WORK` directory are both required — see
+`engines/codex_cli.md` → Run Integrity (items 1 and 5).
 
 The past-summary text (when `--use-past-summary` is passed) is baked into the prepared prompt during step 1, so step 3 (`--from-response`) does not need any extra flag.
 

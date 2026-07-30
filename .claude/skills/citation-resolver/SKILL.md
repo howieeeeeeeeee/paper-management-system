@@ -63,6 +63,18 @@ refresh behavior.
 
 The resolver sets `citation_exist: true` for every selected paper whose final `citation.csl.json` validates — `resolved` and `skipped_valid` alike — preserving all other frontmatter and writing atomically. Report the per-paper `citation_exist_written` values; surface any `citation_exist_warning` as a diagnostic rather than fixing the note by hand.
 
+### Validate metadata after every link write
+
+Treat a result with `link_updated: true` or any `citation_exist_warning` as incomplete until the canonical metadata note is checked. Read the note and verify all of the following before reporting success or continuing to bibliography export:
+
+- The frontmatter parses as YAML and still opens as Obsidian properties.
+- The property is exactly `link: <public URL>` with a space after the colon.
+- The URL is the resolver-reported `source_url` or its verified canonical redirect.
+- The URL is not double-prefixed or nested, such as `https://doi.org/http://...`.
+- A fresh citation audit classifies the paper as `ready`.
+
+If the current resolver run itself created a malformed `link:` line, repair only that line to the verified `source_url` using valid YAML syntax. Never hand-write `citation_exist`; rerun `resolve` so the resolver writes the flag from the already valid `citation.csl.json`, then rerun the audit. Do not treat a valid CSL file alone as sufficient when the metadata note no longer parses.
+
 For labels with blank links:
 
 1. Read `CITATION_CURRENT_AGENT_SEARCH_MISSING_LINK` from `paperhub.config`.

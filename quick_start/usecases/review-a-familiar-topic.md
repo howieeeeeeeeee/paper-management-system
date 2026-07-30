@@ -10,7 +10,7 @@ Provide:
 
 - A familiar topic or research question.
 - The absolute path of the Markdown note to create or update.
-- The points you want refreshed, such as where the literature stands, experimental designs, competing mechanisms, or open questions.
+- The points you want refreshed, such as where the literature stands, experimental designs, competing mechanisms, or documented disagreements.
 
 ## Build the Review Note
 
@@ -28,10 +28,10 @@ Use paper-finder in details mode and paperhub-obsidian to complete this task:
 1. Search the entire PaperHub library using the topic, close synonyms, mechanisms, outcomes, and experimental terms.
 2. Retrieve every meaningfully relevant paper rather than stopping at an arbitrary top 10.
 3. Read the available metadata, AI summaries, and additional notes for the matched papers. Use ask-knowledge-base as well only when relevant non-paper notes in the vault should be included.
-4. Synthesize the material into the target note. Cover the state of the literature, how the main experiments or empirical designs work, important disagreements, and useful open questions.
+4. Synthesize the material into the target note. Cover the state of the literature, how the main experiments or empirical designs work, important disagreements, and the limits of the available evidence.
 5. Cite papers with their existing PaperHub wikilinks. Distinguish documented findings from your own synthesis, and do not invent missing details.
 6. Preserve useful existing content if the target note already exists, and keep the structure concise and readable in Obsidian.
-7. Stay within the existing library and vault. Do not search for or import new papers. If coverage is thin, say what is missing instead of filling the gap from outside sources.
+7. Stay within the existing library and vault. Do not search for or import new papers. If coverage is thin, say what is missing instead of filling the gap from outside sources. Do not generate speculative research questions or claim a gap unless the reviewed material establishes it.
 
 Report the number of papers reviewed, the main organizing themes, and any important gaps in the existing library.
 ```

@@ -1,8 +1,8 @@
 # PaperHub
 
-PaperHub is a coding-agent-augmented paper management system. The aim is to delegate all the **dirty work to agents** and have **more focus time on the knowledge work**, on **Obsidian** specifically. Drop PDFs into a local inbox or provide public paper links, ask your agent to run the PaperHub skills, and get a searchable library where every paper has a stable label, metadata note, optional public PDF, optional AI summary, and Obsidian Base dashboard entry. See my [Claims](#claims).
+PaperHub is a coding-agent-augmented paper management system. The aim is to delegate all the **dirty work to agents** and have **more focus time on the knowledge work**, on **Obsidian** specifically. Drop PDFs into a local inbox or provide public paper links, ask your agent to run the PaperHub skills, and get a searchable library where every paper has a stable label, metadata note, optional public PDF, optional AI summary, and Obsidian Base dashboard entry. See my [statement on AI in research](#statement-on-ai-in-research).
 
-**ToC:** [Quick Start](#quick-start) | [Daily Workflow](#daily-workflow) | [Use Cases](#use-cases) | [Changelog](#changelog) | [Claims](#claims)
+**ToC:** [Quick Start](#quick-start) | [Daily Workflow](#daily-workflow) | [Use Cases](#use-cases) | [Changelog](#changelog) | [Statement on AI in Research](#statement-on-ai-in-research)
 
 A typical paper is stored as one self-contained folder:
 
@@ -231,7 +231,7 @@ Here are the recent changes:
 - **July 2026:** Added `paper-finder` and `ask-knowledge-base` for knowledge retrieval.
 - **Since late 2025:** I have used this workflow for my own papers. In May 2026, I began open-sourcing it, adding `paper_organizer`, multiple AI engines, and public-link intake.
 
-## Claim(s)
+## Statement on AI in Research
 
 As an economics PhD student, I am still building up my research skill set. I do not think AI, or any automatic tool, can completely replace the process of reading the literature and building knowledge throughout the research lifecycle. I truly believe that the mental connections we form among papers while engaging with the literature cannot be outsourced to an external tool.
 

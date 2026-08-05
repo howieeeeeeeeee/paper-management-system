@@ -23,7 +23,7 @@ modes/
   metadata_only.md        ← writes {paper_label}.md only (sends first N pages)
   enrich.md               ← writes ai_summary.md for an EXISTING folder; patches blank meta
 shared/
-  post_ai.md              ← validation, autofix, optional citations, tags, versioning, partial-failure handling
+  post_ai.md              ← validation, autofix, optional citations, tags, related-paper labels, versioning, partial-failure handling
 setup/
   python_uv_recovery.md   ← read only if uv is missing and pip cannot install it
 tags/
@@ -196,8 +196,9 @@ After the selected engine finishes and the paper files are written, read `shared
 2. Auto-fix small output issues: AI markup artifacts, tag spaces, missing required YAML fields, and missing `## Abstract`.
 3. When `CITATION_RESOLVE_AFTER_ORGANIZE` is enabled, attempt citation resolution once without blocking the paper workflow; skip `enrich`.
 4. Run the batch tag handoff in `tags/post_summary_update.md` so new tags are added or merged against the registry.
-5. Version the organized files by running the `versioning-with-git` skill (mirrors the vault into the out-of-iCloud git backup repo and commits/pushes there — the vault itself has no `.git`), unless the user asked not to commit. It self-skips when `USE_GIT = False` or no backup path is set (loaded from `paperhub_utils/config/config.json`).
-6. Report the result with token usage when available, tag updates, auto-fixes, optional citation status, and any failed papers.
+5. Reconcile generated wikilink targets under an exact `Related Papers` heading against local author-year candidates. The helper is read-only; the current coding agent changes only clearly confirmed targets and leaves ambiguous or unmatched references untouched.
+6. Version the organized files by running the `versioning-with-git` skill (mirrors the vault into the out-of-iCloud git backup repo and commits/pushes there — the vault itself has no `.git`), unless the user asked not to commit. It self-skips when `USE_GIT = False` or no backup path is set (loaded from `paperhub_utils/config/config.json`).
+7. Report the result with token usage when available, tag updates, related-paper reconciliation, auto-fixes, optional citation status, and any failed papers.
 
 For partial batch failures, ask the user whether to abandon, retry, or choose another allowed model for the active engine. Never switch models automatically.
 
@@ -241,7 +242,7 @@ public PDFs. If public PDFs are pending a mode, ask once before engine calls.
 | Project root | current paper-library root (`PAPERHUB_ROOT` overrides auto-detection) |
 | Output dir | `organized/` |
 | Git backup repo | `git.backup_abs_path` in `config.json` — a git repo OUTSIDE iCloud; the vault has no `.git`. Commits go through the `versioning-with-git` skill |
-| Entry scripts | `paperhub_utils/scripts/` (`scripts.paper_organizer`, `scripts.enrich`, `scripts.paper_search`, `scripts.update_utils`) |
+| Entry scripts | `paperhub_utils/scripts/` (`scripts.paper_organizer`, `scripts.enrich`, `scripts.related_paper_candidates`, `scripts.paper_search`, `scripts.update_utils`) |
 | Python package | `paperhub_utils/paperhub/` (`config.py`, `cli_workflow/`, `tag_utils/`, `prompt/builder.py`) |
 | User config | `paperhub_utils/config/config.json` (`paperhub.config` loads and exports it) |
 | Available engines | `available_engines` in `config.json`; canonicalized as `paperhub.config.AVAILABLE_ENGINES`; current coding agent is always included |
@@ -255,4 +256,4 @@ public PDFs. If public PDFs are pending a mode, ask once before engine calls.
 - Does NOT ask the user for metadata when public sources can provide it; missing
   link fields remain explicit placeholders.
 - Does NOT support custom output formats.
-- Does NOT edit existing papers EXCEPT in `enrich` mode, which only patches blank meta keys and (re)writes `ai_summary.md` — never touches `contributions`/`status`/`interest`, never overwrites a non-blank field.
+- Does NOT edit existing papers except in `enrich` mode and the post-AI related-paper step. Enrich only patches blank meta keys and (re)writes `ai_summary.md`; related-paper reconciliation may change only a confirmed wikilink target under `Related Papers`. Neither route touches `contributions`/`status`/`interest` or overwrites a non-blank metadata field.

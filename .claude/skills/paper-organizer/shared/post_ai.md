@@ -107,7 +107,27 @@ templates carry that line; if you cannot fill it in, you did not run this step.
 
 After auto-fix, ALWAYS run the post-summary tag flow once for the batch (see `tags/post_summary_update.md`). Capture: count of new tags added (with type), count of merges, count of tags reused unchanged.
 
-## 5. Version (git commit via the backup repo)
+## 5. Related-paper label reconciliation
+
+After the tag flow, run the read-only candidate helper once with only the labels processed in this batch:
+
+```bash
+cd paperhub_utils
+uv run python -m scripts.related_paper_candidates --pretty "{paper_label_1}" "{paper_label_2}" ...
+```
+
+The helper activates only when a paper's canonical metadata note contains a Markdown heading whose exact text is `Related Papers`. It builds an in-memory author-year shortlist from canonical metadata and returns the existing folder labels as candidates, so it adapts to the label style already used by the current PaperHub repository. It tolerates casing, accents, punctuation, spaces, hyphens, underscores, standard two-author labels, and standard multi-author or `et al.` forms. It stores no library index and sends no library-wide context to any AI engine.
+
+Review each returned item with the current coding agent, using only the bullet description and shortlisted candidate metadata. Never send this step back to the original external engine, call another AI engine, or read a PDF.
+
+- Replace only the wikilink target when the bullet clearly describes the same work as a candidate's title, authors, year, and abstract or main-contribution excerpt.
+- Preserve the alias text, bullet description, order, indentation, and all surrounding content byte-for-byte.
+- Leave the generated target unchanged when there is no local candidate or the evidence remains ambiguous.
+- Exclude self-links. When timestamp-suffixed and unsuffixed folders are otherwise identical, prefer the unsuffixed base label.
+
+The helper is read-only. If it fails, preserve the organized paper, continue to the versioning decision, and report the failure; never discard or corrupt a successfully organized paper because this correction step could not run. Report counts and mappings for corrected labels, ambiguous candidates preserved, and references without a local candidate. Notes without the exact heading no-op.
+
+## 6. Version (git commit via the backup repo)
 
 The vault has **no** `.git` (it lives in an iCloud folder). Do not run `git` inside the vault.
 Instead, run the **`versioning-with-git` skill** — it mirrors the vault into the out-of-iCloud
@@ -134,14 +154,15 @@ and skips cleanly when versioning is off or the backup folder is unset.
 **Skip this step if:** the user explicitly said no commit. (Everything else — `USE_GIT` false,
 no backup path, git unavailable — the versioning skill handles and reports.)
 
-## 6. Report
+## 7. Report
 
 Use the per-mode completion-report template in `modes/{mode}.md`. Always include:
 
 - Token usage when available (Agy CLI and the standard Codex CLI flow: token counts unavailable, `cost: N/A`; Coding Agent: no token info).
 - **Tag updates line/section** — count + list of newly added tags (with type), count + list of merges (`new_variant -> existing_canonical`), count of tags reused unchanged. If nothing changed: `Tag updates: all N tags reused from registry, no changes.`
+- **Related-paper reconciliation line/section** — corrected target mappings, ambiguous candidates preserved, references without a local candidate, or `not applicable — no exact Related Papers heading`.
 
-## 7. Handle partial failures
+## 8. Handle partial failures
 
 For batches, check the script's `failed` count. If > 0, surface to the user via `AskUserQuestion`:
 

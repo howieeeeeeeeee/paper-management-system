@@ -1,8 +1,36 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.07.29.1",
+  "latest_version": "2026.08.05.2",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.08.05.2": {
+      "date": "2026-08-05",
+      "title": "Repository-Flexible Related-Paper Matching",
+      "update_kind": "structural + content",
+      "summary": "Finalizes related-paper reconciliation for PaperHub copies that use different standard label styles. Candidate identity now comes from canonical metadata while the replacement remains the exact existing folder label, and the workflow order is explicitly enforced as tags, related-paper review, then versioning.",
+      "how_to_apply": "Update the related-paper candidate helper, managed paper-organizer skill, and tests together. If you already installed 2026.08.05.1, replacing those same managed files completes the upgrade. No configuration, dependency, prompt, schema, or existing-library migration is required.",
+      "changed": [
+        "Related-paper matching no longer assumes one preferred folder-label style. It normalizes case, accents, punctuation, separators, common two-author labels, and multi-author or et al. forms, then returns the repository's actual existing label.",
+        "The shared post-AI workflow and its integration test now enforce tag processing before related-paper reconciliation and versioning afterward.",
+        "Only shortlisted metadata is presented for semantic review; ambiguous or semantically different author-year candidates remain unchanged."
+      ]
+    },
+    "2026.08.05.1": {
+      "date": "2026-08-05",
+      "title": "Related-Paper Labels Reconciled Against the Local Library",
+      "update_kind": "structural + content",
+      "summary": "Adds a lightweight post-organizing check for generated links under an exact Related Papers heading. A read-only helper narrows each reference to local author-year candidates, then the current coding agent corrects only links whose title and description clearly identify the same paper. The helper adapts to each repository's existing label style instead of assuming one naming convention.",
+      "how_to_apply": "Update the managed paper-organizer skill, the new related-paper candidate helper, and its tests together. No configuration, dependency, prompt, schema, or existing-library migration is required. The check runs after tags and before versioning on future organizer and enrich runs; existing notes remain unchanged unless reviewed separately.",
+      "added": [
+        "A read-only scripts.related_paper_candidates command that returns compact local candidates only for newly processed notes with an exact Related Papers heading.",
+        "A shared post-AI reconciliation step that lets the current coding agent confirm semantic matches and change only the wikilink target."
+      ],
+      "changed": [
+        "Candidate discovery now derives paper identity from canonical metadata while returning the repository's actual folder labels, so different PaperHub label preferences continue to work.",
+        "Author-year matching tolerates case, accents, punctuation, separators, two-author labels, and common multi-author or et al. forms without storing a library index or adding library-wide context to the original processing engine.",
+        "Ambiguous and unmatched generated links are preserved, and a helper failure no longer risks an otherwise successful organizer run."
+      ]
+    },
     "2026.07.29.1": {
       "date": "2026-07-29",
       "title": "Codex CLI: Fixed Runs That Hung Forever Instead of Finishing",

@@ -1,8 +1,22 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.08.05.2",
+  "latest_version": "2026.08.07.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.08.21.1": {
+      "date": "2026-08-21",
+      "title": "Engine Routing Precedence And Coding-Agent Default",
+      "update_kind": "content",
+      "summary": "Fixes two paper-organizer routing faults and changes the no-engine default. (1) SKILL.md now states engine-selection precedence before the availability gate: the agent scans the request for a named engine first, and a named engine outranks every default. Previously the gate's config lookup came ~100 lines ahead of the Engines table, so the agent could settle on a default before reading the user's words. (2) The Engines table now matches on engine identity anywhere in the request instead of verbatim quoted phrases, so a near-miss like 'using the Codex CLI' no longer falls through to the default row. (3) When no engine is named, the default is now coding-agent rather than OpenRouter; external engines are used only when the user names one.",
+      "how_to_apply": "Replace the paper-organizer skill's SKILL.md, engines/openrouter.md, and modes/enrich.md together. No configuration, dependency, or schema migration is required and available_engines is unchanged. Behavior change to expect: a request that names no engine now runs on the current coding agent instead of OpenRouter. Adopters who want OpenRouter should name it in the request ('summarize this with openrouter'); naming any engine explicitly works as before."
+    },
+    "2026.08.07.1": {
+      "date": "2026-08-07",
+      "title": "Validated Shell Handoff For External CLI Runs",
+      "update_kind": "content",
+      "summary": "Adds --emit-shell to paper_organizer --prepare-cli-input. It writes the resolved run fields (prompt path, PDF path, model, reasoning effort, labels, cleanup dir) as a sourceable, shell-quoted file and refuses to write at all if any required field is empty or missing. The Codex CLI workflow now sources that file instead of hand-extracting fields from the prepared JSON, which previously could pass empty flags to codex exec when a path was mistyped or a key renamed.",
+      "how_to_apply": "Replace the managed paper_organizer script and the paper-organizer skill's engines/codex_cli.md together. No configuration, dependency, schema, or existing-library migration is required. Existing recipes that hand-extract fields keep working, but should be switched to --emit-shell plus 'source \"$CODEX_CONFIG\" || exit 1'."
+    },
     "2026.08.05.2": {
       "date": "2026-08-05",
       "title": "Repository-Flexible Related-Paper Matching",
@@ -316,23 +330,6 @@
         "The obsolete duplicated paper-summarizer quick-start guide; the thin compatibility guide remains under quick_start/skills."
       ]
     },
-    "2026.07.06.1": {
-      "date": "2026-07-06",
-      "title": "Out-of-vault Git Versioning",
-      "update_kind": "structural + content",
-      "summary": "Moves git versioning out of the (iCloud-synced) library folder into a separate git backup repo, so a live .git no longer risks iCloud corruption. Adds a versioning-with-git skill, a config.json git block, and matching onboarding.",
-      "how_to_apply": "Config shape changed: git settings moved from top-level use_git into a git block { use_git, sync_to_remote, backup_abs_path } and schema_version is now 2. config.py reads the git block with a legacy fallback to top-level use_git, so existing configs keep working with no change. To enable out-of-vault versioning, set git.backup_abs_path to a plain local folder OUTSIDE iCloud (re-run onboarding or edit config.json); commits then mirror the library into that repo instead of committing in place. Remove any .git left inside the library folder once the backup repo holds the current state.",
-      "added": [
-        "versioning-with-git skill: mirrors the library into an out-of-iCloud git backup repo, commits all changes there, and optionally pulls/pushes a remote.",
-        "config.json git block: use_git, sync_to_remote, backup_abs_path (with PAPERHUB_SYNC_TO_REMOTE_GIT and PAPERHUB_GIT_BACKUP env overrides).",
-        "Onboarding questionnaire git section (3 settings) plus iCloud 'Keep Downloaded' guidance and the rule that the backup folder must live outside iCloud."
-      ],
-      "changed": [
-        "paper-summarizer post-AI, tag, and enrich flows now commit via the versioning-with-git skill instead of running git inside the library folder.",
-        "config schema_version bumped to 2; use_git relocated under the git block (legacy top-level use_git still honored).",
-        "onboard.md git logic no longer runs git init in the vault; it configures the backup repo and removes any in-vault .git."
-      ]
-    },
     "2026.07.06.2": {
       "date": "2026-07-06",
       "title": "Vault Knowledge Base Search",
@@ -350,17 +347,37 @@
         "public-template-sync is protected as maintainer-only in both .claude and .agents skill paths."
       ]
     },
-    "2026.07.05.1": {
-      "date": "2026-07-05",
-      "title": "CLI Routes and Paper Finder",
-      "update_kind": "content",
-      "summary": "Adds mature external CLI routes and local paper retrieval workflows.",
-      "how_to_apply": "Safe skill and script updates can be applied directly. Review local prompt customizations before replacing prompt files.",
+    "2026.07.06.1": {
+      "date": "2026-07-06",
+      "title": "Out-of-vault Git Versioning",
+      "update_kind": "structural + content",
+      "summary": "Moves git versioning out of the (iCloud-synced) library folder into a separate git backup repo, so a live .git no longer risks iCloud corruption. Adds a versioning-with-git skill, a config.json git block, and matching onboarding.",
+      "how_to_apply": "Config shape changed: git settings moved from top-level use_git into a git block { use_git, sync_to_remote, backup_abs_path } and schema_version is now 2. config.py reads the git block with a legacy fallback to top-level use_git, so existing configs keep working with no change. To enable out-of-vault versioning, set git.backup_abs_path to a plain local folder OUTSIDE iCloud (re-run onboarding or edit config.json); commits then mirror the library into that repo instead of committing in place. Remove any .git left inside the library folder once the backup repo holds the current state.",
       "added": [
-        "Codex CLI support for paper summarization and enrich workflows.",
-        "Agy CLI support for Gemini-family direct CLI workflows.",
-        "paper-finder skill for retrieving existing papers from keywords, vague descriptions, authors, tags, and snippets.",
-        "Detailed paper-finder mode and no-keyword search flow."
+        "versioning-with-git skill: mirrors the library into an out-of-iCloud git backup repo, commits all changes there, and optionally pulls/pushes a remote.",
+        "config.json git block: use_git, sync_to_remote, backup_abs_path (with PAPERHUB_SYNC_TO_REMOTE_GIT and PAPERHUB_GIT_BACKUP env overrides).",
+        "Onboarding questionnaire git section (3 settings) plus iCloud 'Keep Downloaded' guidance and the rule that the backup folder must live outside iCloud."
+      ],
+      "changed": [
+        "paper-summarizer post-AI, tag, and enrich flows now commit via the versioning-with-git skill instead of running git inside the library folder.",
+        "config schema_version bumped to 2; use_git relocated under the git block (legacy top-level use_git still honored).",
+        "onboard.md git logic no longer runs git init in the vault; it configures the backup repo and removes any in-vault .git."
+      ]
+    },
+    "2026.07.05.3": {
+      "date": "2026-07-05",
+      "title": "Structured Utility Folders",
+      "update_kind": "structural",
+      "summary": "Physically separates PaperHub utility entry scripts, importable Python modules, prompt fragments, local config, and generated outputs.",
+      "how_to_apply": "Update local commands and custom docs to use scripts/, paperhub/, prompts/, config/, and output/raw_outputs/. Preserve local config/config.json and config/.env; if an old misc/config.json exists, compare before migrating.",
+      "changed": [
+        "Executable utilities moved to paperhub_utils/scripts/.",
+        "Importable Python modules moved to paperhub_utils/paperhub/.",
+        "Prompt text moved to paperhub_utils/prompts/.",
+        "User config and defaults moved to paperhub_utils/config/.",
+        "Raw model outputs moved under paperhub_utils/output/raw_outputs/.",
+        "paper-finder CLI now matches the skill flags for explicit terms, result counts, detailed cards, exclude penalties, and full-detail output.",
+        "Enrich prepare supports a coding-agent route without changing Agy or Codex settings."
       ]
     },
     "2026.07.05.2": {
@@ -378,20 +395,17 @@
         "PaperHub utilities are grouped into update-managed files and user-owned local state."
       ]
     },
-    "2026.07.05.3": {
+    "2026.07.05.1": {
       "date": "2026-07-05",
-      "title": "Structured Utility Folders",
-      "update_kind": "structural",
-      "summary": "Physically separates PaperHub utility entry scripts, importable Python modules, prompt fragments, local config, and generated outputs.",
-      "how_to_apply": "Update local commands and custom docs to use scripts/, paperhub/, prompts/, config/, and output/raw_outputs/. Preserve local config/config.json and config/.env; if an old misc/config.json exists, compare before migrating.",
-      "changed": [
-        "Executable utilities moved to paperhub_utils/scripts/.",
-        "Importable Python modules moved to paperhub_utils/paperhub/.",
-        "Prompt text moved to paperhub_utils/prompts/.",
-        "User config and defaults moved to paperhub_utils/config/.",
-        "Raw model outputs moved under paperhub_utils/output/raw_outputs/.",
-        "paper-finder CLI now matches the skill flags for explicit terms, result counts, detailed cards, exclude penalties, and full-detail output.",
-        "Enrich prepare supports a coding-agent route without changing Agy or Codex settings."
+      "title": "CLI Routes and Paper Finder",
+      "update_kind": "content",
+      "summary": "Adds mature external CLI routes and local paper retrieval workflows.",
+      "how_to_apply": "Safe skill and script updates can be applied directly. Review local prompt customizations before replacing prompt files.",
+      "added": [
+        "Codex CLI support for paper summarization and enrich workflows.",
+        "Agy CLI support for Gemini-family direct CLI workflows.",
+        "paper-finder skill for retrieving existing papers from keywords, vague descriptions, authors, tags, and snippets.",
+        "Detailed paper-finder mode and no-keyword search flow."
       ]
     }
   }

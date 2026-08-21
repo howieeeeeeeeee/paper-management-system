@@ -53,11 +53,17 @@ Model used: <model name>
 Token usage: X prompt + Y completion = Z total
 Citation: resolved
 Tag updates: 2 new (international_trade [field], heterogeneous_firms [topic]); 1 merged (melitz_model -> melitz_framework)
+Related papers: 1 corrected (LP2003 -> LevinsohnPetrin2003Production); 1 ambiguous preserved; 2 without a local candidate
 ```
 
 The `Citation:` line is required whenever `CITATION_RESOLVE_AFTER_ORGANIZE` is
 on (see `shared/post_ai.md` §3). List `citation.csl.json` under files created
 only when resolution actually wrote it.
+
+The `Related papers:` line is always required (see `shared/post_ai.md` §5 and
+§7). When the note has no exact `Related Papers` heading, write `Related papers:
+not applicable — no exact Related Papers heading`; when the helper ran but
+changed nothing, still report the ambiguous and no-local-candidate counts.
 
 ## Completion report (batch)
 
@@ -74,6 +80,11 @@ Tag updates this batch:
   - 4 new tags added: international_trade (field), heterogeneous_firms (topic), structural (methodology), econ559 (meta)
   - 2 tags merged into existing: melitz_model -> melitz_framework, info_asym -> information_asymmetry
   - 0 tags reused without change: 11 of 17 tags this batch were already in the registry
+
+Related-paper reconciliation this batch:
+  - 2 targets corrected: melitz2003trade: LP2003 -> LevinsohnPetrin2003Production; ACF2015: ackerbergetal2015 -> AckerbergCavesFrazer2015
+  - 1 ambiguous candidate preserved: melitz2003trade: heisssetal2016inattention (2 local matches)
+  - 7 references without a local candidate
 ```
 
 Always include token usage when available. For Agy CLI and the standard Codex CLI flow, `cost: N/A` and token counts are unavailable.

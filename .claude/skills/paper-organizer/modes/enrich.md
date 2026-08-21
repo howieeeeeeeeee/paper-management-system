@@ -2,7 +2,7 @@
 
 Use this mode when the user wants to add an `ai_summary.md` to a paper that is **already in `organized/`** (typically because the paper was first added in `metadata-only` mode, or the user wants to re-do / polish an existing summary). The PRIMARY job is generating the summary; patching any blank metadata fields is a secondary side effect of the same AI call.
 
-This mode works with **OpenRouter** (default), **Agy CLI**, **Codex CLI**, and **Coding Agent** (`engines/coding_agent.md` — **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `uv run python -m scripts.enrich --engine coding-agent --from-response` so the merge logic and metadata-patch rules below apply unchanged). Pick the engine the same way you would for a new paper.
+This mode works with **Coding Agent** (default when the user names no engine — `engines/coding_agent.md`: **high quota**, gated by `AskUserQuestion` and a 3-paper soft batch cap; reads the whole PDF in-session, hands the response back to `uv run python -m scripts.enrich --engine coding-agent --from-response` so the merge logic and metadata-patch rules below apply unchanged), **OpenRouter**, **Agy CLI**, and **Codex CLI**. Pick the engine the same way you would for a new paper.
 
 ## Trigger phrases
 
@@ -69,7 +69,7 @@ After collecting answers, partition the folders into groups and call `scripts.en
 
 If a folder does NOT have an existing `ai_summary.md`, no question is needed — just run normally (no `--use-past-summary`, no `--force` needed).
 
-## OpenRouter (default)
+## OpenRouter
 
 Single command, processes all folders sequentially in-process:
 
@@ -277,10 +277,17 @@ Enriched 2 paper(s):
   melitz2003trade — summary generated (no past), no meta changes
 Token usage: ... (sum across folders)
 Tag updates: ... (from post-summary tag flow)
+Related papers: 1 corrected (ACF2015: LP2003 -> LevinsohnPetrin2003Production); 0 ambiguous; 4 without a local candidate
 Versioned: committed "feat(papers): enrich 2 folders" to backup repo (pushed)
 ```
 
 Mention "polished from past" for any folder where `past_summary_used` is true so the user knows the reference was applied.
+
+The `Related papers:` line is always required (see `shared/post_ai.md` §5 and
+§7). Enrich skips citation resolution but not this step. When no enriched folder
+has an exact `Related Papers` heading, write `Related papers: not applicable —
+no exact Related Papers heading`; when the helper ran but changed nothing, still
+report the ambiguous and no-local-candidate counts.
 
 ## What this mode does NOT do
 

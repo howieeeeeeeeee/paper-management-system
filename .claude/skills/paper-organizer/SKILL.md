@@ -14,7 +14,7 @@ SKILL.md                  ← you are here (router only)
 onboard.md                ← questionnaire-first setup inside an Obsidian vault
 link_input.md             ← URL/list preprocessing and offline engine handshake
 engines/
-  openrouter.md           ← default; uses `scripts.paper_organizer` via OpenRouter API
+  openrouter.md           ← uses `scripts.paper_organizer` via OpenRouter API
   agy_cli.md              ← active direct-Google CLI workflow via `agy`
   codex_cli.md            ← OpenAI Codex CLI workflow via `codex exec`
   coding_agent.md         ← in-process; full / metadata-only / enrich (high quota for full+enrich)
@@ -43,7 +43,14 @@ tags/
 
 For onboarding/setup/first-run requests, read `onboard.md` and execute it before any paper-processing mode. Onboarding is questionnaire-first: if root `onboarding_questionnaire.md` exists, `onboard.md` tells the agent to read it before asking follow-up questions.
 
-### Engine availability gate
+**Engine selection precedence.** Before reading config, scan the user's request
+for a named engine (`codex`, `agy`/`antigravity`, `openrouter`, `gemini`, or the
+current agent). A named engine is binding and outranks every default below; the
+availability gate may then verify or refuse it, but never replaces it with a
+different engine. Only when the request names none does the default in the
+Engines table apply.
+
+### Engine availability gate (verifies a choice; never makes one)
 
 Before recommending, selecting, or invoking an AI engine, read `AVAILABLE_ENGINES`
 from `paperhub.config` (backed by `available_engines` in
@@ -72,9 +79,9 @@ from `paperhub.config` (backed by `available_engines` in
      order and all unrelated settings. Ensure `coding-agent` remains present.
 4. If an enabled external engine later fails, follow its normal failure flow;
    do not silently switch engines or remove it from the list.
-5. When the user names no engine, default to `openrouter` only when it is listed;
-   otherwise use `coding-agent`. Any engine-selection question must contain only
-   listed engines plus the current agent.
+5. When the user names no engine, default to `coding-agent`. Never reach for an
+   external engine on your own; the user must name it. Any engine-selection
+   question must contain only listed engines plus the current agent.
 
 For paper processing, first identify the input kind. For a URL or Markdown/plain-
 text link list, read `link_input.md`. For a local PDF or existing folder, pick
@@ -142,13 +149,18 @@ for the folder and canonical metadata filename.
 
 ### Engines
 
-| User says | Engine | Read |
+| User's request mentions | Engine | Read |
 |-----------|--------|------|
-| "use current coding agent" / "use you" / "no external AI" | `coding-agent` | `engines/coding_agent.md` (full / metadata-only / enrich; full+enrich gated for quota) |
-| "with codex cli" / "use codex cli" / "direct OpenAI CLI" | `codex-cli` | `engines/codex_cli.md` |
-| "with agy cli" / "use antigravity cli" / "antigravity" / "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
-| "use gemini" / "with gemini" (no "cli") | FILTER, then ASK if needed | Among enabled `openrouter` and `agy-cli`: route directly if one is enabled, ask which if both are enabled, or run the availability gate if neither is enabled |
-| anything else (default) | enabled default | `openrouter` when listed; otherwise `coding-agent` |
+| the current agent — "use you", "no external AI", "current coding agent" | `coding-agent` | `engines/coding_agent.md` (full / metadata-only / enrich; full+enrich gated for quota) |
+| codex, in any phrasing — "with/use/using codex cli", "direct OpenAI CLI" | `codex-cli` | `engines/codex_cli.md` |
+| agy or antigravity, in any phrasing — "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
+| openrouter, in any phrasing | `openrouter` | `engines/openrouter.md` |
+| gemini, without "cli" | FILTER, then ASK if needed | Among enabled `openrouter` and `agy-cli`: route directly if one is enabled, ask which if both are enabled, or run the availability gate if neither is enabled |
+| **no engine named at all** | `coding-agent` | `engines/coding_agent.md` |
+
+Match on the engine's identity anywhere in the request, not on these exact
+strings — the quoted phrases are examples. The default row applies only when no
+engine is named; never reach it because a phrasing did not match verbatim.
 
 ### Modes
 
@@ -205,13 +217,14 @@ For partial batch failures, ask the user whether to abandon, retry, or choose an
 ## Quick start
 
 ```
-"Summarize this paper"                              → enabled default × ask-mode (OpenRouter if listed; otherwise current agent)
+"Summarize this paper"                              → coding-agent × ask-mode (no engine named)
 "Summarize these papers with agy cli"               → agy-cli × ask-mode
 "Summarize these papers with codex cli"             → codex-cli × ask-mode
-"Summarize this paper. Focus on identification."    → openrouter × ask-mode + --instruction
-"Organize https://example.org/paper"                → openrouter × link-metadata
+"Summarize these papers with openrouter"            → openrouter × ask-mode
+"Summarize this paper. Focus on identification."    → coding-agent × ask-mode + --instruction
+"Organize https://example.org/paper"                → coding-agent × link-metadata
 "Organize links under heading X in papers to find"  → chosen engine × link-metadata
-"Enrich ACF2015"                                    → openrouter × enrich
+"Enrich ACF2015"                                    → coding-agent × enrich
 "Add a summary to melitz2003trade with agy cli"     → agy-cli × enrich
 "Add a summary to melitz2003trade with codex cli"   → codex-cli × enrich
 ```

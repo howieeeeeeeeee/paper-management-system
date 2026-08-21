@@ -46,14 +46,18 @@ PAPERHUB_ROOT=$(cd .. && pwd)
 #    Integrity below. Every artifact path derives from $WORK.
 WORK=$(mktemp -d)
 CODEX_INPUT="$WORK/input.json"
+CODEX_CONFIG="$WORK/config.sh"
 CODEX_OUTPUT="$WORK/output.txt"
 CODEX_STDERR="$WORK/stderr.txt"
 
 # 1. Prepare prompt/PDF and resolve the configured Codex model/reasoning pair.
+#    --emit-shell also writes a sourceable config file. It refuses to write
+#    unless every required field is non-empty, so sourcing it is the guard.
 uv run python -m scripts.paper_organizer --prepare-cli-input \
   --external-cli-engine codex-cli \
   --pdf-path-arg "$PAPERHUB_ROOT/to_be_organized/paper.pdf" \
   --summary-mode full \
+  --emit-shell "$CODEX_CONFIG" \
   > "$CODEX_INPUT"
 ```
 
@@ -63,18 +67,17 @@ Add `--codex-model "MODEL_ID"` and/or `--codex-reasoning-effort "EFFORT"` only w
 
 ```bash
 # 2. Call Codex (still in paperhub_utils/).
-read_field() { python3 -c "import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])" "$CODEX_INPUT" "$1"; }
-PROMPT=$(python3 -c "import json,sys; print(open(json.load(open(sys.argv[1]))['prompt_path']).read())" "$CODEX_INPUT")
-PDF_PATH=$(read_field pdf_for_ai_codex_path)
-CODEX_MODEL=$(read_field codex_cli_model)
-CODEX_REASONING_EFFORT=$(read_field codex_cli_reasoning_effort)
+#    Source the generated config; never hand-extract fields. `|| exit 1` is
+#    required - see Run Integrity item 6.
+source "$CODEX_CONFIG" || exit 1
+PROMPT=$(cat "$PROMPT_PATH")
 
 codex exec \
   --cd "$PAPERHUB_ROOT" \
   --dangerously-bypass-approvals-and-sandbox \
   --ephemeral \
-  --model "$CODEX_MODEL" \
-  -c "model_reasoning_effort=\"${CODEX_REASONING_EFFORT}\"" \
+  --model "$MODEL" \
+  -c "model_reasoning_effort=\"${EFFORT}\"" \
   -c 'web_search="disabled"' \
   "You are running the PaperHub Codex CLI workflow.
 
@@ -99,10 +102,8 @@ ${PROMPT}" \
 #    Confirm this run wrote the response before applying it.
 [ -s "$CODEX_OUTPUT" ] && [ "$CODEX_OUTPUT" -nt "$CODEX_INPUT" ] || echo "STALE OR EMPTY - do not apply"
 
-ORIGINAL_PDF=$(read_field original_pdf_path)
-SUMMARY_MODE=$(read_field summary_mode)
-MODEL_LABEL=$(read_field codex_model_label)
-
+# ORIGINAL_PDF, SUMMARY_MODE, MODEL_LABEL and CLEANUP_DIR already came from
+# the sourced config in step 2 - do not re-extract them.
 uv run python -m scripts.paper_organizer --from-response \
   --external-cli-engine codex-cli \
   --response-file "${CODEX_OUTPUT}" \
@@ -114,7 +115,6 @@ uv run python -m scripts.paper_organizer --from-response \
 
 ```bash
 # 4. Clean up prepared prompt/temp PDF, then the artifact directory.
-CLEANUP_DIR=$(read_field cleanup_dir)
 uv run python -m scripts.paper_organizer --cleanup-cli-input "${CLEANUP_DIR}"
 rm -rf "$WORK"
 ```
@@ -145,6 +145,7 @@ The generation step and the apply step are separate commands, so a failed genera
 3. **Confirm the response file was written by this run** — non-empty, and newer than the prepared JSON.
 4. **Never pass the prompt through a shell string.** The prompt contains backticks and `$`, which break shell quoting and can kill the command before Codex starts. Write the prompt to a file and read it in the language driving the call, or pass it as a direct argument in an argument list (for example `subprocess.run([...])`), not inside a generated `.sh` file.
 5. **Always redirect stdin from `/dev/null`.** Per `codex exec --help`, when a prompt argument is given *and* stdin is piped, Codex appends stdin to the prompt as a `<stdin>` block — so it blocks until stdin reaches EOF. Agent tool calls, background jobs, and CI steps hand the child an open stdin that never closes, so the run hangs indefinitely instead of failing fast. Adding `< /dev/null` closes it. Do **not** "fix" this by piping the prompt in (`echo "$PROMPT" | codex exec`): that works only by accident, violates item 4, and `echo` mangles backslashes in some shells.
+6. **Get the run's fields by sourcing `--emit-shell` output. Never hand-extract them.** `--emit-shell` validates every required field and refuses to write a partial file, so `source "$CODEX_CONFIG" || exit 1` cannot leave a variable empty. Hand-extraction can, silently: a mistyped `$WORK`, a renamed JSON key, or a swallowed `2>/dev/null` all yield an empty string, and `codex exec` is then invoked with an empty flag. An empty `EFFORT` fails loudly (`reasoning_effort must not be empty`), but an empty `PDF_PATH` does **not** — Codex starts normally with a blank path under full-access mode in `PAPERHUB_ROOT` and can summarize the wrong file. `title_mismatch_problem` catches that only at apply time, after a full reasoning run has been paid for. Do **not** try to guard hand-extraction with `set -e`: in `local x=$(cmd)` the `local` builtin's own exit status replaces the command substitution's, so a failing extraction reports success and `set -e` never fires. Plain `x=$(cmd)` preserves `$?`, but nothing checks it by default. Sourcing a validated file removes the whole class.
 
 If any check fails, treat the paper as failed and follow **Error Handling** below.
 
@@ -162,6 +163,11 @@ limit concurrently using the same resolved model/reasoning pair and distinct
 output/stderr paths. Default to four workers and allow 1-8. Wait for every
 scheduled generation call, then apply responses sequentially so output folders
 and duplicate checks cannot race.
+
+Give each paper its own `--emit-shell` config (`$WORK/config_N.sh`) and keep
+every artifact for a paper — prepared JSON, config, stdout, stderr — under one
+`$WORK` for the whole batch. Splitting them across directories is what makes a
+path typo produce empty variables for some papers and not others.
 
 Batches make the stale-artifact risk worse, because one broken job is easy to
 miss among several that look fine. Apply the **Run Integrity** checks per paper

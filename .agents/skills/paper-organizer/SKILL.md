@@ -10,11 +10,14 @@ The project's root folder contains a `.claude` directory. Open
 and rules. Read only the engine, mode, link, tag, or onboarding playbooks it
 selects.
 
-Before suggesting or invoking an engine, follow the canonical skill's engine
-availability gate. External engines must appear in `config.json`'s
-`available_engines`; verify an explicitly requested unlisted engine and append it
-only after the check or first run succeeds. The current coding agent is always
-available.
+Before suggesting or invoking an engine, scan the user's request for a named
+engine (codex, agy/antigravity, openrouter, gemini, or the current agent). A
+named engine is binding and outranks every default; when no engine is named,
+default to the current coding agent. Only then follow the canonical skill's
+engine availability gate, which verifies a choice but never makes one. External
+engines must appear in `config.json`'s `available_engines`; verify an explicitly
+requested unlisted engine and append it only after the check or first run
+succeeds. The current coding agent is always available.
 
 Run `uv` commands from `paperhub_utils/`. The local `.venv` is disposable; use
 `uv sync` if it is stale.

@@ -164,35 +164,23 @@ DEFAULT_REASONING = {"effort": "high", "exclude": True}
 # - "openrouter_file_parser": send the PDF file through OpenRouter's file-parser.
 # - "text_extraction": convert the PDF locally with pymupdf4llm and send that text.
 DEFAULT_MODEL = {
-    "model_id": "qwen/qwen3.7-max",
+    "model_id": "qwen/qwen3.8-2.4t-a95b",
     "provider": {},
     "reasoning": DEFAULT_REASONING,
     "pdf_input": "text_extraction",
 }
 MODEL_LIST = [
     {
-        "model_id": "qwen/qwen3.7-max",
+        "model_id": "qwen/qwen3.8-2.4t-a95b",
         "provider": {},
         "reasoning": DEFAULT_REASONING,
         "pdf_input": "text_extraction",
     },
     {
-        "model_id": "deepseek/deepseek-v4-pro",
+        "model_id": "deepseek/deepseek-v4-pro-0813",
         "provider": {},
         "reasoning": DEFAULT_REASONING,
         "pdf_input": "text_extraction",
-    },
-    {
-        "model_id": "moonshotai/kimi-k2.6",
-        "provider": {},
-        "reasoning": DEFAULT_REASONING,
-        "pdf_input": "openrouter_file_parser",
-    },
-    {
-        "model_id": "google/gemini-3.1-pro-preview",
-        "provider": {},
-        "reasoning": DEFAULT_REASONING,
-        "pdf_input": "openrouter_file_parser",
     },
 ]
 

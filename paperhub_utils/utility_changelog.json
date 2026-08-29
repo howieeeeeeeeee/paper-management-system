@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.08.07.1",
+  "latest_version": "2026.08.29.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
     "2026.08.21.1": {
@@ -407,6 +407,13 @@
         "paper-finder skill for retrieving existing papers from keywords, vague descriptions, authors, tags, and snippets.",
         "Detailed paper-finder mode and no-keyword search flow."
       ]
+    },
+    "2026.08.29.1": {
+      "date": "2026-08-29",
+      "title": "No Engine Fallback; Rebuilt OpenRouter Model List",
+      "update_kind": "content",
+      "summary": "paper-organizer now treats the named engine as binding for the whole batch. On a failure (non-zero exit, missing or empty sentinel block, cli_workflow stderr/log guard, timeout, auth error, or a post_ai guard) it stops, keeps diagnostics, and asks whether to retry, switch to a named enabled engine, or abandon the paper, instead of continuing on another engine. A companion rule requires verifying the run used the declared engine: --pdf-engine selects the text-extraction backend, is not validated, and silently falls through to OpenRouter when given an AI engine id. The OpenRouter MODEL_LIST is rebuilt around current frontier models and trimmed to two: qwen/qwen3.8-2.4t-a95b (new DEFAULT_MODEL) and deepseek/deepseek-v4-pro-0813. The previous qwen3.7-max, kimi-k2.6, and gemini-3.1-pro-preview entries are removed. Both remaining models use local text_extraction, so no entry uses OpenRouter's file parser.",
+      "how_to_apply": "Replace the paper-organizer skill's SKILL.md and paperhub/config.py. No schema or existing-library migration is required. Behavior changes: a failed or misrouted engine now halts the batch and waits for an explicit user choice; OpenRouter runs default to qwen/qwen3.8-2.4t-a95b; and all PDFs go through local pymupdf4llm extraction rather than OpenRouter's file parser. Anyone pinning a removed model id in config.json must update it."
     }
   }
 }

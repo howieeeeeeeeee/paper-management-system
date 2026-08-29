@@ -19,5 +19,9 @@ engines must appear in `config.json`'s `available_engines`; verify an explicitly
 requested unlisted engine and append it only after the check or first run
 succeeds. The current coding agent is always available.
 
+If the chosen engine fails, stop and ask whether to retry, switch to a named
+enabled engine, or abandon the paper. Never fall back to another engine or model
+on your own.
+
 Run `uv` commands from `paperhub_utils/`. The local `.venv` is disposable; use
 `uv sync` if it is stale.

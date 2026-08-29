@@ -1,6 +1,6 @@
 ---
 name: paper-organizer
-description: Organize research papers from local PDFs or public paper links. Use for PaperHub onboarding, PDF metadata/full summaries, parallel mixed-link batches, link metadata and abstracts, batches from Markdown link lists, or enriching existing folders. Supports OpenRouter, Agy CLI, Codex CLI, and current-coding-agent engines while keeping external link-engine calls offline.
+description: Organize research papers from local PDFs or public paper links. Use for PaperHub onboarding, PDF metadata/full summaries, parallel mixed-link batches, link metadata and abstracts, batches from Markdown link lists, or enriching existing folders. Supports OpenRouter, Agy CLI, Codex CLI, and current-coding-agent engines while keeping external link-engine calls offline. When invoking, copy any engine the user named (codex, agy/antigravity, openrouter, gemini) into args verbatim — omitting it silently routes the batch to the wrong engine.
 ---
 
 # Research Paper Organizer
@@ -50,6 +50,23 @@ availability gate may then verify or refuse it, but never replaces it with a
 different engine. Only when the request names none does the default in the
 Engines table apply.
 
+**"The user's request" means their original message, verbatim — scroll up and
+reread it.** The `ARGUMENTS:` line appended to this skill is a lossy paraphrase
+written by the invoking agent; an engine the user named is routinely missing from
+it. Never treat `ARGUMENTS:` as the request, and never conclude "no engine named"
+from its contents alone. If the original message is unavailable (compaction, a
+subagent handoff), ask which engine rather than defaulting.
+
+**Declare the engine before acting.** Before any config read, availability gate,
+duplicate preflight, mode question, or engine doc read, output one line:
+
+`Engine: <canonical-id> — <the user's own words, or "no engine named in the original message">`
+
+Reaching `coding-agent` requires the quoted second half to be the literal
+no-engine phrase. That is an assertion that you reread the original message and
+found none — never a fallback for "the ARGUMENTS line didn't mention one" or "no
+phrasing matched a table row verbatim."
+
 ### Engine availability gate (verifies a choice; never makes one)
 
 Before recommending, selecting, or invoking an AI engine, read `AVAILABLE_ENGINES`
@@ -77,11 +94,27 @@ from `paperhub.config` (backed by `available_engines` in
    - After verification or the first real invocation succeeds, append the
      canonical ID to `available_engines` in `config.json`, preserving existing
      order and all unrelated settings. Ensure `coding-agent` remains present.
-4. If an enabled external engine later fails, follow its normal failure flow;
-   do not silently switch engines or remove it from the list.
+4. If an enabled external engine later fails, follow the engine-failure
+   checkpoint below; do not silently switch engines or remove it from the list.
 5. When the user names no engine, default to `coding-agent`. Never reach for an
    external engine on your own; the user must name it. Any engine-selection
    question must contain only listed engines plus the current agent.
+
+### Engine failure — stop and ask
+
+The named engine is binding for the whole batch; there is no automatic fallback.
+On any failure — non-zero exit, missing or empty sentinel block, `cli_workflow`
+stderr/log guard, timeout, auth error, or a `shared/post_ai.md` guard — stop,
+keep the diagnostics, and ask with `AskUserQuestion`: retry the same engine,
+switch to a named enabled engine, or abandon the paper. Never pick the next
+engine or model yourself.
+
+**Verify the run used the engine you declared.** External CLI engines route only
+through `--prepare-cli-input --external-cli-engine <id>` → the CLI call →
+`--from-response`. `--pdf-engine` selects the text-extraction backend, is not
+validated, and silently falls through to OpenRouter when given an AI engine id.
+If a run's logs name a different engine or endpoint than declared, kill it and
+treat it as a failure above.
 
 For paper processing, first identify the input kind. For a URL or Markdown/plain-
 text link list, read `link_input.md`. For a local PDF or existing folder, pick
@@ -156,7 +189,7 @@ for the folder and canonical metadata filename.
 | agy or antigravity, in any phrasing — "direct Google CLI" | `agy-cli` | `engines/agy_cli.md` |
 | openrouter, in any phrasing | `openrouter` | `engines/openrouter.md` |
 | gemini, without "cli" | FILTER, then ASK if needed | Among enabled `openrouter` and `agy-cli`: route directly if one is enabled, ask which if both are enabled, or run the availability gate if neither is enabled |
-| **no engine named at all** | `coding-agent` | `engines/coding_agent.md` |
+| **no engine named at all** — verified against the original message, not `ARGUMENTS:` | `coding-agent` | `engines/coding_agent.md` |
 
 Match on the engine's identity anywhere in the request, not on these exact
 strings — the quoted phrases are examples. The default row applies only when no
@@ -194,7 +227,7 @@ engine is named; never reach it because a phrasing did not match verbatim.
   disabled, provide no OpenRouter web tools, and reject Agy web-tool markers.
   If public metadata is incomplete, the invoking coding agent may browse and
   append verified facts plus source URLs under `Coding-Agent Additions`.
-- **Handle partial failures via `AskUserQuestion`** — never decide unilaterally, never auto-switch models.
+- **Handle partial failures via `AskUserQuestion`** — never decide unilaterally, never auto-switch models or engines. See the engine-failure checkpoint under Routing.
 - **Never satisfy a failing validation guard by creating, blanking, or editing the artifact it checks.** A guard that fires means the engine did not run as assumed; re-run it or fail the paper. Silencing it organizes the wrong paper under a plausible-looking name.
 - **For external CLI engines, prove the run happened before applying its response.** Use fresh per-batch artifact paths (never fixed `/tmp` names that a previous session may have left behind), check each call's own exit code rather than a wrapper's, and never build the prompt inside a shell string — backticks and `$` in the prompt can kill the command before the engine starts.
 - **ONLY use models from `paperhub.config`'s `MODEL_LIST`** for `openrouter`. For `agy-cli`, use `AGY_CLI_MODEL_LIST`; the selected model is persisted to Agy settings by `--prepare-cli-input`. For `codex-cli`, use `CODEX_CLI_MODEL_REASONING_PAIRS`; the selected model is passed per run with `codex exec --model`, and the thinking level is passed per run with `-c model_reasoning_effort=...`.
@@ -212,7 +245,7 @@ After the selected engine finishes and the paper files are written, read `shared
 6. Version the organized files by running the `versioning-with-git` skill (mirrors the vault into the out-of-iCloud git backup repo and commits/pushes there — the vault itself has no `.git`), unless the user asked not to commit. It self-skips when `USE_GIT = False` or no backup path is set (loaded from `paperhub_utils/config/config.json`).
 7. Report the result with token usage when available, tag updates, related-paper reconciliation, auto-fixes, optional citation status, and any failed papers.
 
-For partial batch failures, ask the user whether to abandon, retry, or choose another allowed model for the active engine. Never switch models automatically.
+For partial batch failures, run the engine-failure checkpoint under Routing: stop, report the diagnostics, and ask whether to abandon, retry, switch engine, or choose another allowed model for the active engine. Never switch models or engines automatically.
 
 ## Quick start
 
@@ -244,7 +277,8 @@ public PDFs. If public PDFs are pending a mode, ask once before engine calls.
   one command; Agy and Codex prepare each PDF, run up to the chosen worker limit
   concurrently with isolated artifacts, then apply responses sequentially.
 - Default to four workers and allow `1-8`. Let all scheduled jobs finish after
-  an individual failure, retain failed diagnostics, and never switch models.
+  an individual failure, schedule no new ones, retain failed diagnostics, and
+  never switch models or engines.
 - Reassemble the final user report in original input order and run the tag/post-
   AI handoff once after all groups are resolved.
 

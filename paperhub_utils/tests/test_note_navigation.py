@@ -52,7 +52,7 @@ class NoteNavigationUnitTests(unittest.TestCase):
             METADATA
             + "\nSee [[archive/ai_summary|an inline research note]].\n\n"
             + "---\n### Related Docs\n"
-            + "[[ExampleVault/PaperHub/organized/example2026/ai_summary]]\n"
+            + "[[ExampleVault/PaperHub/organized/example2026/ai_summary|Link to AI Summary]]\n"
         )
 
         updated = add_ai_summary_link_to_metadata(metadata)

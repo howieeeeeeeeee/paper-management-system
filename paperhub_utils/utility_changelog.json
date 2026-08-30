@@ -1,8 +1,15 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.08.30.1",
+  "latest_version": "2026.08.30.2",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.08.30.2": {
+      "date": "2026-08-30",
+      "title": "Portable AI Summary Links",
+      "update_kind": "content",
+      "summary": "Clarifies and regression-tests that metadata notes link to their sibling AI summary with the filename-only wikilink [[ai_summary|Link to AI Summary]], so links remain portable when a vault is moved or renamed.",
+      "how_to_apply": "Update the paper-organizer full-mode instruction and navigation regression test together. Existing vault-qualified AI-summary links may be replaced with [[ai_summary|Link to AI Summary]]; no configuration, dependency, or schema migration is required."
+    },
     "2026.08.30.1": {
       "date": "2026-08-30",
       "title": "Codex Shell-Snapshot Cleanup Warnings No Longer Reject Valid Papers",

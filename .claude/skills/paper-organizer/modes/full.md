@@ -19,10 +19,7 @@ For Codex CLI, follow `engines/codex_cli.md` with `--summary-mode full`; the pre
 └── ai_summary.md                 # AI-generated detailed summary
 ```
 
-The metadata note ends with `[[ai_summary|Link to AI Summary]]`. The summary
-starts its visible content with `[[{paper_label}|Back to Metadata]]`, after YAML
-frontmatter when present. These links are added deterministically after the AI
-output is written, regardless of engine.
+Use sibling wikilinks: metadata ends with `[[ai_summary|Link to AI Summary]]`; the summary begins with `[[{paper_label}|Back to Metadata]]` after frontmatter.
 
 ## Validation (after the AI returns)
 

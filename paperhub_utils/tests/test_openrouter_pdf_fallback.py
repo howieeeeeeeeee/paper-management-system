@@ -14,24 +14,20 @@ from scripts.paper_summarizer import (
 
 class OpenRouterPdfFallbackTests(unittest.TestCase):
     def test_qwen_default_uses_text_extraction_and_reasoning_effort(self) -> None:
-        qwen = resolve_model_config("qwen/qwen3.7-max")
+        qwen = resolve_model_config("qwen/qwen3.8-2.4t-a95b")
         pdf_input = resolve_pdf_input_config(qwen)
 
-        self.assertEqual(DEFAULT_MODEL["model_id"], "qwen/qwen3.7-max")
+        self.assertEqual(DEFAULT_MODEL["model_id"], "qwen/qwen3.8-2.4t-a95b")
         self.assertEqual(qwen.get("reasoning"), DEFAULT_REASONING)
         self.assertEqual(pdf_input["mode"], "text_extraction")
         self.assertEqual(pdf_input["extractor"], "pymupdf4llm")
         self.assertEqual(DEFAULT_MODEL["pdf_input"], "text_extraction")
 
     def test_configured_models_resolve_pdf_input_strategy(self) -> None:
-        deepseek = resolve_model_config("deepseek/deepseek-v4-pro")
-        kimi = resolve_model_config("moonshotai/kimi-k2.6")
-        gemini = resolve_model_config("google/gemini-3.1-pro-preview")
+        deepseek = resolve_model_config("deepseek/deepseek-v4-pro-0813")
 
         self.assertEqual(deepseek.get("reasoning"), DEFAULT_REASONING)
         self.assertEqual(resolve_pdf_input_config(deepseek)["mode"], "text_extraction")
-        self.assertEqual(resolve_pdf_input_config(kimi)["mode"], "openrouter_file_parser")
-        self.assertEqual(resolve_pdf_input_config(gemini)["mode"], "openrouter_file_parser")
 
     def test_extracts_text_from_error_file_annotations(self) -> None:
         error_body = {

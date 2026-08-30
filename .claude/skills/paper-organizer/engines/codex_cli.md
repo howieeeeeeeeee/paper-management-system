@@ -125,6 +125,9 @@ Hard-fatal — do **not** organize output:
 
 - Codex stdout is missing `PAPERHUB_RESPONSE_BEGIN` or `PAPERHUB_RESPONSE_END`, or the response block is empty.
 - Codex stderr indicates authentication, rate-limit, permission, or file-read failures.
+- A shutdown-only `codex_core::shell_snapshot` warning that says Codex could not
+  delete an already-missing snapshot is ignored; it occurs after a successful
+  response and is unrelated to reading the paper.
 - Codex stderr is **empty**. A real run always writes progress output, so an empty stderr means Codex never ran and the response file is stale.
 - The title in the response does not appear in the PDF, which means the response came from a different paper.
 
@@ -174,6 +177,17 @@ miss among several that look fine. Apply the **Run Integrity** checks per paper
 and report each paper's own result (exit code, bytes written, sentinels found)
 before applying anything. Never apply a batch on the strength of the wrapper
 command's exit code alone.
+
+### Resume a stopped batch
+
+The batch artifact directory is the resume record. Keep it until every paper is
+applied or explicitly abandoned. After a checkpoint, do not regenerate a paper
+whose own exit code is zero and whose prepared JSON, config, nonempty fresh
+response, stderr, and single complete sentinel block are still present. Re-run
+that paper's normal `--from-response` command so the validator and PDF-title
+check run again, then continue applying the remaining responses sequentially.
+Generate only papers without a complete valid artifact set. Clean the prepared
+input and batch directory only after the batch is fully resolved.
 
 ## Error Handling
 

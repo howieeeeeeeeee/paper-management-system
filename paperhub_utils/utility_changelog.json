@@ -1,8 +1,15 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.08.29.1",
+  "latest_version": "2026.08.30.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.08.30.1": {
+      "date": "2026-08-30",
+      "title": "Codex Shell-Snapshot Cleanup Warnings No Longer Reject Valid Papers",
+      "update_kind": "content",
+      "summary": "Prevents a successful Codex CLI paper response from being rejected when Codex emits a shutdown-only warning that an already-missing temporary shell snapshot could not be deleted. The exception requires the exact warning and missing-file condition together, so genuine authentication, rate-limit, permission, missing-input, and PDF-read failures remain fatal. Stopped parallel batches now explicitly retain complete per-paper artifacts as their resume record instead of regenerating successful work.",
+      "how_to_apply": "Update the Codex CLI workflow helper, its focused test, and the Codex engine instructions together. No configuration, dependency, schema, or existing-library migration is required. Preserved responses previously blocked only by this exact cleanup warning can be safely applied after their normal exit, freshness, sentinel, title, and stderr checks pass; regenerate only papers without a complete valid artifact set."
+    },
     "2026.08.21.1": {
       "date": "2026-08-21",
       "title": "Engine Routing Precedence And Coding-Agent Default",

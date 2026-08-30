@@ -115,6 +115,49 @@ class CodexWorkflowTests(unittest.TestCase):
 
         self.assertTrue(any("permission denied" in p for p in problems))
 
+    def test_validate_codex_run_ignores_shell_snapshot_cleanup_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            stderr = Path(tmp) / "codex_stderr.txt"
+            stderr.write_text(
+                "WARN codex_core::shell_snapshot: Failed to delete shell snapshot "
+                "at /tmp/missing.sh: No such file or directory\n",
+                encoding="utf-8",
+            )
+            stdout = (
+                f"{CODEX_RESPONSE_BEGIN}\n"
+                "# paper_label\nsample2026paper\n"
+                f"{CODEX_RESPONSE_END}\n"
+            )
+
+            problems = validate_codex_cli_run(stdout_text=stdout, stderr_path=stderr)
+
+            stderr.write_text(
+                "Failed to read paper.pdf: No such file or directory\n",
+                encoding="utf-8",
+            )
+            missing_pdf_problems = validate_codex_cli_run(
+                stdout_text=stdout,
+                stderr_path=stderr,
+            )
+
+            stderr.write_text(
+                "WARN codex_core::shell_snapshot: Failed to delete shell snapshot "
+                "at /tmp/protected.sh: Permission denied\n",
+                encoding="utf-8",
+            )
+            snapshot_permission_problems = validate_codex_cli_run(
+                stdout_text=stdout,
+                stderr_path=stderr,
+            )
+
+        self.assertEqual(problems, [])
+        self.assertTrue(
+            any("no such file or directory" in p for p in missing_pdf_problems)
+        )
+        self.assertTrue(
+            any("permission denied" in p for p in snapshot_permission_problems)
+        )
+
     def test_codex_model_label(self) -> None:
         self.assertEqual(
             codex_model_label("gpt-5.5", "high"),

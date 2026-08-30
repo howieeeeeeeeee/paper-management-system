@@ -149,7 +149,15 @@ def validate_codex_cli_run(
 
 
 def _scan_text_for_markers(text: str, source_label: str) -> list[str]:
-    lowered = text.lower()
+    lowered = "\n".join(
+        line.lower()
+        for line in text.splitlines()
+        if not (
+            "warn codex_core::shell_snapshot: failed to delete shell snapshot"
+            in line.lower()
+            and "no such file or directory" in line.lower()
+        )
+    )
     return [
         f"{source_label} indicates Codex failure: {marker}"
         for marker in CODEX_CLI_HARD_FATAL_MARKERS

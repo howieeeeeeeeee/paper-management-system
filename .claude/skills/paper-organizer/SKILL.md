@@ -219,6 +219,15 @@ engine is named; never reach it because a phrasing did not match verbatim.
 - **Paths with spaces:** Pass literal paths (spaces as-is) to `Read`, `Edit`, and `Write` tools — do NOT backslash-escape spaces. Backslash escaping is only for Bash tool commands. If the project root contains spaces, escaping will cause "file not found" errors even when the file exists.
 - **uv run location:** Always `cd paperhub_utils` before running `uv run` commands, since `pyproject.toml` and `.venv` are stored there. Example: `cd paperhub_utils && uv run python -m scripts.paper_organizer ... && cd ..`
 - **Batch processing paths:** Always cd into `paperhub_utils` first. Use `PAPERHUB_ROOT=$(cd .. && pwd)` to get the PaperHub root (works on any machine). For Agy: use `agy --add-dir "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON. For Codex: use `codex exec --cd "$PAPERHUB_ROOT"` and PDF paths from the prepared JSON; PaperHub's default Codex path uses local yolo/full-access mode with web search disabled.
+- **External CLI runs outlive a default tool timeout — budget for it.** A single
+  full-summary paper at a high thinking level routinely runs well past the ~2
+  minute default Bash/tool timeout in a coding agent; expect several minutes per
+  paper and longer for a parallel batch. Raise the timeout to its maximum for the
+  generation call, or start it in the background and poll its artifacts. A
+  timeout kill has a distinctive signature: **empty stdout, populated stderr, no
+  sentinels.** That is the harness giving up, not the engine failing — do not
+  switch engines or models and do not enter the failed-paper recovery flow.
+  Re-run the same paper with the same model and more time.
 - Treat `.venv` as disposable local state. In iCloud-synced vaults, never preserve or share `.venv` across machines. If a `uv` command fails because the environment is stale or broken, run `uv sync` from `paperhub_utils/`; if it still fails, run `rm -rf .venv` and then `uv sync`.
 - **NEVER read the PDF directly** — except `engines/coding_agent.md` and the first-page-only local title comparison for generic filenames in the duplicate preflight above. The duplicate preflight must not send page content to AI. In `metadata-only` mode the coding-agent engine extracts only the first `METADATA_ONLY_PAGE_LIMIT` pages; in `full` and `enrich` modes it reads the entire PDF natively in-session and is gated by the quota `AskUserQuestion` documented in that engine file.
 - For `openrouter`, `agy-cli`, and `codex-cli`, ALWAYS delegate PDF processing to the script or external CLI. Only validate and fix the output.

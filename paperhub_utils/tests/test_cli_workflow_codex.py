@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from paperhub.cli_workflow.codex import (
     CODEX_RESPONSE_BEGIN,
@@ -13,7 +14,7 @@ from paperhub.cli_workflow.codex import (
     resolve_codex_cli_settings,
     validate_codex_cli_run,
 )
-from paperhub.cli_workflow.pdf import CLI_WORK_DIR
+from paperhub.cli_workflow.pdf import CLI_WORK_DIR, title_mismatch_problem
 from paperhub.config import (
     CODEX_CLI_MODEL,
     CODEX_CLI_MODEL_LIST,
@@ -156,6 +157,29 @@ class CodexWorkflowTests(unittest.TestCase):
         )
         self.assertTrue(
             any("permission denied" in p for p in snapshot_permission_problems)
+        )
+
+    @patch("paperhub.cli_workflow.pdf.subprocess.run")
+    @patch("pypdf.PdfReader")
+    def test_title_check_falls_back_to_poppler_for_corrupt_pypdf_text(
+        self,
+        pdf_reader: Mock,
+        run: Mock,
+    ) -> None:
+        page = Mock()
+        page.extract_text.return_value = " ".join(["/x41/x76/x6f/x69/x64"] * 30)
+        pdf_reader.return_value.pages = [page]
+        response = 'title: "Avoiding Lying: The Case of Delegated Deception"'
+        run.return_value.stdout = (
+            "Avoiding Lying: The Case of Delegated Deception " + "context " * 20
+        )
+
+        self.assertIsNone(title_mismatch_problem(response, Path("paper.pdf")))
+
+        run.return_value.stdout = "unrelated economics article " + "context " * 20
+        self.assertIn(
+            "does not match",
+            title_mismatch_problem(response, Path("paper.pdf")) or "",
         )
 
     def test_codex_model_label(self) -> None:

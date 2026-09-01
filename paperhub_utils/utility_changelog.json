@@ -1,8 +1,22 @@
 {
   "schema_version": 1,
-  "latest_version": "2026.08.30.2",
+  "latest_version": "2026.09.01.1",
   "version_format": "YYYY.MM.DD.N",
   "entries": {
+    "2026.09.01.1": {
+      "date": "2026-09-01",
+      "title": "External CLI Runs Need A Raised Tool Timeout",
+      "update_kind": "content",
+      "summary": "Documents that a full-summary paper run on an external CLI engine routinely outlives a coding agent's default ~2 minute tool timeout, and that a timeout kill looks like empty stdout with populated stderr and no sentinel block. Instructs the agent to raise the timeout or run the call in the background and poll, and to treat that signature as a harness timeout rather than an engine failure, so it re-runs the same paper and model instead of switching engines or entering the failed-paper recovery flow.",
+      "how_to_apply": "Update the paper-organizer critical rules and the Codex engine's non-fatal diagnosis list together. No configuration, dependency, schema, or existing-library migration is required."
+    },
+    "2026.08.30.3": {
+      "date": "2026-08-30",
+      "title": "Corrupt PDF Text Layers No Longer Cause False Title Mismatches",
+      "update_kind": "content",
+      "summary": "Makes the external-CLI title identity guard fall back to the optional local pdftotext command when pypdf's extracted text does not match. This handles PDFs whose embedded font maps produce literal hexadecimal byte codes even though Poppler and visual readers recover the correct title. A genuinely different response title remains fatal.",
+      "how_to_apply": "Update the shared PDF workflow helper, focused Codex workflow test, and Codex engine instructions together. No configuration, dependency, schema, or existing-library migration is required. Systems without pdftotext retain the previous pypdf-only behavior."
+    },
     "2026.08.30.2": {
       "date": "2026-08-30",
       "title": "Portable AI Summary Links",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -106,6 +107,30 @@ def title_mismatch_problem(
 
     hits = sum(1 for w in words if w in haystack)
     ratio = hits / len(words)
+    if ratio < threshold:
+        try:
+            poppler_text = subprocess.run(
+                [
+                    "pdftotext",
+                    "-f",
+                    "1",
+                    "-l",
+                    str(pages),
+                    str(pdf_path),
+                    "-",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            pass
+        else:
+            poppler_haystack = _normalize_words(poppler_text)
+            if len(poppler_haystack.split()) >= 20:
+                poppler_hits = sum(1 for w in words if w in poppler_haystack)
+                ratio = max(ratio, poppler_hits / len(words))
     if ratio >= threshold:
         return None
     return (

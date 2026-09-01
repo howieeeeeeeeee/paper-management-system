@@ -129,11 +129,18 @@ Hard-fatal — do **not** organize output:
   delete an already-missing snapshot is ignored; it occurs after a successful
   response and is unrelated to reading the paper.
 - Codex stderr is **empty**. A real run always writes progress output, so an empty stderr means Codex never ran and the response file is stale.
-- The title in the response does not appear in the PDF, which means the response came from a different paper.
+- The title in the response does not appear in the PDF, which means the response came from a different paper. When `pypdf` returns a corrupt text layer, the check automatically tries the optional local `pdftotext` command before rejecting the response.
 
 Not fatal, and not a model failure — diagnose before retrying:
 
 - Codex stderr is only `Reading additional input from stdin...` (or ends there) with empty stdout, and the process never exits. Stdin was left open; Codex is waiting to append it to the prompt. Kill it and re-run the **same** model with `< /dev/null` (Run Integrity item 5). Do not switch models or engines, and do not enter the failed-paper recovery flow — nothing was wrong with the request.
+- Stdout is empty and stderr holds real progress output (often pages of extracted
+  PDF text), with no sentinels and a kill/timeout exit code. The calling harness
+  timed out, not Codex. A full-summary paper at a high reasoning effort routinely
+  needs several minutes, and a parallel batch needs longer, so a default ~2 minute
+  agent tool timeout will cut it off mid-reasoning. Re-run the **same** paper and
+  model with the tool timeout raised to its maximum, or start the call in the
+  background and poll. Do not switch models or engines.
 
 The `--from-response --external-cli-engine codex-cli` command enforces these via `validate_codex_cli_run` in `cli_workflow/codex.py` and `title_mismatch_problem` in `cli_workflow/pdf.py`. The title check reads the PDF locally **after** Codex has already returned; it never preprocesses the PDF or changes what Codex receives, which is still the absolute PDF path.
 
